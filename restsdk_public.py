@@ -1,16 +1,57 @@
 ##Intended for python3.6 on linux, probably won't work on Windows
 ##This software is distributed without any warranty. It will probably brick your computer.
-#DO NOT ADD SLASHES TO END OF DIRECTORIES
-db='/restsdk/data/db/index.db' #where the file DB is stored example: /data/db/index.db
-filedir='/restsdk/data/files' #where the files are stored example: /restsdk/data/files
-dumpdir='/location/to/dump/files/to' #where you want the new files dumped example:/EXTERNAL/FILES
+def print_help():
+    print("Usage: python restsdk_public.py [options]")
+    print("Options:")
+    print("  --dry_run     Perform a dry run (do not copy files)")
+    print("  --help        Show this help message")
+    print("  --db          Path to the file DB (example: /restsdk/data/db/index.db)")
+    print("  --filedir     Path to the files directory (example: /restsdk/data/files)")
+    print("  --dumpdir     Path to the directory to dump files (example: /location/to/dump/files/to)")
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dry_run', action='store_true', default=False, help='Perform a dry run')
+    parser.add_argument('--db', help='Path to the file DB')
+    parser.add_argument('--filedir', help='Path to the files directory')
+    parser.add_argument('--dumpdir', help='Path to the directory to dump files')
+    args = parser.parse_args()
+
+    db = args.db
+    filedir = args.filedir
+    dumpdir = args.dumpdir
+    dry_run = args.dry_run
+
+    if db is None or filedir is None or dumpdir is None:
+        print("Error: Missing required arguments. Please provide values for --db, --filedir, and --dumpdir.")
+        sys.exit(1)
+
+    if "--help" in sys.argv:
+        print_help()
+        sys.exit(0)
+
+    # Rest of the code...
 #NOTHING AFTER THIS LINE NEEDS TO BE EDITED
+# add a help command to the script to give a manual for usage and parameters
+def print_help():
+    print("Usage: python restsdk_public.py [options]")
+    print("Options:")
+    print("  --dry_run     Perform a dry run (do not copy files)")
+    print("  --help        Show this help message")
+
+if __name__ == "__main__":
+    if "--help" in sys.argv:
+        print_help()
+        sys.exit(0)
 skipnames=[filedir] #remove these strings from the final file/path name. Don't edit this.
 import sqlite3
 import pprint
 import copy
 import os
 from shutil import copyfile
+import argparse
+import sys
+import argparse
     
 def findNextParent(fileID):
     #finds the next parent db item in a chain
@@ -81,27 +122,38 @@ for file in files:
     fileDIC[fileID]={'Name':fileName,'Parent':fileParent,'contentID':contentID,'Type':mimeType,'fileContentID':''}
 
 skipnames.append(getRootDirs()) #remove obnoxious root dir names
-for root,dirs,files in os.walk(filedir): #find all files in original directory structure
+#how can I modify this function so that I can do a dry run and not actually copy the files?
+parser = argparse.ArgumentParser()
+parser.add_argument('--dry_run', action='store_true', default=False, help='Perform a dry run')
+args = parser.parse_args()
+
+dry_run = args.dry_run
+
+for root, dirs, files in os.walk(filedir):  # find all files in original directory structure
     for file in files:
-        filename=str(file)
-        print('FOUND FILE ' + filename + ' SEARCHING......',end="\r")
-        fileID=filenameToID(str(file))
-        fullpath=None
-        if fileID!=None:
-            fullpath=idToPath2(fileID)
-        if fullpath!=None:
-            #print('FILE RESOLVED TO ' + fullpath)
+        filename = str(file)
+        print('FOUND FILE ' + filename + ' SEARCHING......', end="\r")
+        fileID = filenameToID(str(file))
+        fullpath = None
+        if fileID != None:
+            fullpath = idToPath2(fileID)
+        if fullpath != None:
+            # print('FILE RESOLVED TO ' + fullpath)
             for paths in skipnames:
-                newpath=fullpath.replace(paths,'')
-            newpath=dumpdir+newpath
-            fullpath=str(os.path.join(root,file))
-            #print('Copying ' + fullpath + ' to ' + newpath,end="\r")
-            print('Copying ' + newpath)
-            try:
-                os.makedirs(os.path.dirname(newpath), exist_ok=True)
-                copyfile(fullpath,newpath)
-            except:
-                print('Error copying file ' + fullpath + ' to ' + newpath)
+                newpath = fullpath.replace(paths, '')
+            newpath = dumpdir + newpath
+            fullpath = str(os.path.join(root, file))
+            if dry_run:
+                print('Dry run: Skipping copying ' + fullpath + ' to ' + newpath)
+            else:
+                # print('Copying ' + fullpath + ' to ' + newpath,end="\r")
+                print('Copying ' + newpath)
+                try:
+                    os.makedirs(os.path.dirname(newpath), exist_ok=True)
+                    copyfile(fullpath, newpath)
+                except:
+                    print('Error copying file ' + fullpath + ' to ' + newpath)
+
 print("Did this script help you recover your data? Save you a few hundred bucks? Or make you some money recovering somebody else's data?")
 print("Consider sending us some bitcoin/crypto as a way of saying thanks!")
 print("Bitcoin: 1DqSLNR8kTgwq5rvveUFDSbYQnJp9D5gfR")
