@@ -1,3 +1,11 @@
+import sqlite3
+import pprint
+import copy
+import os
+from shutil import copyfile
+import argparse
+import sys
+
 ##Intended for python3.6 on linux, probably won't work on Windows
 ##This software is distributed without any warranty. It will probably brick your computer.
 def print_help():
@@ -44,15 +52,7 @@ if __name__ == "__main__":
         print_help()
         sys.exit(0)
 skipnames=[filedir] #remove these strings from the final file/path name. Don't edit this.
-import sqlite3
-import pprint
-import copy
-import os
-from shutil import copyfile
-import argparse
-import sys
-import argparse
-    
+
 def findNextParent(fileID):
     #finds the next parent db item in a chain
     for key,value in fileDIC.items():
