@@ -5,6 +5,7 @@ import os
 from shutil import copyfile
 import argparse
 import sys
+import multiprocessing
 
 ##Intended for python3.6 on linux, probably won't work on Windows
 ##This software is distributed without any warranty. It will probably brick your computer.
@@ -33,10 +34,6 @@ if __name__ == "__main__":
     if db is None or filedir is None or dumpdir is None:
         print("Error: Missing required arguments. Please provide values for --db, --filedir, and --dumpdir.")
         sys.exit(1)
-
-    if "--help" in sys.argv:
-        print_help()
-        sys.exit(0)
 
     # Rest of the code...
 #NOTHING AFTER THIS LINE NEEDS TO BE EDITED
@@ -128,34 +125,42 @@ processed_files = 0  # counter for processed files
 
 print('Total files to copy ' + total_files)
 
-for root, dirs, files in os.walk(filedir):  # find all files in original directory structure
-    for file in files:
-        filename = str(file)
-        print('FOUND FILE ' + filename + ' SEARCHING......', end="\r")
-        print('Processing ' + processed_files + ' of ' + total_files + ' files', end="\r")
-        fileID = filenameToID(str(file))
-        fullpath = None
-        if fileID != None:
-            fullpath = idToPath2(fileID)
-        if fullpath != None:
-            # print('FILE RESOLVED TO ' + fullpath)
-            for paths in skipnames:
-                newpath = fullpath.replace(paths, '')
-            newpath = dumpdir + newpath
-            fullpath = str(os.path.join(root, file))
-            if dry_run:
-                print('Dry run: Skipping copying ' + fullpath + ' to ' + newpath)
-            else:
-                # print('Copying ' + fullpath + ' to ' + newpath,end="\r")
-                print('Copying ' + newpath)
-                try:
-                    os.makedirs(os.path.dirname(newpath), exist_ok=True)
-                    copyfile(fullpath, newpath)
-                    processed_files += 1
-                    progress = (processed_files / total_files) * 100
-                    print(f'Progress: {progress:.2f}%')
-                except:
-                    print('Error copying file ' + fullpath + ' to ' + newpath)
+def copy_file(file, skipnames, dumpdir, dry_run):
+    filename = str(file)
+    print('FOUND FILE ' + filename + ' SEARCHING......', end="\r")
+    print('Processing ' + str(processed_files) + ' of ' + str(total_files) + ' files', end="\r")
+    fileID = filenameToID(str(file))
+    fullpath = None
+    if fileID != None:
+        fullpath = idToPath2(fileID)
+    if fullpath != None:
+        for paths in skipnames:
+            newpath = fullpath.replace(paths, '')
+        newpath = dumpdir + newpath
+        fullpath = str(os.path.join(root, file))
+        if dry_run:
+            print('Dry run: Skipping copying ' + fullpath + ' to ' + newpath)
+        else:
+            print('Copying ' + newpath)
+            try:
+                os.makedirs(os.path.dirname(newpath), exist_ok=True)
+                copyfile(fullpath, newpath)
+                processed_files += 1
+                progress = (processed_files / total_files) * 100
+                print(f'Progress: {progress:.2f}%')
+            except:
+                print('Error copying file ' + fullpath + ' to ' + newpath)
+
+# Create a pool of worker processes
+pool = multiprocessing.Pool()
+
+# Use the pool to parallelize the file copying process
+for root, dirs, files in os.walk(filedir):
+    pool.map(copy_file, files, skipnames, dumpdir, dry_run)
+
+# Close the pool to release resources
+pool.close()
+pool.join()
 
 print("Did this script help you recover your data? Save you a few hundred bucks? Or make you some money recovering somebody else's data?")
 print("Consider sending us some bitcoin/crypto as a way of saying thanks!")
