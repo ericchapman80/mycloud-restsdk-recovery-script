@@ -82,23 +82,26 @@ def copy_file(file, skipnames, dumpdir, dry_run, log_file):
             newpath = fullpath.replace(paths, '')
         newpath = dumpdir + newpath
         fullpath = str(os.path.join(root, file))
-        if dry_run:
-            print('Dry run: Skipping copying ' + fullpath + ' to ' + newpath)
+        if os.path.exists(newpath):  # Check if the file already exists in dumpdir
+            print('File ' + newpath + ' already exists in target destination, skipping')
         else:
-            print('Copying ' + newpath)
-            try:
-                os.makedirs(os.path.dirname(newpath), exist_ok=True)
-                copyfile(fullpath, newpath)
-                processed_files += 1
-                progress = (processed_files / total_files) * 100
-                print(f'Progress: {progress:.2f}%')
-                # Write the successfully copied file to the log file
-                with lock:
-                    with open(log_file, 'a') as f:
-                        f.write(fullpath + '\n')
-            except:
-                print('Error copying file ' + fullpath + ' to ' + newpath)
-
+            if dry_run:
+                print('Dry run: Skipping copying ' + fullpath + ' to ' + newpath)
+            else:
+                print('Copying ' + newpath)
+                try:
+                    os.makedirs(os.path.dirname(newpath), exist_ok=True)
+                    copyfile(fullpath, newpath)
+                    processed_files += 1
+                    progress = (processed_files / total_files) * 100
+                    print(f'Progress: {progress:.2f}%')
+                    # Write the successfully copied file to the log file
+                    with lock:
+                        with open(log_file, 'a') as f:
+                            f.write(fullpath + '\n')
+                except:
+                    print('Error copying file ' + fullpath + ' to ' + newpath)
+                    
 def get_dir_size(start_path = '.'):
     total_size = 0
     for dirpath, dirnames, filenames in os.walk(start_path):
