@@ -8,6 +8,9 @@ import sys
 
 ##Intended for python3.6 on linux, probably won't work on Windows
 ##This software is distributed without any warranty. It will probably brick your computer.
+# --db /media/chapman/4be9fddb-873d-4dd9-852b-bb9556560ff1/restsdk/data/db/index.db
+# --filedir /media/chapman/4be9fddb-873d-4dd9-852b-bb9556560ff1/restsdk/data/files
+# --dumpdir /mnt/nfs-media 
 def print_help():
     print("Usage: python restsdk_public.py [options]")
     print("Options:")
@@ -20,16 +23,20 @@ def print_help():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--dry_run', action='store_true', default=False, help='Perform a dry run')
-    parser.add_argument('--db', help='Path to the file DB')
-    parser.add_argument('--filedir', help='Path to the files directory')
-    parser.add_argument('--dumpdir', help='Path to the directory to dump files')
+    parser.add_argument('--db', type=str, help='Path to the file DB')
+    parser.add_argument('--filedir', type=str, help='Path to the files directory')
+    parser.add_argument('--dumpdir', type=str, help='Path to the directory to dump files')
     args = parser.parse_args()
-
+    
+    print(args.db)  # Outputs: /path/to/my/file.txt
+    print(args.filedir)  # Outputs: /path/to/my/file.txt
+    print(args.dumpdir)  # Outputs: /path/to/my/file.txt
+    
     db = args.db
     filedir = args.filedir
     dumpdir = args.dumpdir
     dry_run = args.dry_run
-
+    
     if db is None or filedir is None or dumpdir is None:
         print("Error: Missing required arguments. Please provide values for --db, --filedir, and --dumpdir.")
         sys.exit(1)
@@ -37,15 +44,6 @@ if __name__ == "__main__":
     if "--help" in sys.argv:
         print_help()
         sys.exit(0)
-
-    # Rest of the code...
-#NOTHING AFTER THIS LINE NEEDS TO BE EDITED
-# add a help command to the script to give a manual for usage and parameters
-def print_help():
-    print("Usage: python restsdk_public.py [options]")
-    print("Options:")
-    print("  --dry_run     Perform a dry run (do not copy files)")
-    print("  --help        Show this help message")
 
 if __name__ == "__main__":
     if "--help" in sys.argv:
@@ -122,12 +120,6 @@ for file in files:
     fileDIC[fileID]={'Name':fileName,'Parent':fileParent,'contentID':contentID,'Type':mimeType,'fileContentID':''}
 
 skipnames.append(getRootDirs()) #remove obnoxious root dir names
-#how can I modify this function so that I can do a dry run and not actually copy the files?
-parser = argparse.ArgumentParser()
-parser.add_argument('--dry_run', action='store_true', default=False, help='Perform a dry run')
-args = parser.parse_args()
-
-dry_run = args.dry_run
 
 for root, dirs, files in os.walk(filedir):  # find all files in original directory structure
     for file in files:
