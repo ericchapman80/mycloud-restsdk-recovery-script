@@ -21,12 +21,6 @@ def print_help():
     print("  --filedir     Path to the files directory (example: /restsdk/data/files)")
     print("  --dumpdir     Path to the directory to dump files (example: /location/to/dump/files/to)")
 
-def print_help():
-    print("Usage: python restsdk_public.py [options]")
-    print("Options:")
-    print("  --dry_run     Perform a dry run (do not copy files)")
-    print("  --help        Show this help message")
-
 def findNextParent(fileID):
     #finds the next parent db item in a chain
     for key,value in fileDIC.items():
@@ -208,4 +202,7 @@ if __name__ == "__main__":
     dumpdir_size = get_dir_size(dumpdir) / (1024 * 1024 * 1024)
     print(f'The size of the source directory {filedir} is {filedir_size:.2f} GB')
     print(f'The size of the destination directory {dumpdir} is {filedir_size:.2f} GB')
-    
+    print(f'Total files copied: {processed_files}')
+    print(f'Total files skipped: {total_files - processed_files}')
+    print(f'Total files in the source directory: {total_files}')
+    print(f'Total files in the destination directory: {len(os.listdir(dumpdir))}')
