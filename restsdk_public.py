@@ -8,9 +8,7 @@ import sys
 
 ##Intended for python3.6 on linux, probably won't work on Windows
 ##This software is distributed without any warranty. It will probably brick your computer.
-# --db /media/chapman/4be9fddb-873d-4dd9-852b-bb9556560ff1/restsdk/data/db/index.db
-# --filedir /media/chapman/4be9fddb-873d-4dd9-852b-bb9556560ff1/restsdk/data/files
-# --dumpdir /mnt/nfs-media 
+
 def print_help():
     print("Usage: python restsdk_public.py [options]")
     print("Options:")
@@ -121,10 +119,16 @@ for file in files:
 
 skipnames.append(getRootDirs()) #remove obnoxious root dir names
 
+total_files = sum([len(files) for _, _, files in os.walk(filedir)])  # total number of files to be processed
+processed_files = 0  # counter for processed files
+
+print('Total files to copy ' + total_files)
+
 for root, dirs, files in os.walk(filedir):  # find all files in original directory structure
     for file in files:
         filename = str(file)
         print('FOUND FILE ' + filename + ' SEARCHING......', end="\r")
+        print('Processing ' + processed_files + ' of ' + total_files + ' files', end="\r")
         fileID = filenameToID(str(file))
         fullpath = None
         if fileID != None:
@@ -143,6 +147,9 @@ for root, dirs, files in os.walk(filedir):  # find all files in original directo
                 try:
                     os.makedirs(os.path.dirname(newpath), exist_ok=True)
                     copyfile(fullpath, newpath)
+                    processed_files += 1
+                    progress = (processed_files / total_files) * 100
+                    print(f'Progress: {progress:.2f}%')
                 except:
                     print('Error copying file ' + fullpath + ' to ' + newpath)
 
