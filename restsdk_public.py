@@ -20,6 +20,8 @@ def print_help():
     print("  --db          Path to the file DB (example: /restsdk/data/db/index.db)")
     print("  --filedir     Path to the files directory (example: /restsdk/data/files)")
     print("  --dumpdir     Path to the directory to dump files (example: /location/to/dump/files/to)")
+    print("  --log_file    Path to the log file (example: /location/to/log/file.log)")
+    print("  --create_log  Create a log file from an existing run where logging was not in place.")
 
 def findNextParent(fileID):
     #finds the next parent db item in a chain
@@ -102,6 +104,13 @@ def copy_file(file, skipnames, dumpdir, dry_run, log_file):
                 except:
                     print('Error copying file ' + fullpath + ' to ' + newpath)
                     
+def create_log_file(root_dir, log_file):
+                        with open(log_file, 'w') as f:
+                            for root, dirs, files in os.walk(root_dir):
+                                for file in files:
+                                    file_path = os.path.join(root, file)
+                                    f.write(file_path + '\n')
+
 def get_dir_size(start_path = '.'):
     total_size = 0
     for dirpath, dirnames, filenames in os.walk(start_path):
@@ -120,6 +129,7 @@ if __name__ == "__main__":
     parser.add_argument('--filedir', help='Path to the files directory')
     parser.add_argument('--dumpdir', help='Path to the directory to dump files')
     parser.add_argument('--log_file', help='Path to the log file')
+    parser.add_argument('--create_log', action='store_true', default=False, help='Create a log file from an existing run where logging was not in place')
     args = parser.parse_args()
 
     if "--help" in sys.argv:
@@ -134,16 +144,23 @@ if __name__ == "__main__":
 
     lock = Lock()
 
-    # Get the size of filedir in GB
-    filedir_size = get_dir_size(filedir) / (1024 * 1024 * 1024)
-    print(f'The size of the directory {filedir} is {filedir_size:.2f} GB')
-
+    if args.create_log:
+        if log_file is None or dumpdir is None:
+            print("Error: Missing required arguments. Please provide values for --log_file and --dumpdir.")
+            sys.exit(1)
+        else:
+            create_log_file(dumpdir, args.log_file)
+            sys.exit(0)    
 
     if db is None or filedir is None or dumpdir is None:
         print("Error: Missing required arguments. Please provide values for --db, --filedir, and --dumpdir.")
         sys.exit(1)
     
     skipnames=[filedir] #remove these strings from the final file/path name. Don't edit this.
+
+     # Get the size of filedir in GB
+    filedir_size = get_dir_size(filedir) / (1024 * 1024 * 1024)
+    print(f'The size of the directory {filedir} is {filedir_size:.2f} GB')
 
     #open the sqlite database
     print('Opening database...',end="/r")
