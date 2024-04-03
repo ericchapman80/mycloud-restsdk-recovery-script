@@ -8,9 +8,15 @@ import sys
 import multiprocessing
 import logging
 from multiprocessing import Lock
+import time
 
 ##Intended for python3.6 on linux, probably won't work on Windows
 ##This software is distributed without any warranty. It will probably brick your computer.
+
+# Set up logging
+log_filename = 'summary.log'
+logging.basicConfig(filename=log_filename, level=logging.INFO, format='%(asctime)s %(message)s')
+
 
 def print_help():
     print("Usage: python restsdk_public.py [options]")
@@ -71,7 +77,9 @@ def getRootDirs():
         if 'auth' in values['Name'] and '|' in values['Name']:
             return str(values['Name'])
         
-def copy_file(file, skipnames, dumpdir, dry_run, log_file):
+def copy_file(args):
+    file, skipnames, dumpdir, dry_run, log_file = args
+    # rest of the function
     filename = str(file)
     print('FOUND FILE ' + filename + ' SEARCHING......', end="\r")
     print('Processing ' + str(processed_files) + ' of ' + str(total_files) + ' files', end="\r")
@@ -111,18 +119,27 @@ def create_log_file(root_dir, log_file):
                                     file_path = os.path.join(root, file)
                                     f.write(file_path + '\n')
 
-def get_dir_size(start_path = '.'):
+def get_dir_size(start_path='.'):
     total_size = 0
-    for dirpath, dirnames, filenames in os.walk(start_path):
-        for f in filenames:
-            fp = os.path.join(dirpath, f)
+    for dirpath, _, filenames in os.walk(start_path):
+        for filename in filenames:
+            filepath = os.path.join(dirpath, filename)
             # skip if it is symbolic link
-            if not os.path.islink(fp):
-                total_size += os.path.getsize(fp)
+            if not os.path.islink(filepath):
+                try:
+                    file_stat = os.stat(filepath)
+                    total_size += file_stat.st_size
+                except OSError:
+                    pass
 
     return total_size
 
 if __name__ == "__main__":
+
+    # Log start time
+    start_time = time.time()
+    logging.info(f'Start time: {time.ctime(start_time)}')
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--dry_run', action='store_true', default=False, help='Perform a dry run')
     parser.add_argument('--db', help='Path to the file DB')
@@ -141,6 +158,8 @@ if __name__ == "__main__":
     dumpdir = args.dumpdir
     dry_run = args.dry_run
     log_file = args.log_file
+
+    logging.info(f'Parameters: db={db}, filedir={filedir}, dumpdir={dumpdir}, dry_run={dry_run}, log_file={log_file}, create_log={args.create_log}')
 
     lock = Lock()
 
@@ -161,15 +180,19 @@ if __name__ == "__main__":
      # Get the size of filedir in GB
     filedir_size = get_dir_size(filedir) / (1024 * 1024 * 1024)
     print(f'The size of the directory {filedir} is {filedir_size:.2f} GB')
+    logging.info(f'The size of the directory {filedir} is {filedir_size:.2f} GB')
 
     #open the sqlite database
-    print('Opening database...',end="/r")
+    print('Opening database...',end="\r")
+    logging.info('Opening database...')
     try:
         con = sqlite3.connect(db)
     except:
         print('Error opening database at ' + db)
+        logging.info('Error opening database at ' + db)
         quit()
-    print('Querying database...',end="/r")
+    print('Querying database...',end="\r")
+    logging.info('Querying database...')
     cur = con.cursor()
     cur.execute("SELECT id,name,parentID,mimeType,contentID FROM files")
     files = cur.fetchall()
@@ -189,16 +212,22 @@ if __name__ == "__main__":
     total_files = sum([len(files) for _, _, files in os.walk(filedir)])  # total number of files to be processed
     processed_files = 0  # counter for processed files
 
-    print('Total files to copy ' + total_files)
+    print('Total files to copy ' + str(total_files))
+    logging.info('Total files to copy ' + str(total_files))
 
     # Check if the log file exists
     if os.path.exists(log_file):
+        print('Log file found - opening file ' + log_file + ' to check for previously copied files')
+        logging.info('Log file found - opening file ' + log_file + ' to check for previously copied files')
+        copied_files = set()
         with open(log_file, 'r') as f:
-            copied_files = f.read().splitlines()
+            copied_files = set(f.read().splitlines())
     else:
         copied_files = []
 
     # Filter out files that have already been copied
+    print('Filtering out any files previously copied to the destination directory: ' + dumpdir)
+    logging.info('Filtering out any files previously copied to the destination directory: ' + dumpdir)
     files = [file for file in files if file not in copied_files]
 
     # Create a pool of worker processes
@@ -206,7 +235,8 @@ if __name__ == "__main__":
 
     # Use the pool to parallelize the file copying process
     for root, dirs, files in os.walk(filedir):
-        pool.map(copy_file, files, skipnames, dumpdir, dry_run, log_file)
+        #pool.map(copy_file, files, skipnames, dumpdir, dry_run, log_file)
+        pool.map(copy_file, [(file, skipnames, dumpdir, dry_run, log_file) for file in files])
 
     # Close the pool to release resources
     pool.close()
@@ -220,9 +250,21 @@ if __name__ == "__main__":
 
     # Get the size of dumpdir in GB
     dumpdir_size = get_dir_size(dumpdir) / (1024 * 1024 * 1024)
-    print(f'The size of the source directory {filedir} is {filedir_size:.2f} GB')
-    print(f'The size of the destination directory {dumpdir} is {filedir_size:.2f} GB')
-    print(f'Total files copied: {processed_files}')
-    print(f'Total files skipped: {total_files - processed_files}')
-    print(f'Total files in the source directory: {total_files}')
-    print(f'Total files in the destination directory: {len(os.listdir(dumpdir))}')
+    print(f'The size of the source directory {filedir} is {str(filedir_size):.2f} GB')
+    print(f'The size of the destination directory {dumpdir} is {str(dumpdir_size):.2f} GB')
+    print(f'Total files copied: {str(processed_files)}')
+    print(f'Total files skipped: {str(total_files - processed_files)}')
+    print(f'Total files in the source directory: {str(total_files)}')
+    print(f'Total files in the destination directory: {str(len(os.listdir(dumpdir)))}')
+
+    logging.info(f'The size of the source directory {filedir} is {str(filedir_size):.2f} GB')
+    logging.info(f'The size of the destination directory {dumpdir} is {str(dumpdir_size):.2f} GB')
+    logging.info(f'Total files copied: {str(processed_files)}')
+    logging.info(f'Total files skipped: {str(total_files - processed_files)}')
+    logging.info(f'Total files in the source directory: {str(total_files)}')
+    logging.info(f'Total files in the destination directory: {str(len(os.listdir(dumpdir)))}')
+
+    # Log the end of your script
+    end_time = time.time()
+    logging.info(f'End time: {time.ctime(end_time)}')
+    logging.info(f'Total execution time: {end_time - start_time} seconds')
