@@ -55,11 +55,11 @@ def idToPath2(fileID):
     #turn a file ID into an original path
     value=fileDIC[fileID]
     if value['Parent']!=None:
-        #print("Found file " + value['Name'] + 'searching for parents')
-        #print('Totalpath is ' + path)
+        print("idToPath2 - Found file " + value['Name'] + 'searching for parents')
+        print('idToPath2 - Totalpath is ' + path)
         path=findTree(fileID,value['Name'],value['Parent'])
     else:
-        #print("Found file " + value['Name'] + 'no parent search needed')
+        print("idToPath2 - Found file " + value['Name'] + 'no parent search needed')
         path=fileDIC[fileID]['Name']
     return path
 
@@ -67,9 +67,9 @@ def filenameToID(filename):
     #turn a filename from filesystem into a db id
     for keys,values in fileDIC.items():
         if values['contentID']==filename:
-            #print('Found filename ' + filename + ' in DBkey ' + str(keys) +' with name ' + values['Name'])
+            print('filenameToID Function - Found filename ' + filename + ' in DBkey ' + str(keys) +' with name ' + values['Name'])
             return str(keys)
-    #print('Unable to find filename' + filename)
+    print('filenameToID Function - Unable to find filename ' + filename)
     return None
 
 def getRootDirs():
@@ -80,19 +80,30 @@ def getRootDirs():
         
 def copy_file(args):
     file, skipnames, dumpdir, dry_run, log_file = args
+
+    print("File:", file)
+    print("Skip names:", skipnames)
+    print("Dump directory:", dumpdir)
+    print("Dry run:", dry_run)
+    print("Log file:", log_file)
     
     filename = str(file)
     print('FOUND FILE ' + filename + ' SEARCHING......', end="\n")
     print('Processing ' + str(processed_files_counter.value) + ' of ' + str(remaining_files) + ' files', end="\n")
     fileID = filenameToID(str(file))
     fullpath = None
+    print('fileID value = ' + fileID, end="\n")
     if fileID != None:
+        print('Fileid is not Null', end="\n")
         fullpath = idToPath2(fileID)
     if fullpath != None:
+        print('Fullpath is not Null', end="\n")
+        newpath = None
         for paths in skipnames:
             newpath = fullpath.replace(paths, '')
         newpath = dumpdir + newpath
         fullpath = str(os.path.join(root, file))
+
         if os.path.exists(newpath):  # Check if the file already exists in dumpdir
             print('File ' + newpath + ' already exists in target destination, skipping')
             with skipped_files_counter.get_lock():
@@ -257,11 +268,11 @@ if __name__ == "__main__":
     logging.info(f'Number of remaining files to be copied: {remaining_files}')
 
     # Create a pool of worker processes
-    pool = multiprocessing.Pool()
+    pool = multiprocessing.Pool(1)
 
     # Use the pool to parallelize the file copying process
     for root, dirs, files in os.walk(filedir):
-        pool.map(copy_file, [(os.path.join(root, file), skipnames, dumpdir, dry_run, log_file) for file in files])
+        pool.map(copy_file, [(file, skipnames, dumpdir, dry_run, log_file) for file in files])
 
     # Close the pool to release resources
     pool.close()
