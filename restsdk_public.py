@@ -8,6 +8,7 @@ import sys
 import multiprocessing
 import logging
 from multiprocessing import Lock
+from multiprocessing import Value
 import time
 
 ##Intended for python3.6 on linux, probably won't work on Windows
@@ -79,11 +80,10 @@ def getRootDirs():
         
 def copy_file(args):
     file, skipnames, dumpdir, dry_run, log_file = args
-    # rest of the function
-    global processed_files
+    
     filename = str(file)
-    print('FOUND FILE ' + filename + ' SEARCHING......', end="\r")
-    print('Processing ' + str(processed_files) + ' of ' + str(total_files) + ' files', end="\r")
+    print('FOUND FILE ' + filename + ' SEARCHING......', end="\n")
+    print('Processing ' + str(processed_files_counter.value) + ' of ' + str(remaining_files) + ' files', end="\n")
     fileID = filenameToID(str(file))
     fullpath = None
     if fileID != None:
@@ -95,16 +95,30 @@ def copy_file(args):
         fullpath = str(os.path.join(root, file))
         if os.path.exists(newpath):  # Check if the file already exists in dumpdir
             print('File ' + newpath + ' already exists in target destination, skipping')
+            with skipped_files_counter.get_lock():
+                skipped_files_counter.value += 1
+            with processed_files_counter.get_lock():
+                processed_files_counter.value += 1
         else:
             if dry_run:
                 print('Dry run: Skipping copying ' + fullpath + ' to ' + newpath)
+                # Use .value to access the Value's underlying data
+                with processed_files_counter.get_lock():
+                    processed_files_counter.value += 1
+                progress = (processed_files_counter.value / remaining_files) * 100
+                with skipped_files_counter.get_lock():
+                    skipped_files_counter.value += 1
             else:
                 print('Copying ' + newpath)
                 try:
                     os.makedirs(os.path.dirname(newpath), exist_ok=True)
                     copyfile(fullpath, newpath)
-                    processed_files += 1
-                    progress = (processed_files / total_files) * 100
+                    # Use .value to access the Value's underlying data
+                    with processed_files_counter.get_lock():
+                        processed_files_counter.value += 1
+                    progress = (processed_files_counter.value / remaining_files) * 100
+                    with copied_files_counter.get_lock():
+                        copied_files_counter.value += 1
                     print(f'Progress: {progress:.2f}%')
                     # Write the successfully copied file to the log file
                     with lock:
@@ -112,6 +126,7 @@ def copy_file(args):
                             f.write(fullpath + '\n')
                 except:
                     print('Error copying file ' + fullpath + ' to ' + newpath)
+                    logging.info('Error copying file ' + fullpath + ' to ' + newpath)
                     
 def create_log_file(root_dir, log_file):
                         with open(log_file, 'w') as f:
@@ -211,7 +226,12 @@ if __name__ == "__main__":
     skipnames.append(getRootDirs()) #remove obnoxious root dir names
 
     total_files = sum([len(files) for _, _, files in os.walk(filedir)])  # total number of files to be processed
-    processed_files = 0  # counter for processed files
+    
+    # Create a Value to hold processed_files, copied_files, and skipped_files
+    # Since we are using multi-threading we need to use a multiprocessing.Value to share the counter between processes
+    processed_files_counter = Value('i', 0)
+    copied_files_counter = Value('i', 0)
+    skipped_files_counter = Value('i', 0)
 
     print('Total files to copy ' + str(total_files))
     logging.info('Total files to copy ' + str(total_files))
@@ -230,14 +250,18 @@ if __name__ == "__main__":
     print('Filtering out any files previously copied to the destination directory: ' + dumpdir)
     logging.info('Filtering out any files previously copied to the destination directory: ' + dumpdir)
     files = [file for file in files if file not in copied_files]
+    
+    # Count the number of remaining files to be copied after the filtering
+    remaining_files = len(files)
+    print(f'Number of remaining files to be copied: {remaining_files}')
+    logging.info(f'Number of remaining files to be copied: {remaining_files}')
 
     # Create a pool of worker processes
     pool = multiprocessing.Pool()
 
     # Use the pool to parallelize the file copying process
     for root, dirs, files in os.walk(filedir):
-        #pool.map(copy_file, files, skipnames, dumpdir, dry_run, log_file)
-        pool.map(copy_file, [(file, skipnames, dumpdir, dry_run, log_file) for file in files])
+        pool.map(copy_file, [(os.path.join(root, file), skipnames, dumpdir, dry_run, log_file) for file in files])
 
     # Close the pool to release resources
     pool.close()
@@ -253,15 +277,15 @@ if __name__ == "__main__":
     dumpdir_size = get_dir_size(dumpdir) / (1024 * 1024 * 1024)
     print(f'The size of the source directory {filedir} is {str(filedir_size):.2f} GB')
     print(f'The size of the destination directory {dumpdir} is {str(dumpdir_size):.2f} GB')
-    print(f'Total files copied: {str(processed_files)}')
-    print(f'Total files skipped: {str(total_files - processed_files)}')
+    print(f'Total files copied: {str(copied_files_counter.value)}')
+    print(f'Total files skipped: {str(skipped_files_counter.value)}')
     print(f'Total files in the source directory: {str(total_files)}')
     print(f'Total files in the destination directory: {str(len(os.listdir(dumpdir)))}')
 
     logging.info(f'The size of the source directory {filedir} is {str(filedir_size):.2f} GB')
     logging.info(f'The size of the destination directory {dumpdir} is {str(dumpdir_size):.2f} GB')
-    logging.info(f'Total files copied: {str(processed_files)}')
-    logging.info(f'Total files skipped: {str(total_files - processed_files)}')
+    logging.info(f'Total files copied: {str(copied_files_counter.value)}')
+    logging.info(f'Total files skipped: {str(skipped_files_counter.value)}')
     logging.info(f'Total files in the source directory: {str(total_files)}')
     logging.info(f'Total files in the destination directory: {str(len(os.listdir(dumpdir)))}')
 
