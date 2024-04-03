@@ -80,6 +80,7 @@ def getRootDirs():
 def copy_file(args):
     file, skipnames, dumpdir, dry_run, log_file = args
     # rest of the function
+    global processed_files
     filename = str(file)
     print('FOUND FILE ' + filename + ' SEARCHING......', end="\r")
     print('Processing ' + str(processed_files) + ' of ' + str(total_files) + ' files', end="\r")
