@@ -107,3 +107,32 @@ print("Consider sending us some bitcoin/crypto as a way of saying thanks!")
 print("Bitcoin: 1DqSLNR8kTgwq5rvveUFDSbYQnJp9D5gfR")
 print("ETH: 0x9e765052283Ce6521E40069Ac52ffA5B277bD8AB")
 print("Zcash: t1RetUQktuUBL2kbX72taERb6QcuAiDsvC4")
+
+
+
+""" from concurrent.futures import ThreadPoolExecutor
+
+def copy_file(root, file, skipnames):
+    filename=str(file)
+    print('FOUND FILE ' + filename + ' SEARCHING......',end="\r")
+    fileID=filenameToID(str(file))
+    fullpath=None
+    if fileID!=None:
+        fullpath=idToPath2(fileID)
+    if fullpath!=None:
+        for paths in skipnames:
+            newpath=fullpath.replace(paths,'')
+        newpath=dumpdir+newpath
+        fullpath=str(os.path.join(root,file))
+        print('Copying ' + newpath)
+        try:
+            os.makedirs(os.path.dirname(newpath), exist_ok=True)
+            copyfile(fullpath,newpath)
+        except:
+            print('Error copying file ' + fullpath + ' to ' + newpath)
+
+# In the main part of your code
+with ThreadPoolExecutor(max_workers=5) as executor:
+    for root,dirs,files in os.walk(filedir): #find all files in original directory structure
+        for file in files:
+            executor.submit(copy_file, root, file, skipnames) """
