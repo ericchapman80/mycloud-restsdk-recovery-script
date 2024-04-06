@@ -1,16 +1,15 @@
-import sqlite3
-import pprint
-import copy
-import os
-from shutil import copyfile
 import argparse
-import sys
-import multiprocessing
+import copy
 import logging
-from multiprocessing import Lock
-from multiprocessing import Value
+import multiprocessing
+import os
+import pprint
+import sqlite3
+import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import Lock, Value
+from shutil import copyfile
 
 ##Intended for python3.6 on linux, probably won't work on Windows
 ##This software is distributed without any warranty. It will probably brick your computer.
@@ -33,56 +32,90 @@ def print_help():
     print("  --create_log  Create a log file from an existing run where logging was not in place.")
 
 def findNextParent(fileID):
-    #finds the next parent db item in a chain
-    for key,value in fileDIC.items():
-        if key==fileID:
+    """
+    Finds the next parent directory from the data dicstionary
+    Args: fileID (str): The ID of the file to find the next parent for.
+    Returns: str: The ID of the next parent db item in the chain.
+    """
+    for key, value in fileDIC.items():
+        if key == fileID:
             return value['Parent']
         
 def hasAnotherParent(fileID):
-    #checks to see if a db item has another parent
-    if fileDIC[fileID]['Parent']!=None:
+    """
+    Checks if the data dictionary item has another parent.
+    Args: fileID (str): The ID of the file to check.
+    Returns: bool: True if the file has another parent, False otherwise.
+    """
+    if fileDIC[fileID]['Parent'] != None:
         return True
     else:
         return False
     
-def findTree(fileID,name,parent):
-    #turn a file ID into an original path
-    path=fileDIC[parent]['Name']+"/"+name
-    while hasAnotherParent(fileID)==True:
-        fileID=findNextParent(fileID)
-        path=fileDIC[fileID]['Name']+'/'+path
+def findTree(fileID, name, parent):
+    """
+    Finds the original file path for a given file ID, name, and parent.
+    Parameters:
+        fileID (int): The ID of the file.
+        name (str): The name of the file.
+        parent (str): The parent directory of the file.
+    Returns: str: The original file path.
+    """
+    path = fileDIC[parent]['Name'] + "/" + name
+    while hasAnotherParent(fileID) == True:
+        fileID = findNextParent(fileID)
+        path = fileDIC[fileID]['Name'] + '/' + path
     return path
 
 def idToPath2(fileID):
-    #turn a file ID into an original path
-    value=fileDIC[fileID]
-    if value['Parent']!=None:
-        print("idToPath2 - Found file " + value['Name'] + 'searching for parents')
-        print('idToPath2 - Totalpath is ' + path)
-        path=findTree(fileID,value['Name'],value['Parent'])
+    """
+    Converts a file ID into its original path by traversing the fileDIC dictionary and reconstructing the path.
+    Args: fileID (int): The ID of the file.
+    Returns: str: The original path of the file.
+    """
+    value = fileDIC[fileID]
+    if value['Parent'] != None:
+        path = findTree(fileID, value['Name'], value['Parent'])
     else:
-        print("idToPath2 - Found file " + value['Name'] + 'no parent search needed')
-        path=fileDIC[fileID]['Name']
+        path = fileDIC[fileID]['Name']
     return path
 
 def filenameToID(filename):
-    #turn a filename from filesystem into a db id
-    for keys,values in fileDIC.items():
-        if values['contentID']==filename:
-            print('filenameToID Function - Found filename ' + filename + ' in DBkey ' + str(keys) +' with name ' + values['Name'])
+    """
+    Search the data dictionary for an contentID that matches a corresponding filename from the filesystem return the identity key.
+    Parameters: filename (str): The name of the file to search for.
+    Returns: str or None: The key corresponding to the filename if found, or None if not found.
+    """
+    for keys, values in fileDIC.items():
+        if values['contentID'] == filename:
             return str(keys)
-    print('filenameToID Function - Unable to find filename ' + filename)
     return None
 
 def getRootDirs():
+    """
+    Returns the name of the root directory that contains the 'auth' folder with a '|' character in its name.
+    Returns: str: The name of the root directory.
+    """
     #quick function to find annoying "auth folder" name for filtering purposes
     for keys,values in fileDIC.items():
         if 'auth' in values['Name'] and '|' in values['Name']:
             return str(values['Name'])
         
 def copy_file(root, file, skipnames, dumpdir, dry_run, log_file):
-    #root, file, skipnames, dumpdir, dry_run, log_file = args
-    
+    """
+    Copy a file from the source directory to the target directory, skipping duplicates.
+    Args:
+        root (str): The root directory of the file.
+        file (str): The name of the file.
+        skipnames (list): A list of paths to skip during the copy process.
+        dumpdir (str): The target directory to copy the file to.
+        dry_run (bool): If True, perform a dry run without actually copying the file.
+        log_file (str): The path to the log file.
+    Returns:
+        None
+    """
+    # Function code...
+def copy_file(root, file, skipnames, dumpdir, dry_run, log_file):
     filename = str(file)
     print('FOUND FILE ' + filename + ' SEARCHING......', end="\n")
     print('Processing ' + str(processed_files_counter.value) + ' of ' + str(total_files) + ' files', end="\n")
@@ -99,7 +132,7 @@ def copy_file(root, file, skipnames, dumpdir, dry_run, log_file):
         fullpath = str(os.path.join(root, file))
 
         # Check if the file has already been copied by comparing the full path to the copied_files set
-        if fullpath in copied_files:
+        if newpath in copied_files:
             print('File ' + fullpath + ' exists in ' + log_file + ', thus copied in a previous run to avoid duplication, skipping')
             logging.info(f'File {fullpath} exists in {log_file}, thus copied in a previous run to avoid duplication, skipping')
             with skipped_files_counter.get_lock():
@@ -109,7 +142,8 @@ def copy_file(root, file, skipnames, dumpdir, dry_run, log_file):
             progress = (processed_files_counter.value / total_files) * 100
             print(f'Progress: {progress:.2f}%')
             return
-        elif os.path.exists(newpath):  # Check if the file already exists in dumpdir skip to avoid duplication
+        # Check if the file already exists in dumpdir skip to avoid duplication
+        elif os.path.exists(newpath):  
             print('File ' + newpath + ' already exists in target destination, skipping')
             with skipped_files_counter.get_lock():
                 skipped_files_counter.value += 1
@@ -125,8 +159,8 @@ def copy_file(root, file, skipnames, dumpdir, dry_run, log_file):
                 with processed_files_counter.get_lock():
                     processed_files_counter.value += 1
                 progress = (processed_files_counter.value / total_files) * 100
-                with skipped_files_counter.get_lock():
-                    skipped_files_counter.value += 1
+                with copied_files_counter.get_lock():
+                    copied_files_counter.value += 1
                 print(f'Progress: {progress:.2f}%')
                 return
             else:
@@ -148,15 +182,37 @@ def copy_file(root, file, skipnames, dumpdir, dry_run, log_file):
                 except:
                     print('Error copying file ' + fullpath + ' to ' + newpath)
                     logging.info('Error copying file ' + fullpath + ' to ' + newpath)
+    else:
+        print('Error: Unable to find file ' + filename + ' in the database')
+        logging.info('Error: Unable to find file ' + filename + ' in the database')
+        with processed_files_counter.get_lock():
+            processed_files_counter.value += 1
+        progress = (processed_files_counter.value / total_files) * 100
+        with skipped_files_counter.get_lock():
+            skipped_files_counter.value += 1
+        print(f'Progress: {progress:.2f}%')
                     
 def create_log_file(root_dir, log_file):
-                        with open(log_file, 'w') as f:
-                            for root, dirs, files in os.walk(root_dir):
-                                for file in files:
-                                    file_path = os.path.join(root, file)
-                                    f.write(file_path + '\n')
+    """
+    Creates a log file and writes the absolute paths of all files in the given root directory.
+    This is useful for creating a log file from an existing run where logging was not in place.
+    Args:
+        root_dir (str): The root directory to start searching for files.
+        log_file (str): The path to the log file to be created.
+    Returns: None
+    """
+    with open(log_file, 'w') as f:
+        for root, dirs, files in os.walk(root_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                f.write(file_path + '\n')
 
 def get_dir_size(start_path='.'):
+    """
+    Calculate the total size of a directory and its subdirectories.
+    Args: start_path (str): The path of the directory to calculate the size of. Defaults to the current directory.
+    Returns: int: The total size of the directory in bytes.
+    """
     total_size = 0
     for dirpath, _, filenames in os.walk(start_path):
         for filename in filenames:
@@ -214,8 +270,8 @@ if __name__ == "__main__":
     
     skipnames=[filedir] #remove these strings from the final file/path name. Don't edit this.
 
-     # Get the size of filedir in GB
-    filedir_size= 1804.2066087452695
+    # Get the size of filedir in GB
+    filedir_size = get_dir_size(filedir) / (1024 * 1024 * 1024)
     print(f'The size of the directory {filedir} is {filedir_size:.2f} GB')
     logging.info(f'The size of the directory {filedir} is {filedir_size:.2f} GB')
 
@@ -233,6 +289,8 @@ if __name__ == "__main__":
     cur = con.cursor()
     cur.execute("SELECT id,name,parentID,mimeType,contentID FROM files")
     files = cur.fetchall()
+    #Retrieve the number of DB records
+    num_db_rows = len(files)
     #SQlite has a table named "FILES", the filename in the file structure is found in ContentID, with the parent directory being called ParentID
     fileDIC={}
 
@@ -244,18 +302,25 @@ if __name__ == "__main__":
         contentID=file[4]
         fileDIC[fileID]={'Name':fileName,'Parent':fileParent,'contentID':contentID,'Type':mimeType,'fileContentID':''}
 
+    # Get the size of fileDIC
+    fileDIC_size = len(fileDIC)
+
     skipnames.append(getRootDirs()) #remove obnoxious root dir names
 
     total_files = sum([len(files) for _, _, files in os.walk(filedir)])  # total number of files to be processed
     
-    # Create a Value to hold processed_files, copied_files, and skipped_files
     # Since we are using multi-threading we need to use a multiprocessing.Value to share the counter between processes
     processed_files_counter = Value('i', 0)
     copied_files_counter = Value('i', 0)
     skipped_files_counter = Value('i', 0)
 
-    print('Total files to copy ' + str(total_files))
-    logging.info('Total files to copy ' + str(total_files))
+    #Pre-processing message Logging
+    print('There are ' + str(total_files) + ' files to copy from ' + filedir + ' to ' + dumpdir)
+    logging.info('There are ' + str(total_files) + ' files to copy from ' + filedir + ' to ' + dumpdir)
+    print('There are ' + str(num_db_rows) + ' rows in the database to process')
+    logging.info('There are ' + str(num_db_rows) + ' rows in the database to process')
+    print('The size of file data dictionary is ' + str(fileDIC_size) + ' elements')
+    logging.info('The size of file data dictionary is ' + str(fileDIC_size) + ' elements')
 
     # Check if the log file exists
     if os.path.exists(log_file):
@@ -263,12 +328,13 @@ if __name__ == "__main__":
         logging.info('Log file found - opening file ' + log_file + ' to check for previously copied files')
         copied_files = set()
         with open(log_file, 'r') as f:
-            copied_files = set(f.read().splitlines())
+            copied_files = set(f.read().splitlines()) # read the log file and store the copied files in a set
+            print('There are ' + str(len(copied_files)) + ' files copied on previous runs of this script, pulled from ' + log_file)
+            logging.info('There are ' + str(len(copied_files)) + ' files copied on previous runs of this script, pulled from ' + log_file)
     else:
         copied_files = []
 
-    # In the main part of your code
-    with ThreadPoolExecutor(max_workers=1) as executor:
+    with ThreadPoolExecutor(max_workers=os.cpu_count() or 1) as executor:
         for root,dirs,files in os.walk(filedir): #find all files in original directory structure
             for file in files:
                 executor.submit(copy_file, root, file, skipnames, dumpdir, dry_run, log_file)
@@ -279,23 +345,41 @@ if __name__ == "__main__":
     print("ETH: 0x9e765052283Ce6521E40069Ac52ffA5B277bD8AB")
     print("Zcash: t1RetUQktuUBL2kbX72taERb6QcuAiDsvC4")
 
-    # Get the size of dumpdir in GB
+    # Post-processing message logging
     dumpdir_size = get_dir_size(dumpdir) / (1024 * 1024 * 1024)
+
+    #Console Logging
     print(f'The size of the source directory {filedir} is {str(filedir_size):.2f} GB')
     print(f'The size of the destination directory {dumpdir} is {str(dumpdir_size):.2f} GB')
-    print(f'Total files copied: {str(copied_files_counter.value)}')
+    print('There are ' + str(total_files) + 'files to copy from ' + filedir + ' to ' + dumpdir).end("\n")
+    print('There are ' + str(num_db_rows) + ' rows in the database to process').end("\n")
+    print('The size of file data dictionary is ' + str(fileDIC_size) + ' elements')
+    print('There are ' + str(len(copied_files)) + ' files copied on previous runs of this script, pulled from ' + log_file)
+    if dry_run:
+        print(f'Dry run - No files were actually copied: Total files that would have been copied: {str(copied_files_counter.value)}')
+    else:
+        print(f'Total files copied: {str(copied_files_counter.value)}')
     print(f'Total files skipped: {str(skipped_files_counter.value)}')
     print(f'Total files in the source directory: {str(total_files)}')
     print(f'Total files in the destination directory: {str(len(os.listdir(dumpdir)))}')
 
+    #Output file logging
     logging.info(f'The size of the source directory {filedir} is {str(filedir_size):.2f} GB')
-    logging.info(f'The size of the destination directory {dumpdir} is {str(dumpdir_size):.2f} GB')
-    logging.info(f'Total files copied: {str(copied_files_counter.value)}')
+    logging.info(f'The size of the destination directory {dumpdir} is {str(dumpdir_size):.2f} GB') 
+    logging.info('There are ' + str(total_files) + 'files to copy from ' + filedir + ' to ' + dumpdir)
+    logging.info('There are ' + str(num_db_rows) + ' rows in the database to process')
+    logging.info('The size of file data dictionary is ' + str(fileDIC_size) + ' elements')
+    logging.info('There are ' + str(len(copied_files)) + ' files copied on previous runs of this script, pulled from ' + log_file)
+    if dry_run:
+        logging.info(f'Dry run - No files were actually copied: Total files that would have been copied: {str(copied_files_counter.value)}')
+    else:
+        logging.info(f'Total files copied: {str(copied_files_counter.value)}')
     logging.info(f'Total files skipped: {str(skipped_files_counter.value)}')
     logging.info(f'Total files in the source directory: {str(total_files)}')
     logging.info(f'Total files in the destination directory: {str(len(os.listdir(dumpdir)))}')
 
     # Log the end of your script
     end_time = time.time()
+    logging.info(f'Start time: {time.ctime(start_time)}')
     logging.info(f'End time: {time.ctime(end_time)}')
     logging.info(f'Total execution time: {end_time - start_time} seconds')
