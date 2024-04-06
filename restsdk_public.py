@@ -10,9 +10,11 @@ import logging
 from multiprocessing import Lock
 from multiprocessing import Value
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 ##Intended for python3.6 on linux, probably won't work on Windows
 ##This software is distributed without any warranty. It will probably brick your computer.
+#--db=/media/chapman/4be9fddb-873d-4dd9-852b-bb9556560ff1/restsdk/data/db/index.db --filedir=/media/chapman/4be9fddb-873d-4dd9-852b-bb9556560ff1/restsdk/data/files --dumpdir=/mnt/nfs-media --dry_run --log_file=/home/chapman/projects/mycloud-restsdk-recovery-script/copied_file.log
 
 # Set up logging
 log_filename = 'summary.log'
@@ -78,47 +80,55 @@ def getRootDirs():
         if 'auth' in values['Name'] and '|' in values['Name']:
             return str(values['Name'])
         
-def copy_file(args):
-    file, skipnames, dumpdir, dry_run, log_file = args
-
-    print("File:", file)
-    print("Skip names:", skipnames)
-    print("Dump directory:", dumpdir)
-    print("Dry run:", dry_run)
-    print("Log file:", log_file)
+def copy_file(root, file, skipnames, dumpdir, dry_run, log_file):
+    #root, file, skipnames, dumpdir, dry_run, log_file = args
     
     filename = str(file)
     print('FOUND FILE ' + filename + ' SEARCHING......', end="\n")
-    print('Processing ' + str(processed_files_counter.value) + ' of ' + str(remaining_files) + ' files', end="\n")
+    print('Processing ' + str(processed_files_counter.value) + ' of ' + str(total_files) + ' files', end="\n")
     fileID = filenameToID(str(file))
     fullpath = None
-    print('fileID value = ' + fileID, end="\n")
     if fileID != None:
-        print('Fileid is not Null', end="\n")
         fullpath = idToPath2(fileID)
     if fullpath != None:
-        print('Fullpath is not Null', end="\n")
         newpath = None
         for paths in skipnames:
             newpath = fullpath.replace(paths, '')
-        newpath = dumpdir + newpath
+        if newpath != None:
+            newpath = dumpdir + newpath
         fullpath = str(os.path.join(root, file))
 
-        if os.path.exists(newpath):  # Check if the file already exists in dumpdir
+        # Check if the file has already been copied by comparing the full path to the copied_files set
+        if fullpath in copied_files:
+            print('File ' + fullpath + ' exists in ' + log_file + ', thus copied in a previous run to avoid duplication, skipping')
+            logging.info(f'File {fullpath} exists in {log_file}, thus copied in a previous run to avoid duplication, skipping')
+            with skipped_files_counter.get_lock():
+                skipped_files_counter.value += 1
+            with processed_files_counter.get_lock():
+                processed_files_counter.value += 1
+            progress = (processed_files_counter.value / total_files) * 100
+            print(f'Progress: {progress:.2f}%')
+            return
+        elif os.path.exists(newpath):  # Check if the file already exists in dumpdir skip to avoid duplication
             print('File ' + newpath + ' already exists in target destination, skipping')
             with skipped_files_counter.get_lock():
                 skipped_files_counter.value += 1
             with processed_files_counter.get_lock():
                 processed_files_counter.value += 1
+            progress = (processed_files_counter.value / total_files) * 100
+            print(f'Progress: {progress:.2f}%')
+            return
         else:
             if dry_run:
                 print('Dry run: Skipping copying ' + fullpath + ' to ' + newpath)
                 # Use .value to access the Value's underlying data
                 with processed_files_counter.get_lock():
                     processed_files_counter.value += 1
-                progress = (processed_files_counter.value / remaining_files) * 100
+                progress = (processed_files_counter.value / total_files) * 100
                 with skipped_files_counter.get_lock():
                     skipped_files_counter.value += 1
+                print(f'Progress: {progress:.2f}%')
+                return
             else:
                 print('Copying ' + newpath)
                 try:
@@ -127,7 +137,7 @@ def copy_file(args):
                     # Use .value to access the Value's underlying data
                     with processed_files_counter.get_lock():
                         processed_files_counter.value += 1
-                    progress = (processed_files_counter.value / remaining_files) * 100
+                    progress = (processed_files_counter.value / total_files) * 100
                     with copied_files_counter.get_lock():
                         copied_files_counter.value += 1
                     print(f'Progress: {progress:.2f}%')
@@ -205,7 +215,7 @@ if __name__ == "__main__":
     skipnames=[filedir] #remove these strings from the final file/path name. Don't edit this.
 
      # Get the size of filedir in GB
-    filedir_size = get_dir_size(filedir) / (1024 * 1024 * 1024)
+    filedir_size= 1804.2066087452695
     print(f'The size of the directory {filedir} is {filedir_size:.2f} GB')
     logging.info(f'The size of the directory {filedir} is {filedir_size:.2f} GB')
 
@@ -257,26 +267,11 @@ if __name__ == "__main__":
     else:
         copied_files = []
 
-    # Filter out files that have already been copied
-    print('Filtering out any files previously copied to the destination directory: ' + dumpdir)
-    logging.info('Filtering out any files previously copied to the destination directory: ' + dumpdir)
-    files = [file for file in files if file not in copied_files]
-    
-    # Count the number of remaining files to be copied after the filtering
-    remaining_files = len(files)
-    print(f'Number of remaining files to be copied: {remaining_files}')
-    logging.info(f'Number of remaining files to be copied: {remaining_files}')
-
-    # Create a pool of worker processes
-    pool = multiprocessing.Pool(1)
-
-    # Use the pool to parallelize the file copying process
-    for root, dirs, files in os.walk(filedir):
-        pool.map(copy_file, [(file, skipnames, dumpdir, dry_run, log_file) for file in files])
-
-    # Close the pool to release resources
-    pool.close()
-    pool.join()
+    # In the main part of your code
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        for root,dirs,files in os.walk(filedir): #find all files in original directory structure
+            for file in files:
+                executor.submit(copy_file, root, file, skipnames, dumpdir, dry_run, log_file)
 
     print("Did this script help you recover your data? Save you a few hundred bucks? Or make you some money recovering somebody else's data?")
     print("Consider sending us some bitcoin/crypto as a way of saying thanks!")
