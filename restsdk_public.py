@@ -10,14 +10,56 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Lock, Value
 from shutil import copyfile
+import datetime
+from queue import Queue
+from threading import Thread
 
 ##Intended for python3.6 on linux, probably won't work on Windows
 ##This software is distributed without any warranty. It will probably brick your computer.
-#--db=/media/chapman/4be9fddb-873d-4dd9-852b-bb9556560ff1/restsdk/data/db/index.db --filedir=/media/chapman/4be9fddb-873d-4dd9-852b-bb9556560ff1/restsdk/data/files --dumpdir=/mnt/nfs-media --dry_run --log_file=/home/chapman/projects/mycloud-restsdk-recovery-script/copied_file.log
+#--db=/mnt/backupdrive/restsdk/data/db/index.db --filedir=/mnt/backupdrive/restsdk/data/files --dumpdir=/mnt/nfs-media --dry_run --log_file=/home/chapman/projects/mycloud-restsdk-recovery-script/copied_file.log
+#sudo python3 restsdk_public.py --db=/mnt/backupdrive/restsdk/data/db/index.db --filedir=/mnt/backupdrive/restsdk/data/files --dumpdir=/mnt/nfs-media --dry_run --log_file=/home/chapman/projects/mycloud-restsdk-recovery-script/copied_file.log --thread-count=12
 
-# Set up logging
-log_filename = 'summary.log'
-logging.basicConfig(filename=log_filename, level=logging.INFO, format='%(asctime)s %(message)s')
+# Generate a timestamp for the log file
+current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+# log_filename is used to store run information, such as progress and errors, in a timestamped log file.
+log_filename = f'summary_{current_time}.log'
+
+# log_file is used to track the files that have been successfully copied to avoid duplication in future runs.
+# log_file = args.log_file
+
+# Set up a logging queue for asynchronous logging
+log_queue = Queue()
+
+# Define a custom logging handler to use the queue
+class QueueHandler(logging.Handler):
+    def __init__(self, queue):
+        super().__init__()
+        self.queue = queue
+
+    def emit(self, record):
+        self.queue.put(self.format(record))
+
+# Define a worker thread to process log messages asynchronously
+def log_worker():
+    with open(log_filename, 'a') as log_file:
+        while True:
+            message = log_queue.get()
+            if message == "STOP":
+                break
+            log_file.write(message + '\n')
+            log_file.flush()
+
+# Start the logging worker thread
+log_thread = Thread(target=log_worker, daemon=True)
+log_thread.start()
+
+# Set up the logging configuration
+queue_handler = QueueHandler(log_queue)
+formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s')
+queue_handler.setFormatter(formatter)
+logging.getLogger().addHandler(queue_handler)
+logging.getLogger().setLevel(logging.INFO)  # Default level is INFO
 
 
 def print_help():
@@ -30,6 +72,7 @@ def print_help():
     print("  --dumpdir     Path to the directory to dump files (example: /location/to/dump/files/to)")
     print("  --log_file    Path to the log file (example: /location/to/log/file.log)")
     print("  --create_log  Create a log file from an existing run where logging was not in place.")
+    print("  --thread-count Number of threads to use")
 
 def findNextParent(fileID):
     """
@@ -238,9 +281,14 @@ if __name__ == "__main__":
     parser.add_argument('--db', help='Path to the file DB')
     parser.add_argument('--filedir', help='Path to the files directory')
     parser.add_argument('--dumpdir', help='Path to the directory to dump files')
-    parser.add_argument('--log_file', help='Path to the log file')
+    parser.add_argument('--log_file', help='Path to the log file used to track successfully copied files to avoid duplication in future runs')
     parser.add_argument('--create_log', action='store_true', default=False, help='Create a log file from an existing run where logging was not in place')
+    parser.add_argument('--thread-count', type=int, help='Number of threads to use')
+    parser.add_argument('--log_level', type=str, choices=['DEBUG', 'INFO', 'WARNING'], default='INFO', help='Set the logging level (DEBUG, INFO, WARNING). Default is INFO.')
     args = parser.parse_args()
+
+    # Assign log_file after args is defined
+    log_file = args.log_file
 
     if "--help" in sys.argv:
         print_help()
@@ -250,9 +298,16 @@ if __name__ == "__main__":
     filedir = args.filedir
     dumpdir = args.dumpdir
     dry_run = args.dry_run
-    log_file = args.log_file
+    # log_file = args.log_file
 
-    logging.info(f'Parameters: db={db}, filedir={filedir}, dumpdir={dumpdir}, dry_run={dry_run}, log_file={log_file}, create_log={args.create_log}')
+    # Determine the number of threads to use
+    thread_count = args.thread_count if args.thread_count else os.cpu_count() or 1
+
+    # Set the logging level based on the argument
+    log_level = args.log_level
+    logging.getLogger().setLevel(getattr(logging, log_level))
+
+    logging.info(f'Parameters: db={db}, filedir={filedir}, dumpdir={dumpdir}, dry_run={dry_run}, log_file={log_file}, create_log={args.create_log}, thread_count={thread_count}')
 
     lock = Lock()
 
@@ -287,20 +342,26 @@ if __name__ == "__main__":
     print('Querying database...',end="\r")
     logging.info('Querying database...')
     cur = con.cursor()
-    cur.execute("SELECT id,name,parentID,mimeType,contentID FROM files")
+    # Optimize database query by adding indexes and fetching only required columns
+    cur.execute("SELECT id, name, parentID, contentID FROM files")
     files = cur.fetchall()
-    #Retrieve the number of DB records
-    num_db_rows = len(files)
-    #SQlite has a table named "FILES", the filename in the file structure is found in ContentID, with the parent directory being called ParentID
-    fileDIC={}
 
-    for file in files:
-        fileID=file[0]
-        fileName=file[1]
-        fileParent=file[2]
-        mimeType=file[3]
-        contentID=file[4]
-        fileDIC[fileID]={'Name':fileName,'Parent':fileParent,'contentID':contentID,'Type':mimeType,'fileContentID':''}
+    # Define num_db_rows based on the database query
+    num_db_rows = len(files)  # Count the number of rows fetched from the database
+
+    # Create an index on the database for faster lookups (if not already present)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_contentID ON files (contentID)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_parentID ON files (parentID)")
+    con.commit()
+
+    # Optimize file processing by reducing redundant checks and using efficient data structures
+    copied_files = set()  # Use a set for faster lookups
+    if os.path.exists(log_file):
+        with open(log_file, 'r') as f:
+            copied_files.update(f.read().splitlines())
+
+    # Use a dictionary to store file paths for quick access
+    fileDIC = {file[0]: {'Name': file[1], 'Parent': file[2], 'contentID': file[3]} for file in files}
 
     # Get the size of fileDIC
     fileDIC_size = len(fileDIC)
@@ -321,6 +382,8 @@ if __name__ == "__main__":
     logging.info('There are ' + str(num_db_rows) + ' rows in the database to process')
     print('The size of file data dictionary is ' + str(fileDIC_size) + ' elements')
     logging.info('The size of file data dictionary is ' + str(fileDIC_size) + ' elements')
+    print('The number of threads used in this run is ' + str(thread_count))
+    logging.info('The number of threads used in this run is ' + str(thread_count))
 
     # Check if the log file exists
     if os.path.exists(log_file):
@@ -334,7 +397,13 @@ if __name__ == "__main__":
     else:
         copied_files = []
 
-    with ThreadPoolExecutor(max_workers=os.cpu_count() or 1) as executor:
+    # Set the queue size dynamically based on the number of processing threads
+    queue_size = thread_count * 2  # Queue size is twice the number of threads
+
+    # Initialize the logging queue with the dynamic size
+    log_queue = Queue(maxsize=queue_size)
+
+    with ThreadPoolExecutor(max_workers=thread_count) as executor:
         for root,dirs,files in os.walk(filedir): #find all files in original directory structure
             for file in files:
                 executor.submit(copy_file, root, file, skipnames, dumpdir, dry_run, log_file)
@@ -362,24 +431,48 @@ if __name__ == "__main__":
     print(f'Total files skipped: {str(skipped_files_counter.value)}')
     print(f'Total files in the source directory: {str(total_files)}')
     print(f'Total files in the destination directory: {str(len(os.listdir(dumpdir)))}')
+    print('The number of threads used in this run is ' + str(thread_count))
+    
+    # Consolidate reconciliation and logging to avoid duplication
+    print("\nReconciliation Summary:")
+    logging.info("\nReconciliation Summary:")
 
-    #Output file logging
-    logging.info(f'The size of the source directory {filedir} is {str(filedir_size):.2f} GB')
-    logging.info(f'The size of the destination directory {dumpdir} is {str(dumpdir_size):.2f} GB') 
-    logging.info('There are ' + str(total_files) + 'files to copy from ' + filedir + ' to ' + dumpdir)
-    logging.info('There are ' + str(num_db_rows) + ' rows in the database to process')
-    logging.info('The size of file data dictionary is ' + str(fileDIC_size) + ' elements')
-    logging.info('There are ' + str(len(copied_files)) + ' files copied on previous runs of this script, pulled from ' + log_file)
+    summary_data = [
+        ("The size of the source directory", f"{filedir_size:.2f} GB"),
+        ("The size of the destination directory", f"{dumpdir_size:.2f} GB"),
+        ("Total files to copy", total_files),
+        ("Rows in the database to process", num_db_rows),
+        ("The size of file data dictionary", fileDIC_size),
+        ("Files copied on previous runs", len(copied_files)),
+        ("Total files copied", copied_files_counter.value),
+        ("Total files skipped", skipped_files_counter.value),
+        ("Total files in the source directory", total_files),
+        ("Total files in the destination directory", len(os.listdir(dumpdir)))
+    ]
+
+    for label, value in summary_data:
+        print(f"{label}: {value}")
+        logging.info(f"{label}: {value}")
+
     if dry_run:
-        logging.info(f'Dry run - No files were actually copied: Total files that would have been copied: {str(copied_files_counter.value)}')
-    else:
-        logging.info(f'Total files copied: {str(copied_files_counter.value)}')
-    logging.info(f'Total files skipped: {str(skipped_files_counter.value)}')
-    logging.info(f'Total files in the source directory: {str(total_files)}')
-    logging.info(f'Total files in the destination directory: {str(len(os.listdir(dumpdir)))}')
+        print(f"Dry run - No files were actually copied: Total files that would have been copied: {copied_files_counter.value}")
+        logging.info(f"Dry run - No files were actually copied: Total files that would have been copied: {copied_files_counter.value}")
 
-    # Log the end of your script
-    end_time = time.time()
-    logging.info(f'Start time: {time.ctime(start_time)}')
-    logging.info(f'End time: {time.ctime(end_time)}')
-    logging.info(f'Total execution time: {end_time - start_time} seconds')
+    if processed_files_counter.value != total_files:
+        print("Warning: Not all files were processed. Check for errors or incomplete runs.")
+        logging.warning("Not all files were processed. Check for errors or incomplete runs.")
+    else:
+        print("All files have been processed successfully.")
+        logging.info("All files have been processed successfully.")
+
+    # Ensure re-runnability by leveraging log_file
+    if os.path.exists(log_file):
+        print(f"Resuming from previous run. Log file found: {log_file}")
+        logging.info(f"Resuming from previous run. Log file found: {log_file}")
+    else:
+        print("Starting a new run. No log file found.")
+        logging.info("Starting a new run. No log file found.")
+
+    # Stop the logging thread
+    log_queue.put("STOP")
+    log_thread.join()
