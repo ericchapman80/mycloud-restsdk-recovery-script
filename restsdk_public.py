@@ -60,8 +60,6 @@ formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s')
 queue_handler.setFormatter(formatter)
 logging.getLogger().addHandler(queue_handler)
 logging.getLogger().setLevel(logging.INFO)  # Default level is INFO
-
-
 def print_help():
     print("Usage: python restsdk_public.py [options]")
     print("Options:")
@@ -293,7 +291,6 @@ if __name__ == "__main__":
     if "--help" in sys.argv:
         print_help()
         sys.exit(0)
-
     db = args.db
     filedir = args.filedir
     dumpdir = args.dumpdir
@@ -317,8 +314,7 @@ if __name__ == "__main__":
             sys.exit(1)
         else:
             create_log_file(dumpdir, args.log_file)
-            sys.exit(0)    
-
+            sys.exit(0)
     if db is None or filedir is None or dumpdir is None:
         print("Error: Missing required arguments. Please provide values for --db, --filedir, and --dumpdir.")
         sys.exit(1)
@@ -420,8 +416,8 @@ if __name__ == "__main__":
     #Console Logging
     print(f'The size of the source directory {filedir} is {str(filedir_size):.2f} GB')
     print(f'The size of the destination directory {dumpdir} is {str(dumpdir_size):.2f} GB')
-    print('There are ' + str(total_files) + 'files to copy from ' + filedir + ' to ' + dumpdir).end("\n")
-    print('There are ' + str(num_db_rows) + ' rows in the database to process').end("\n")
+    print('There are ' + str(total_files) + 'files to copy from ' + filedir + ' to ' + dumpdir)
+    print('There are ' + str(num_db_rows) + ' rows in the database to process')
     print('The size of file data dictionary is ' + str(fileDIC_size) + ' elements')
     print('There are ' + str(len(copied_files)) + ' files copied on previous runs of this script, pulled from ' + log_file)
     if dry_run:
