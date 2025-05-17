@@ -26,3 +26,11 @@ This code will not be receiving any updates, feel free to fork it if you want to
 **Notes:**
 SQLite database is stored in /restsdk/data/db/index.db. Inside the DB two main tables appear to be of interest, FILES and ImageTrans. FILES lists each file with a unique ID (primary key) and a ContentID (the name of the file when stored on the filesystem) along with the file name "My important picture.jpg" and some other metadata. I believe ImageTrans is only for thumbnailing purposes but I could be wrong about that. Importantly, the entries in FILES have a "parent" attribute which places each file in a directory structure. This script totally ignores ImageTrans.
 
+**FAQ:**
+
+**Why do I see "File not found in database" errors?**
+* Files may be missing from the database due to corruption or interrupted operations on the MyCloud device
+* The script searches for matches between filenames and ContentIDs, returning None when no match exists
+* Some files in the filesystem dump may be temporary or system files without database entries
+* These unmatched files are reported but not counted in the percentage complete calculation
+
