@@ -7,6 +7,7 @@ import pprint
 import sqlite3
 import sys
 import time
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Lock, Value
 from shutil import copyfile
@@ -142,7 +143,7 @@ def getRootDirs():
         if 'auth' in values['Name'] and '|' in values['Name']:
             return str(values['Name'])
         
-def copy_file(root, file, skipnames, dumpdir, dry_run, log_file):
+def copy_file(root, file, skipnames, dumpdir, dry_run, log_file, semaphore=None):
     """
     Copy a file from the source directory to the target directory, skipping duplicates.
     Args:
@@ -156,7 +157,7 @@ def copy_file(root, file, skipnames, dumpdir, dry_run, log_file):
         None
     """
     # Function code...
-def copy_file(root, file, skipnames, dumpdir, dry_run, log_file):
+def copy_file(root, file, skipnames, dumpdir, dry_run, log_file, semaphore=None):
     filename = str(file)
     print('FOUND FILE ' + filename + ' SEARCHING......', end="\n")
     print('Processing ' + str(processed_files_counter.value) + ' of ' + str(total_files) + ' files', end="\n")
@@ -208,10 +209,63 @@ def copy_file(root, file, skipnames, dumpdir, dry_run, log_file):
                 print('Copying ' + newpath)
                 try:
                     os.makedirs(os.path.dirname(newpath), exist_ok=True)
-                    copyfile(fullpath, newpath)
+                    # Use semaphore if provided to limit concurrent disk operations
+                    if semaphore:
+                        with semaphore:
+                            # Optimized buffered copy with semaphore protection
+                            with open(fullpath, 'rb') as fsrc:
+                                with open(newpath, 'wb') as fdst:
+                                    buffer_size = 20 * 1024 * 1024  # 20MB buffer for NAS transfers
+                                    while True:
+                                        buffer = fsrc.read(buffer_size)
+                                        if not buffer:
+                                            break
+                                        fdst.write(buffer)
+                    else:
+                        with open(fullpath, 'rb') as fsrc:
+                            with open(newpath, 'wb') as fdst:
+                                buffer_size = 20 * 1024 * 1024  # 20MB buffer for NAS transfers
+                                while True:
+                                    buffer = fsrc.read(buffer_size)
+                                    if not buffer:
+                                        break
+                                    fdst.write(buffer)
                     # Use .value to access the Value's underlying data
                     with processed_files_counter.get_lock():
                         processed_files_counter.value += 1
+                        
+                        # Calculate and display ETA every minute
+                        current_time = time.time()
+                        if copy_start_time is None:
+                            global copy_start_time, files_processed_at_start
+                            copy_start_time = current_time
+                            files_processed_at_start = processed_files_counter.value
+                        elif current_time - last_eta_update > eta_update_interval:
+                            global last_eta_update
+                            # Calculate ETA based on processing rate
+                            elapsed = current_time - copy_start_time
+                            files_processed = processed_files_counter.value - files_processed_at_start
+                            
+                            if files_processed > 0 and elapsed > 0:
+                                files_per_second = files_processed / elapsed
+                                remaining_files = total_files - processed_files_counter.value
+                                
+                                if files_per_second > 0:
+                                    seconds_remaining = remaining_files / files_per_second
+                                    hours_remaining = seconds_remaining / 3600
+                                    
+                                    if hours_remaining < 1:
+                                        eta_str = f"{int(seconds_remaining / 60)} minutes"
+                                    elif hours_remaining < 24:
+                                        eta_str = f"{int(hours_remaining)} hours, {int((hours_remaining % 1) * 60)} minutes"
+                                    else:
+                                        days = int(hours_remaining / 24)
+                                        eta_str = f"{days} days, {int(hours_remaining % 24)} hours"
+                                    
+                                    print(f"Estimated time remaining: {eta_str} at {files_per_second:.2f} files/second")
+                                    logging.info(f"Estimated time remaining: {eta_str} at {files_per_second:.2f} files/second")
+                            
+                            last_eta_update = current_time
                     progress = (processed_files_counter.value / total_files) * 100
                     with copied_files_counter.get_lock():
                         copied_files_counter.value += 1
@@ -273,6 +327,11 @@ if __name__ == "__main__":
     # Log start time
     start_time = time.time()
     logging.info(f'Start time: {time.ctime(start_time)}')
+    
+    copy_start_time = None
+    files_processed_at_start = 0
+    last_eta_update = 0
+    eta_update_interval = 60  # Update ETA every 60 seconds
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--dry_run', action='store_true', default=False, help='Perform a dry run')
@@ -298,7 +357,12 @@ if __name__ == "__main__":
     # log_file = args.log_file
 
     # Determine the number of threads to use
-    thread_count = args.thread_count if args.thread_count else os.cpu_count() or 1
+    if args.thread_count:
+        thread_count = args.thread_count
+    else:
+        cpu_count = os.cpu_count() or 1
+        thread_count = min(cpu_count * 4, 24)  # Cap at 24 to avoid excessive overhead
+        logging.info(f"Auto-configured thread count to {thread_count} for I/O-bound operations")
 
     # Set the logging level based on the argument
     log_level = args.log_level
@@ -399,10 +463,73 @@ if __name__ == "__main__":
     # Initialize the logging queue with the dynamic size
     log_queue = Queue(maxsize=queue_size)
 
+    # Create a semaphore to limit concurrent disk operations
+    disk_semaphore = threading.Semaphore(min(8, thread_count))  # Lower limit for spinning disks
+    logging.info(f"Using disk semaphore limit of {min(8, thread_count)} for spinning disk optimization")
+
+    print("Scanning files and prioritizing by size...")
+    logging.info("Scanning files and prioritizing by size...")
+    file_tasks = []
+    max_files_to_scan = 100000  # Limit for very large filesystems
+    files_scanned = 0
+
+    for root, dirs, files in os.walk(filedir):
+        for file in files:
+            try:
+                full_path = os.path.join(root, file)
+                file_size = os.path.getsize(full_path)
+                file_tasks.append((file_size, root, file))
+                files_scanned += 1
+                if files_scanned % 10000 == 0:
+                    print(f"Scanned {files_scanned} files...")
+                    
+                if files_scanned >= max_files_to_scan:
+                    print(f"Reached scan limit of {max_files_to_scan} files. Processing this batch first.")
+                    break
+            except (OSError, FileNotFoundError) as e:
+                logging.warning(f"Error getting size for {full_path}: {e}")
+                file_tasks.append((float('inf'), root, file))
+        
+        if files_scanned >= max_files_to_scan:
+            break
+
+    print(f"Sorting {len(file_tasks)} files by size (smallest first)...")
+    logging.info(f"Sorting {len(file_tasks)} files by size (smallest first)...")
+    file_tasks.sort(key=lambda x: x[0])
+
+    print("Starting file copy operations with prioritized ordering...")
+    logging.info("Starting file copy operations with prioritized ordering...")
+    
     with ThreadPoolExecutor(max_workers=thread_count) as executor:
-        for root,dirs,files in os.walk(filedir): #find all files in original directory structure
-            for file in files:
-                executor.submit(copy_file, root, file, skipnames, dumpdir, dry_run, log_file)
+        for _, root, file in file_tasks:
+            executor.submit(copy_file, root, file, skipnames, dumpdir, dry_run, log_file, disk_semaphore)
+    
+    if files_scanned >= max_files_to_scan:
+        print(f"Processed initial batch of {max_files_to_scan} files. Continuing with progressive scanning...")
+        logging.info(f"Processed initial batch of {max_files_to_scan} files. Continuing with progressive scanning...")
+        
+        # Track directories we've already processed
+        processed_dirs = set()
+        for root, _, _ in os.walk(filedir):
+            if files_scanned <= max_files_to_scan:
+                processed_dirs.add(root)
+        
+        with ThreadPoolExecutor(max_workers=thread_count) as executor:
+            active_tasks = []
+            
+            for root, dirs, files in os.walk(filedir):
+                # Skip directories we've already processed
+                if root in processed_dirs:
+                    continue
+                    
+                for file in files:
+                    task = executor.submit(copy_file, root, file, skipnames, dumpdir, dry_run, log_file, disk_semaphore)
+                    active_tasks.append(task)
+                    
+                    while len(active_tasks) >= thread_count * 2:
+                        active_tasks = [t for t in active_tasks if not t.done()]
+                        if len(active_tasks) >= thread_count * 2:
+                            time.sleep(0.1)
 
     print("Did this script help you recover your data? Save you a few hundred bucks? Or make you some money recovering somebody else's data?")
     print("Consider sending us some bitcoin/crypto as a way of saying thanks!")
