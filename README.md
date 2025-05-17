@@ -12,7 +12,7 @@ This script reads the database and a dump of the filesystem and copies the data 
 **More:**
 Need more help than this script can offer? We offer affordable flat-rate data recovery at [our website](https://springfielddatarecovery.com)
 
-**If this script has helped you recover your data, please consider saying thanks with a crypto/Bitcoin donation**
+## If this script has helped you recover your data, please consider saying thanks with a crypto/Bitcoin donation
 
 * Bitcoin: 1DqSLNR8kTgwq5rvveUFDSbYQnJp9D5gfR
 * ETH: 0x9e765052283Ce6521E40069Ac52ffA5B277bD8AB
