@@ -89,7 +89,6 @@ if __name__ == "__main__":
     parser.add_argument("--log_file", type=str, help="Path to the log file")
     parser.add_argument("--thread-count", type=int, help="Number of threads to use")
     parser.add_argument("--dry_run", action="store_true", help="Perform a dry run (do not copy files)")
-    parser.add_argument("--help", action="store_true", help="Show help message")
     parser.add_argument("--create_log", action="store_true", help="Create a log file from an existing run")
 
     args = parser.parse_args()
