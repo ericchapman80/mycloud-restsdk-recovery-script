@@ -5,9 +5,20 @@ This script helps you recover and transfer files from a Western Digital (WD) MyC
 **Problem:**
 MyCloud devices don't use a simple, flat filesystem like other external drives, they store files with random-seeming names and directory structures. If your MyCloud is not functioning, you will need to read the SQLite database on the device to determine the original file structure.
 
+### 🚀 Quick Setup (Recommended)
+1. Run the setup script:
+   ```sh
+   bash setup.sh
+   ```
+2. To activate the environment in the future:
+   ```sh
+   source venv/bin/activate
+   ```
+3. Then run all project commands as usual (e.g., python restsdk_public.py ...)
+
 ### 1. Requirements
 - Python 3.6+
-- Install dependencies:
+- Alternatively, install dependencies manually:
   ```sh
   pip install -r requirements.txt
   ```
