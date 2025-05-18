@@ -1,10 +1,16 @@
-
 # MyCloud REST SDK Recovery Script
 
 This script helps you recover and transfer files from a Western Digital (WD) MyCloud device or similar storage to another location (like a Synology NAS), with features for performance, safety, and resumability.
 
 **Problem:**
 MyCloud devices don't use a simple, flat filesystem like other external drives, they store files with random-seeming names and directory structures. If your MyCloud is not functioning, you will need to read the SQLite database on the device to determine the original file structure.
+
+### 1. Requirements
+- Python 3.6+
+- Install dependencies:
+  ```sh
+  pip install -r requirements.txt
+  ```
 
 **Solution:**
 This script reads the database and a dump of the filesystem and copies the data to another location with the correct filenames and structures. This script is intended for a Linux machine where you already have the file structure and database extracted. This won't work on Windows. I know it's ugly and inefficient, I am new to python. This is tested and working with **Python 3.6 on Linux**.
