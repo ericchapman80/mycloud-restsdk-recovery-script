@@ -93,9 +93,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.help:
-        print_help()
-        sys.exit(0)
 
     if args.preflight:
         if not args.filedir or not args.dumpdir:
