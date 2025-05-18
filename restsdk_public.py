@@ -17,9 +17,10 @@ from threading import Thread
 # Preflight import
 try:
     from preflight import preflight_summary, print_preflight_report
-except ImportError:
-    preflight_summary = None
-    print_preflight_report = None
+except ImportError as e:
+    print("❌ ERROR: Could not import preflight module. Make sure preflight.py is in the same directory.")
+    print(f"Details: {e}")
+    sys.exit(1)
 
 ##Intended for python3.6 on linux, probably won't work on Windows
 ##This software is distributed without any warranty. It will probably brick your computer.
