@@ -14,6 +14,13 @@ import datetime
 from queue import Queue
 from threading import Thread
 
+# Preflight import
+try:
+    from preflight import preflight_summary, print_preflight_report
+except ImportError:
+    preflight_summary = None
+    print_preflight_report = None
+
 ##Intended for python3.6 on linux, probably won't work on Windows
 ##This software is distributed without any warranty. It will probably brick your computer.
 #--db=/mnt/backupdrive/restsdk/data/db/index.db --filedir=/mnt/backupdrive/restsdk/data/files --dumpdir=/mnt/nfs-media --dry_run --log_file=/home/chapman/projects/mycloud-restsdk-recovery-script/copied_file.log
@@ -63,14 +70,42 @@ logging.getLogger().setLevel(logging.INFO)  # Default level is INFO
 def print_help():
     print("Usage: python restsdk_public.py [options]")
     print("Options:")
-    print("  --dry_run     Perform a dry run (do not copy files)")
-    print("  --help        Show this help message")
-    print("  --db          Path to the file DB (example: /restsdk/data/db/index.db)")
-    print("  --filedir     Path to the files directory (example: /restsdk/data/files)")
-    print("  --dumpdir     Path to the directory to dump files (example: /location/to/dump/files/to)")
-    print("  --log_file    Path to the log file (example: /location/to/log/file.log)")
-    print("  --create_log  Create a log file from an existing run where logging was not in place.")
-    print("  --thread-count Number of threads to use")
+    print("  --preflight         Run hardware and file system pre-flight check (requires --filedir and --dumpdir)")
+    print("  --dry_run           Perform a dry run (do not copy files)")
+    print("  --help              Show this help message")
+    print("  --db                Path to the file DB (example: /restsdk/data/db/index.db)")
+    print("  --filedir           Path to the files directory (example: /restsdk/data/files)")
+    print("  --dumpdir           Path to the directory to dump files (example: /location/to/dump/files/to)")
+    print("  --log_file          Path to the log file (example: /location/to/log/file.log)")
+    print("  --create_log        Create a log file from an existing run where logging was not in place.")
+    print("  --thread-count      Number of threads to use")
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="WD MyCloud REST SDK Recovery Tool")
+    parser.add_argument("--preflight", action="store_true", help="Run pre-flight hardware/file check and print recommendations")
+    parser.add_argument("--db", type=str, help="Path to the file DB")
+    parser.add_argument("--filedir", type=str, help="Path to the files directory")
+    parser.add_argument("--dumpdir", type=str, help="Path to the directory to dump files")
+    parser.add_argument("--log_file", type=str, help="Path to the log file")
+    parser.add_argument("--thread-count", type=int, help="Number of threads to use")
+    parser.add_argument("--dry_run", action="store_true", help="Perform a dry run (do not copy files)")
+    parser.add_argument("--help", action="store_true", help="Show help message")
+    parser.add_argument("--create_log", action="store_true", help="Create a log file from an existing run")
+
+    args = parser.parse_args()
+
+    if args.help:
+        print_help()
+        sys.exit(0)
+
+    if args.preflight:
+        if not args.filedir or not args.dumpdir:
+            print("\n❗ Please provide both --filedir (source) and --dumpdir (destination) for pre-flight check.\n")
+            print_help()
+            sys.exit(1)
+        summary = preflight_summary(args.filedir, args.dumpdir)
+        print_preflight_report(summary, args.filedir, args.dumpdir)
+        sys.exit(0)
 
 def findNextParent(fileID):
     """

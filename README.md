@@ -1,7 +1,7 @@
 
-# Free WD MyCloud Data Recovery Tool
-# mycloud-restsdk-recovery-script
-A script to recover files from MyCloud REST SDK Folder Structure
+# MyCloud REST SDK Recovery Script
+
+This script helps you recover and transfer files from a Western Digital (WD) MyCloud device or similar storage to another location (like a Synology NAS), with features for performance, safety, and resumability.
 
 **Problem:**
 MyCloud devices don't use a simple, flat filesystem like other external drives, they store files with random-seeming names and directory structures. If your MyCloud is not functioning, you will need to read the SQLite database on the device to determine the original file structure.
