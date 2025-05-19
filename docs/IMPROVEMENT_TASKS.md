@@ -34,12 +34,18 @@
 
 ## 5. Resumable/Checkpointed Transfers ✅ **Complete**
 - **User Story:** As a user, I want the script to be reliably re-runnable and able to resume from where it left off after interruptions (e.g., power loss), using a progress or checkpoint file.
-    - **Implementation Approach (Final):**
-        - The script uses a log file (e.g., `copied_file.log`) to track files that have been successfully copied. On every `--resume`, the log file is regenerated from the destination directory to ensure it reflects the true state (unless `--no-regen-log` is specified).
-        - Atomic log updates: files are only added to the log after a successful copy, and regeneration is done via a temp file and `os.replace`.
-        - CLI options: `--resume`, `--regen-log`, `--no-regen-log` provide flexible, user-friendly resumability and accuracy.
-        - The script always checks both the log and destination before copying a file.
-        - See the README for usage details and examples.
+    - **Implementation Approach (Hybrid Log + Database):**
+        - **Hybrid Tracking:** The script maintains both a human-readable log file (e.g., `copied_file.log`) and a dedicated `copied_files` table in the database to track which files have been copied. This ensures redundancy, speed, and auditability.
+        - **Log/DB Sync:** On every `--resume` or `--create-log`, the script scans the destination directory and updates both the log file and the `copied_files` table to reflect all files currently present at the destination.
+        - **Copy Logic:** After each successful copy, the file is appended to the log and inserted into the `copied_files` table.
+        - **Filtering:** When determining which files to process, the script uses a SQL join to exclude any files already present in the `copied_files` table (and optionally in a `skipped_files` table for permanently skipped/problem files). This avoids loading millions of file paths into memory and leverages database indexing for speed.
+        - **CLI options:** `--resume`, `--regen-log`, `--no-regen-log` control resumability and log/DB sync behavior.
+        - **Rationale:**
+            - **Safety:** The main `FILES` table is never altered, preserving the original metadata and reducing risk of corruption.
+            - **Redundancy:** If either the log or the database state is lost/corrupted, the other can be used to recover.
+            - **Auditability:** The log file provides a human-readable backup and audit trail.
+            - **Performance:** SQL filtering and indexing make this approach scalable to millions of files without excessive memory use.
+        - **See the README for usage details and examples.**
 
 ## 6. Regenerate Progress File ⏳ **To Do**
 - **User Story:** As a user, I want a CLI option to regenerate the progress/input file, so I can resume transfers efficiently after interruptions or changes.

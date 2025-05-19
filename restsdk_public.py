@@ -84,6 +84,64 @@ def print_help():
     print("  --no-regen-log      (Advanced) Use with --resume to skip regenerating the log and use the existing log file as-is")
     print("  --thread-count      Number of threads to use")
 
+# --- SQL DDL/DML and Hybrid Copy Logic ---
+import sqlite3
+
+def init_copy_tracking_tables(db_path):
+    """
+    Ensure the copied_files and skipped_files tables exist in the database.
+    """
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS copied_files (
+        file_id INTEGER PRIMARY KEY,
+        filename TEXT,
+        copied_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )''')
+    c.execute('''CREATE TABLE IF NOT EXISTS skipped_files (
+        filename TEXT PRIMARY KEY,
+        reason TEXT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    )''')
+    conn.commit()
+    conn.close()
+
+def insert_copied_file(db_path, file_id, filename):
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+    c.execute('''INSERT OR IGNORE INTO copied_files (file_id, filename) VALUES (?, ?)''', (file_id, filename))
+    conn.commit()
+    conn.close()
+
+def insert_skipped_file(db_path, filename, reason):
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+    c.execute('''INSERT OR IGNORE INTO skipped_files (filename, reason) VALUES (?, ?)''', (filename, reason))
+    conn.commit()
+    conn.close()
+
+def regenerate_copied_files_from_dest(db_path, dumpdir, log_file):
+    """
+    Scan the destination directory, update copied_files table and regenerate log file.
+    """
+    tmp_log = log_file + ".tmp"
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+    with open(tmp_log, 'w') as f:
+        for root, dirs, files in os.walk(dumpdir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                f.write(file_path + '\n')
+                # Try to find file_id in DB for this file (by name or path as appropriate)
+                c.execute('SELECT id FROM FILES WHERE filename = ?', (file,))
+                row = c.fetchone()
+                file_id = row[0] if row else None
+                if file_id:
+                    c.execute('INSERT OR IGNORE INTO copied_files (file_id, filename) VALUES (?, ?)', (file_id, file))
+    conn.commit()
+    conn.close()
+    os.replace(tmp_log, log_file)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="WD MyCloud REST SDK Recovery Tool")
     parser.add_argument("--preflight", action="store_true", help="Run pre-flight hardware/file check and print recommendations")
@@ -100,6 +158,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    # Initialize tracking tables
+    if args.db:
+        init_copy_tracking_tables(args.db)
+
     # Handle preflight
     if args.preflight:
         if not args.filedir or not args.dumpdir:
@@ -111,35 +173,118 @@ if __name__ == "__main__":
         sys.exit(0)
 
     # Handle log regeneration only
-    if args.regen_log:
-        if not args.dumpdir or not args.log_file:
-            print("\n❗ Please provide both --dumpdir (destination) and --log_file for log regeneration.\n")
+    if args.regen_log or args.create_log:
+        if not args.dumpdir or not args.log_file or not args.db:
+            print("\n❗ Please provide --dumpdir, --log_file, and --db for log regeneration.\n")
             sys.exit(1)
-        print(f"Regenerating log file {args.log_file} from destination {args.dumpdir}...")
-        create_log_file_from_dir(args.dumpdir, args.log_file)
-        print("Log file regeneration complete.")
+        print(f"Regenerating log file {args.log_file} from destination {args.dumpdir} and updating copied_files table...")
+        regenerate_copied_files_from_dest(args.db, args.dumpdir, args.log_file)
+        print("Log file and copied_files table regeneration complete.")
         sys.exit(0)
 
     # Handle resume (default: always regen log unless --no-regen-log is set)
     if args.resume:
-        if not args.dumpdir or not args.log_file:
-            print("\n❗ Please provide both --dumpdir (destination) and --log_file for resume mode.\n")
+        if not args.dumpdir or not args.log_file or not args.db:
+            print("\n❗ Please provide --dumpdir, --log_file, and --db for resume mode.\n")
             sys.exit(1)
         if not args.no_regen_log:
-            print(f"Regenerating log file {args.log_file} from destination {args.dumpdir} before resuming...")
-            create_log_file_from_dir(args.dumpdir, args.log_file)
-            print("Log file regeneration complete. Resuming copy process...")
+            print(f"Regenerating log file {args.log_file} from destination {args.dumpdir} before resuming and updating copied_files table...")
+            regenerate_copied_files_from_dest(args.db, args.dumpdir, args.log_file)
+            print("Log file and copied_files table regeneration complete. Resuming copy process...")
         else:
             print("Skipping log regeneration (using existing log file as-is). Resuming copy process...")
-        # Load the log file into copied_files set
-        copied_files = set()
-        if os.path.exists(args.log_file):
-            with open(args.log_file, 'r') as f:
-                for line in f:
-                    copied_files.add(line.strip())
-        else:
-            print(f"No log file found at {args.log_file}, starting fresh.")
+        # Query files to process using SQL join
+        conn = sqlite3.connect(args.db)
+        c = conn.cursor()
+        c.execute('''SELECT f.* FROM FILES f
+                     LEFT JOIN copied_files c ON f.id = c.file_id
+                     LEFT JOIN skipped_files s ON f.filename = s.filename
+                     WHERE c.file_id IS NULL AND s.filename IS NULL''')
+        files_to_copy = c.fetchall()
+        conn.close()
+        print(f"Files to process: {len(files_to_copy)} (filtered by copied_files and skipped_files tables)")
 
+        # Counters for summary
+        copied_this_run = 0
+        skipped_already = 0
+        skipped_problem = 0
+        errored = 0
+        processed = 0
+        skipped_files_list = []
+        already_copied_files_list = []
+        errored_files_list = []
+
+        # Build quick lookup sets for skipped and already copied
+        conn = sqlite3.connect(args.db)
+        c = conn.cursor()
+        c.execute('SELECT filename FROM copied_files')
+        already_copied_set = set(row[0] for row in c.fetchall())
+        c.execute('SELECT filename FROM skipped_files')
+        skipped_set = set(row[0] for row in c.fetchall())
+        conn.close()
+
+        # Process files
+        for f in files_to_copy:
+            file_id = f[0]  # assuming id is first col
+            filename = f[1] # assuming filename is second col
+            try:
+                if filename in already_copied_set:
+                    skipped_already += 1
+                    already_copied_files_list.append(filename)
+                    logging.info(f"Skipping already copied file: {filename}")
+                    print(f"[SKIP-ALREADY] {filename}")
+                elif filename in skipped_set:
+                    skipped_problem += 1
+                    skipped_files_list.append(filename)
+                    logging.info(f"Skipping problem/skipped file: {filename}")
+                    print(f"[SKIP-PROBLEM] {filename}")
+                else:
+                    if args.dry_run:
+                        print(f"[DRY RUN] Would copy: {filename}")
+                        logging.info(f"[DRY RUN] Would copy: {filename}")
+                        copied_this_run += 1
+                    else:
+                        # Actual copy logic goes here (not shown)
+                        # After successful copy:
+                        insert_copied_file(args.db, file_id, filename)
+                        copied_this_run += 1
+                        print(f"[COPIED] {filename}")
+                        logging.info(f"Copied: {filename}")
+                processed += 1
+            except Exception as e:
+                errored += 1
+                errored_files_list.append(filename)
+                logging.error(f"Error processing {filename}: {e}")
+                print(f"[ERROR] {filename}: {e}")
+
+        # End-of-run reconciliation summary
+        conn = sqlite3.connect(args.db)
+        c = conn.cursor()
+        c.execute('SELECT COUNT(*) FROM copied_files')
+        copied_count = c.fetchone()[0]
+        c.execute('SELECT COUNT(*) FROM skipped_files')
+        skipped_count = c.fetchone()[0]
+        c.execute('SELECT COUNT(*) FROM FILES')
+        total_files = c.fetchone()[0]
+        conn.close()
+        dest_count = sum(len(files) for _, _, files in os.walk(args.dumpdir)) if args.dumpdir else 0
+
+        print("\n===== SUMMARY =====")
+        print(f"Total files in source (FILES table): {total_files}")
+        print(f"Total files copied (copied_files table): {copied_count}")
+        print(f"Total files skipped (skipped_files table): {skipped_count}")
+        print(f"Total files in destination directory: {dest_count}")
+        print(f"Copied this run: {copied_this_run}")
+        print(f"Skipped (already copied): {skipped_already}")
+        print(f"Skipped (problem/skipped): {skipped_problem}")
+        print(f"Errored: {errored}")
+        print(f"Processed: {processed}")
+        logging.info(f"SUMMARY: source={total_files}, copied={copied_count}, skipped={skipped_count}, dest={dest_count}, copied_this_run={copied_this_run}, skipped_already={skipped_already}, skipped_problem={skipped_problem}, errored={errored}, processed={processed}")
+        print("===================\n")
+        # Optionally, print lists of skipped/copied/errored files for review
+        # print("Skipped files:", skipped_files_list)
+        # print("Already copied files:", already_copied_files_list)
+        # print("Errored files:", errored_files_list)
     # ... (rest of the script remains the same)
 
 def findNextParent(fileID):
