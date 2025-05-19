@@ -145,6 +145,10 @@ def regenerate_copied_files_from_dest(db_path, dumpdir, log_file):
                 if file_id:
                     print(f"  [MATCH] DB id: {file_id} for file: {file} -- inserting into copied_files table.")
                     c.execute('INSERT OR IGNORE INTO copied_files (file_id, filename) VALUES (?, ?)', (file_id, file))
+                    if c.rowcount == 1:
+                        print(f"    [INSERTED] Inserted into copied_files: ({file_id}, {file})")
+                    else:
+                        print(f"    [SKIPPED] Entry already exists for: ({file_id}, {file})")
                 else:
                     print(f"  [NO MATCH] No DB entry found for destination file: {file}")
                 total_files += 1
