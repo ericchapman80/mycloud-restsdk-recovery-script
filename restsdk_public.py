@@ -90,11 +90,12 @@ import sqlite3
 def init_copy_tracking_tables(db_path):
     """
     Ensure the copied_files and skipped_files tables exist in the database.
+    Uses TEXT for file_id and filename to match Files table schema.
     """
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS copied_files (
-        file_id INTEGER PRIMARY KEY,
+        file_id TEXT PRIMARY KEY,
         filename TEXT,
         copied_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )''')
@@ -109,7 +110,7 @@ def init_copy_tracking_tables(db_path):
 def insert_copied_file(db_path, file_id, filename):
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
-    c.execute('''INSERT OR IGNORE INTO copied_files (file_id, filename) VALUES (?, ?)''', (file_id, filename))
+    c.execute('''INSERT OR IGNORE INTO copied_files (file_id, filename) VALUES (?, ?)''', (str(file_id), str(filename)))
     conn.commit()
     conn.close()
 
@@ -232,40 +233,67 @@ if __name__ == "__main__":
         skipped_set = set(row[0] for row in c.fetchall())
         conn.close()
 
-        # Process files
-        for f in files_to_copy:
-            file_id = f[0]  # id (TEXT)
-            name = f[1]     # name (original file name)
-            contentID = f[2] # contentID (on-disk filename)
+        # --- Multithreaded file copy using ThreadPoolExecutor ---
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        def copy_worker(f):
+            # Files table order: id, parentID, contentID, version, name, ...
+            file_id = f[0]         # id (TEXT)
+            contentID = f[2]       # contentID (TEXT)
+            name = f[4]            # name (TEXT)
             try:
                 if contentID in already_copied_set:
-                    skipped_already += 1
-                    already_copied_files_list.append(contentID)
-                    logging.info(f"Skipping already copied file: {contentID}")
-                    print(f"[SKIP-ALREADY] {contentID}")
+                    return ("skipped_already", contentID)
                 elif contentID in skipped_set:
-                    skipped_problem += 1
-                    skipped_files_list.append(contentID)
-                    logging.info(f"Skipping problem/skipped file: {contentID}")
-                    print(f"[SKIP-PROBLEM] {contentID}")
+                    return ("skipped_problem", contentID)
                 else:
                     if args.dry_run:
                         print(f"[DRY RUN] Would copy: {contentID}")
                         logging.info(f"[DRY RUN] Would copy: {contentID}")
-                        copied_this_run += 1
+                        return ("dry_run", contentID)
                     else:
-                        # Actual copy logic goes here (not shown)
-                        # After successful copy:
-                        insert_copied_file(args.db, file_id, contentID)
-                        copied_this_run += 1
-                        print(f"[COPIED] {contentID}")
-                        logging.info(f"Copied: {contentID}")
-                processed += 1
+                        try:
+                            rel_path = idToPath2(file_id)
+                            for skip in skipnames:
+                                rel_path = rel_path.replace(skip, '')
+                            rel_path = rel_path.replace('|', '-')
+                            dest_path = os.path.join(args.dumpdir, rel_path)
+                            src_path = os.path.join(args.filedir, contentID)
+                            os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+                            shutil.copy2(src_path, dest_path)
+                            insert_copied_file(args.db, file_id, contentID)
+                            print(f"[COPIED] {rel_path}")
+                            logging.info(f"Copied: {rel_path}")
+                            return ("copied", rel_path)
+                        except Exception as copy_err:
+                            logging.error(f"Error copying {rel_path if 'rel_path' in locals() else name}: {copy_err}")
+                            print(f"[ERROR] {rel_path if 'rel_path' in locals() else name}: {copy_err}")
+                            return ("errored", rel_path if 'rel_path' in locals() else name)
             except Exception as e:
-                errored += 1
-                errored_files_list.append(contentID)
                 logging.error(f"Error processing {contentID}: {e}")
                 print(f"[ERROR] {contentID}: {e}")
+                return ("errored", contentID)
+
+        # Use user-specified thread count or default
+        thread_count = args.thread_count if args.thread_count else os.cpu_count() or 4
+        results = {"copied": 0, "skipped_already": 0, "skipped_problem": 0, "errored": 0, "dry_run": 0}
+        with ThreadPoolExecutor(max_workers=thread_count) as executor:
+            future_to_file = {executor.submit(copy_worker, f): f for f in files_to_copy}
+            for future in as_completed(future_to_file):
+                status, val = future.result()
+                results[status] += 1
+                # Optionally, collect lists for reporting
+                if status == "skipped_already":
+                    already_copied_files_list.append(val)
+                elif status == "skipped_problem":
+                    skipped_files_list.append(val)
+                elif status == "errored":
+                    errored_files_list.append(val)
+
+        copied_this_run = results["copied"]
+        skipped_already = results["skipped_already"]
+        skipped_problem = results["skipped_problem"]
+        errored = results["errored"]
+        processed = sum(results.values())
 
         # End-of-run reconciliation summary
         conn = sqlite3.connect(args.db)
