@@ -58,6 +58,45 @@ python restsdk_public.py --regen-log --dumpdir=/mnt/nfs-media --log_file=copied_
 
 ---
 
+## 🗄️ SQL Migration & Integration Points
+
+To enable hybrid log + database resumable logic, add the following tables to your SQLite database:
+
+```sql
+-- Table for tracking copied files
+CREATE TABLE IF NOT EXISTS copied_files (
+    file_id INTEGER PRIMARY KEY,
+    filename TEXT,
+    copied_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table for tracking skipped/problem files
+CREATE TABLE IF NOT EXISTS skipped_files (
+    filename TEXT PRIMARY KEY,
+    reason TEXT,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Example: Query for Files to Copy
+
+```sql
+SELECT f.*
+FROM FILES f
+LEFT JOIN copied_files c ON f.id = c.file_id
+LEFT JOIN skipped_files s ON f.filename = s.filename
+WHERE c.file_id IS NULL AND s.filename IS NULL;
+```
+- This query returns only files that have not been copied and are not permanently skipped.
+
+### Integration Points in Script
+- On `--resume` or `--create-log`, scan the destination and update both `copied_file.log` and the `copied_files` table.
+- After each successful copy, insert into `copied_files` and append to the log.
+- For skipped/problem files, insert into `skipped_files`.
+- Always filter files to process using the SQL join above, not by loading all copied/skipped files into memory.
+
+---
+
 **More:**
 Need more help than this script can offer? We offer affordable flat-rate data recovery at [our website](https://springfielddatarecovery.com)
 
