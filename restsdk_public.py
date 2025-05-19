@@ -152,8 +152,11 @@ def regenerate_copied_files_from_dest(db_path, dumpdir, log_file):
                 else:
                     print(f"  [NO MATCH] No DB entry found for destination file: {file}")
                 total_files += 1
+                #TODO: add this batch size as a pareameter to the cli
                 if total_files % 10000 == 0:
                     print(f"  Processed {total_files} files so far...")
+                    conn.commit()
+                    print(f"  [COMMIT] Database commit after {total_files} files.")
     print(f"Finished scanning. Total files processed: {total_files}")
     conn.commit()
     conn.close()
