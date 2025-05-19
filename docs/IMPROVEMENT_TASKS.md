@@ -32,13 +32,14 @@
         - Update the progress bar or percentage after every file operation.
         - Log and summarize skipped/missing/errored files in the final report.
 
-## 5. Resumable/Checkpointed Transfers 🟡 **In Progress**
+## 5. Resumable/Checkpointed Transfers ✅ **Complete**
 - **User Story:** As a user, I want the script to be reliably re-runnable and able to resume from where it left off after interruptions (e.g., power loss), using a progress or checkpoint file.
-    - **Implementation Approach:**
-        - Use an atomic, append-only log or checkpoint file for completed files.
-        - On startup, scan the checkpoint file and skip already-copied files.
-        - Optionally, checkpoint progress periodically (not just on successful copy).
-        - Ensure log file is written atomically (e.g., write to temp then rename).
+    - **Implementation Approach (Final):**
+        - The script uses a log file (e.g., `copied_file.log`) to track files that have been successfully copied. On every `--resume`, the log file is regenerated from the destination directory to ensure it reflects the true state (unless `--no-regen-log` is specified).
+        - Atomic log updates: files are only added to the log after a successful copy, and regeneration is done via a temp file and `os.replace`.
+        - CLI options: `--resume`, `--regen-log`, `--no-regen-log` provide flexible, user-friendly resumability and accuracy.
+        - The script always checks both the log and destination before copying a file.
+        - See the README for usage details and examples.
 
 ## 6. Regenerate Progress File ⏳ **To Do**
 - **User Story:** As a user, I want a CLI option to regenerate the progress/input file, so I can resume transfers efficiently after interruptions or changes.
