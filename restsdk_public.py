@@ -124,10 +124,13 @@ def regenerate_copied_files_from_dest(db_path, dumpdir, log_file):
     """
     Scan the destination directory, update copied_files table and regenerate log file.
     Uses contentID for matching, as this is the on-disk filename.
+    Provides progress output for user feedback during long scans.
     """
     tmp_log = log_file + ".tmp"
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
+    total_files = 0
+    print("Scanning destination directory and regenerating log file (this may take a while for large datasets)...")
     with open(tmp_log, 'w') as f:
         for root, dirs, files in os.walk(dumpdir):
             for file in files:
@@ -139,6 +142,10 @@ def regenerate_copied_files_from_dest(db_path, dumpdir, log_file):
                 file_id = row[0] if row else None
                 if file_id:
                     c.execute('INSERT OR IGNORE INTO copied_files (file_id, filename) VALUES (?, ?)', (file_id, file))
+                total_files += 1
+                if total_files % 1000 == 0:
+                    print(f"  Processed {total_files} files so far...")
+    print(f"Finished scanning. Total files processed: {total_files}")
     conn.commit()
     conn.close()
     os.replace(tmp_log, log_file)
