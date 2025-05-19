@@ -138,12 +138,15 @@ def regenerate_copied_files_from_dest(db_path, dumpdir, log_file):
             for file in files:
                 file_path = os.path.join(root, file)
                 f.write(file_path + '\n')
-                # Match by original file name (destination files are named by 'name' column)
+                print(f"Checking destination file: {file}")
                 c.execute('SELECT id FROM Files WHERE name = ?', (file,))
                 row = c.fetchone()
                 file_id = row[0] if row else None
                 if file_id:
+                    print(f"  [MATCH] DB id: {file_id} for file: {file} -- inserting into copied_files table.")
                     c.execute('INSERT OR IGNORE INTO copied_files (file_id, filename) VALUES (?, ?)', (file_id, file))
+                else:
+                    print(f"  [NO MATCH] No DB entry found for destination file: {file}")
                 total_files += 1
                 if total_files % 100000 == 0:
                     print(f"  Processed {total_files} files so far...")
