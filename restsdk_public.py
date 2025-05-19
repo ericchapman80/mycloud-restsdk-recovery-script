@@ -431,10 +431,30 @@ if __name__ == "__main__":
     # Initialize the logging queue with the dynamic size
     log_queue = Queue(maxsize=queue_size)
 
+    # Progress tracking variables
+    last_logged_percent = -1
+    def log_progress():
+        copied = copied_files_counter.value
+        skipped = skipped_files_counter.value
+        # For this implementation, missing and errored are counted as skipped (can be split if needed)
+        missing = 0
+        errored = 0
+        processed = processed_files_counter.value
+        percent = int((processed / total_files) * 100) if total_files else 100
+        msg = f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Progress: Copied={copied} Skipped={skipped} Missing={missing} Errored={errored} Total={total_files} Percent={percent}%"
+        print(msg)
+        logging.info(msg)
+
     with ThreadPoolExecutor(max_workers=thread_count) as executor:
         for root,dirs,files in os.walk(filedir): #find all files in original directory structure
             for file in files:
                 executor.submit(copy_file, root, file, skipnames, dumpdir, dry_run, log_file)
+                # Efficient 1% progress logging
+                processed = processed_files_counter.value
+                percent = int((processed / total_files) * 100) if total_files else 100
+                if percent > last_logged_percent:
+                    last_logged_percent = percent
+                    log_progress()
 
     print("Did this script help you recover your data? Save you a few hundred bucks? Or make you some money recovering somebody else's data?")
     print("Consider sending us some bitcoin/crypto as a way of saying thanks!")
