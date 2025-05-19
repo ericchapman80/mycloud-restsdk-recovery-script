@@ -79,6 +79,9 @@ def print_help():
     print("  --dumpdir           Path to the directory to dump files (example: /location/to/dump/files/to)")
     print("  --log_file          Path to the log file (example: /location/to/log/file.log)")
     print("  --create_log        Create a log file from an existing run where logging was not in place.")
+    print("  --resume            Resume a previous run, regenerating the log from the destination before resuming (default)")
+    print("  --regen-log         Regenerate the log file from the destination directory only, then exit")
+    print("  --no-regen-log      (Advanced) Use with --resume to skip regenerating the log and use the existing log file as-is")
     print("  --thread-count      Number of threads to use")
 
 if __name__ == "__main__":
@@ -91,10 +94,13 @@ if __name__ == "__main__":
     parser.add_argument("--thread-count", type=int, help="Number of threads to use")
     parser.add_argument("--dry_run", action="store_true", help="Perform a dry run (do not copy files)")
     parser.add_argument("--create_log", action="store_true", help="Create a log file from an existing run")
+    parser.add_argument("--resume", action="store_true", help="Resume a previous run, regenerating the log from the destination before resuming (default)")
+    parser.add_argument("--regen-log", action="store_true", help="Regenerate the log file from the destination directory only, then exit")
+    parser.add_argument("--no-regen-log", action="store_true", help="When used with --resume, skip regenerating the log and use the existing log file as-is (advanced)")
 
     args = parser.parse_args()
 
-
+    # Handle preflight
     if args.preflight:
         if not args.filedir or not args.dumpdir:
             print("\n❗ Please provide both --filedir (source) and --dumpdir (destination) for pre-flight check.\n")
@@ -103,6 +109,38 @@ if __name__ == "__main__":
         summary = preflight_summary(args.filedir, args.dumpdir)
         print_preflight_report(summary, args.filedir, args.dumpdir)
         sys.exit(0)
+
+    # Handle log regeneration only
+    if args.regen_log:
+        if not args.dumpdir or not args.log_file:
+            print("\n❗ Please provide both --dumpdir (destination) and --log_file for log regeneration.\n")
+            sys.exit(1)
+        print(f"Regenerating log file {args.log_file} from destination {args.dumpdir}...")
+        create_log_file_from_dir(args.dumpdir, args.log_file)
+        print("Log file regeneration complete.")
+        sys.exit(0)
+
+    # Handle resume (default: always regen log unless --no-regen-log is set)
+    if args.resume:
+        if not args.dumpdir or not args.log_file:
+            print("\n❗ Please provide both --dumpdir (destination) and --log_file for resume mode.\n")
+            sys.exit(1)
+        if not args.no_regen_log:
+            print(f"Regenerating log file {args.log_file} from destination {args.dumpdir} before resuming...")
+            create_log_file_from_dir(args.dumpdir, args.log_file)
+            print("Log file regeneration complete. Resuming copy process...")
+        else:
+            print("Skipping log regeneration (using existing log file as-is). Resuming copy process...")
+        # Load the log file into copied_files set
+        copied_files = set()
+        if os.path.exists(args.log_file):
+            with open(args.log_file, 'r') as f:
+                for line in f:
+                    copied_files.add(line.strip())
+        else:
+            print(f"No log file found at {args.log_file}, starting fresh.")
+
+    # ... (rest of the script remains the same)
 
 def findNextParent(fileID):
     """
@@ -265,20 +303,20 @@ def copy_file(root, file, skipnames, dumpdir, dry_run, log_file):
             skipped_files_counter.value += 1
         print(f'Progress: {progress:.2f}%')
                     
-def create_log_file(root_dir, log_file):
+def create_log_file_from_dir(root_dir, log_file):
     """
-    Creates a log file and writes the absolute paths of all files in the given root directory.
-    This is useful for creating a log file from an existing run where logging was not in place.
+    Regenerate the log file by scanning the destination directory and writing all found files to the log.
     Args:
-        root_dir (str): The root directory to start searching for files.
+        root_dir (str): The directory to scan (usually the destination/dumpdir).
         log_file (str): The path to the log file to be created.
-    Returns: None
     """
-    with open(log_file, 'w') as f:
+    tmp_log = log_file + ".tmp"
+    with open(tmp_log, 'w') as f:
         for root, dirs, files in os.walk(root_dir):
             for file in files:
                 file_path = os.path.join(root, file)
                 f.write(file_path + '\n')
+    os.replace(tmp_log, log_file)
 
 def get_dir_size(start_path='.'):
     """

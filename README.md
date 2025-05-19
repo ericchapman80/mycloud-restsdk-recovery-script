@@ -26,6 +26,38 @@ MyCloud devices don't use a simple, flat filesystem like other external drives, 
 **Solution:**
 This script reads the database and a dump of the filesystem and copies the data to another location with the correct filenames and structures. This script is intended for a Linux machine where you already have the file structure and database extracted. This won't work on Windows. I know it's ugly and inefficient, I am new to python. This is tested and working with **Python 3.6 on Linux**.
 
+---
+
+## 🚦 Resumable & Accurate Transfers
+
+This script is designed to be safely interrupted and resumed at any time, ensuring no files are duplicated or missed. It uses a log file (e.g., `copied_file.log`) to track files that have been successfully copied. This log is automatically regenerated from the destination directory at the start of a resume (unless you specify otherwise), ensuring the log always reflects the true state of the destination.
+
+### Key CLI Options
+- `--resume` : Resume a previous run. By default, regenerates the log file from the destination before resuming, ensuring accuracy.
+- `--regen-log` : Only regenerate the log file from the destination directory, then exit (no copying performed).
+- `--no-regen-log` : (Advanced) Use with `--resume` to skip regenerating the log and use the existing log file as-is.
+- `--log_file` : Path to the log file tracking copied files (required for resume/regenerate).
+
+### Usage Examples
+```sh
+# Resume a transfer (recommended: always up-to-date log)
+python restsdk_public.py --resume --dumpdir=/mnt/nfs-media --log_file=copied_file.log ...
+
+# Resume a transfer, but skip log regeneration (advanced)
+python restsdk_public.py --resume --no-regen-log --dumpdir=/mnt/nfs-media --log_file=copied_file.log ...
+
+# Only regenerate the log file (no file copying)
+python restsdk_public.py --regen-log --dumpdir=/mnt/nfs-media --log_file=copied_file.log
+```
+
+### How It Works
+- On `--resume`, the script scans the destination directory and rebuilds the log file before resuming, so the log always matches the actual files present.
+- The script always checks both the log and the destination before copying any file.
+- Files are only added to the log after a successful copy (atomic update).
+- You can safely interrupt and rerun the script as many times as needed.
+
+---
+
 **More:**
 Need more help than this script can offer? We offer affordable flat-rate data recovery at [our website](https://springfielddatarecovery.com)
 
