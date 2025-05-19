@@ -123,6 +123,7 @@ def insert_skipped_file(db_path, filename, reason):
 def regenerate_copied_files_from_dest(db_path, dumpdir, log_file):
     """
     Scan the destination directory, update copied_files table and regenerate log file.
+    Uses contentID for matching, as this is the on-disk filename.
     """
     tmp_log = log_file + ".tmp"
     conn = sqlite3.connect(db_path)
@@ -132,8 +133,8 @@ def regenerate_copied_files_from_dest(db_path, dumpdir, log_file):
             for file in files:
                 file_path = os.path.join(root, file)
                 f.write(file_path + '\n')
-                # Try to find file_id in DB for this file (by name or path as appropriate)
-                c.execute('SELECT id FROM FILES WHERE filename = ?', (file,))
+                # Match by contentID (on-disk filename)
+                c.execute('SELECT id FROM Files WHERE contentID = ?', (file,))
                 row = c.fetchone()
                 file_id = row[0] if row else None
                 if file_id:
@@ -196,9 +197,10 @@ if __name__ == "__main__":
         # Query files to process using SQL join
         conn = sqlite3.connect(args.db)
         c = conn.cursor()
-        c.execute('''SELECT f.* FROM FILES f
+        # Use contentID for all joins and filtering
+        c.execute('''SELECT f.* FROM Files f
                      LEFT JOIN copied_files c ON f.id = c.file_id
-                     LEFT JOIN skipped_files s ON f.filename = s.filename
+                     LEFT JOIN skipped_files s ON f.contentID = s.filename
                      WHERE c.file_id IS NULL AND s.filename IS NULL''')
         files_to_copy = c.fetchall()
         conn.close()
@@ -225,37 +227,38 @@ if __name__ == "__main__":
 
         # Process files
         for f in files_to_copy:
-            file_id = f[0]  # assuming id is first col
-            filename = f[1] # assuming filename is second col
+            file_id = f[0]  # id (TEXT)
+            name = f[1]     # name (original file name)
+            contentID = f[2] # contentID (on-disk filename)
             try:
-                if filename in already_copied_set:
+                if contentID in already_copied_set:
                     skipped_already += 1
-                    already_copied_files_list.append(filename)
-                    logging.info(f"Skipping already copied file: {filename}")
-                    print(f"[SKIP-ALREADY] {filename}")
-                elif filename in skipped_set:
+                    already_copied_files_list.append(contentID)
+                    logging.info(f"Skipping already copied file: {contentID}")
+                    print(f"[SKIP-ALREADY] {contentID}")
+                elif contentID in skipped_set:
                     skipped_problem += 1
-                    skipped_files_list.append(filename)
-                    logging.info(f"Skipping problem/skipped file: {filename}")
-                    print(f"[SKIP-PROBLEM] {filename}")
+                    skipped_files_list.append(contentID)
+                    logging.info(f"Skipping problem/skipped file: {contentID}")
+                    print(f"[SKIP-PROBLEM] {contentID}")
                 else:
                     if args.dry_run:
-                        print(f"[DRY RUN] Would copy: {filename}")
-                        logging.info(f"[DRY RUN] Would copy: {filename}")
+                        print(f"[DRY RUN] Would copy: {contentID}")
+                        logging.info(f"[DRY RUN] Would copy: {contentID}")
                         copied_this_run += 1
                     else:
                         # Actual copy logic goes here (not shown)
                         # After successful copy:
-                        insert_copied_file(args.db, file_id, filename)
+                        insert_copied_file(args.db, file_id, contentID)
                         copied_this_run += 1
-                        print(f"[COPIED] {filename}")
-                        logging.info(f"Copied: {filename}")
+                        print(f"[COPIED] {contentID}")
+                        logging.info(f"Copied: {contentID}")
                 processed += 1
             except Exception as e:
                 errored += 1
-                errored_files_list.append(filename)
-                logging.error(f"Error processing {filename}: {e}")
-                print(f"[ERROR] {filename}: {e}")
+                errored_files_list.append(contentID)
+                logging.error(f"Error processing {contentID}: {e}")
+                print(f"[ERROR] {contentID}: {e}")
 
         # End-of-run reconciliation summary
         conn = sqlite3.connect(args.db)
@@ -264,13 +267,13 @@ if __name__ == "__main__":
         copied_count = c.fetchone()[0]
         c.execute('SELECT COUNT(*) FROM skipped_files')
         skipped_count = c.fetchone()[0]
-        c.execute('SELECT COUNT(*) FROM FILES')
+        c.execute('SELECT COUNT(*) FROM Files')
         total_files = c.fetchone()[0]
         conn.close()
         dest_count = sum(len(files) for _, _, files in os.walk(args.dumpdir)) if args.dumpdir else 0
 
         print("\n===== SUMMARY =====")
-        print(f"Total files in source (FILES table): {total_files}")
+        print(f"Total files in source (Files table): {total_files}")
         print(f"Total files copied (copied_files table): {copied_count}")
         print(f"Total files skipped (skipped_files table): {skipped_count}")
         print(f"Total files in destination directory: {dest_count}")
