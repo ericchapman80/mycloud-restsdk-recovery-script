@@ -117,7 +117,8 @@ def insert_copied_file(db_path, file_id, filename):
 def insert_skipped_file(db_path, filename, reason):
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
-    c.execute('''INSERT OR IGNORE INTO skipped_files (filename, reason) VALUES (?, ?)''', (filename, reason))
+    # Always use TEXT for filename and reason
+    c.execute('''INSERT OR IGNORE INTO skipped_files (filename, reason) VALUES (?, ?)''', (str(filename), str(reason)))
     conn.commit()
     conn.close()
 
