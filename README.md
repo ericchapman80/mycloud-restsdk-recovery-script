@@ -118,7 +118,48 @@ SQLite database is stored in /restsdk/data/db/index.db. Inside the DB two main t
 
 **Why do I see "File not found in database" errors?**
 * Files may be missing from the database due to corruption or interrupted operations on the MyCloud device
-* The script searches for matches between filenames and ContentIDs, returning None when no match exists
+* The script searches for matches between on-disk filenames (`contentID` column) and database entries. If no match exists, the file is skipped and reported.
 * Some files in the filesystem dump may be temporary or system files without database entries
 * These unmatched files are reported but not counted in the percentage complete calculation
 
+**How is the database structured? What columns matter?**
+* The main table is typically called `Files`.
+* Key columns:
+  - `id`: The primary key for each file record.
+  - `contentID`: The unique identifier for the file as stored on disk (used for matching during recovery).
+  - `name`: The original human-readable file name.
+* The script uses `contentID` for matching files in the destination/source directory with database records.
+
+**How can I safely inspect or query the database?**
+> ⚠️ **Warning:** Always make a backup of your database before running queries that modify data. Read-only queries are generally safe, but proceed with caution.
+
+To inspect the schema or sample data, use the following commands:
+
+```sh
+# Start the SQLite shell
+sqlite3 index.db
+```
+
+```sql
+-- Show table names
+.tables
+
+-- Show the schema for the Files table
+.schema Files
+
+-- See a sample of file records
+SELECT id, name, contentID FROM Files LIMIT 10;
+
+-- Count all files
+SELECT COUNT(*) FROM Files;
+```
+
+**If you see errors about missing columns:**
+- Double-check the actual schema using `.schema Files`.
+- The script expects `contentID` to match on-disk filenames.
+- If your database uses different column names, adjust the script and queries accordingly.
+
+**Best Practices:**
+- Always work on a copy of your database when experimenting or debugging.
+- Never run destructive queries unless you are certain of their effect.
+- If in doubt, ask for help or clarification before proceeding.
