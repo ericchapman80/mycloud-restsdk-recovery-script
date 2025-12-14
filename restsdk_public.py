@@ -20,6 +20,7 @@ try:
     from preflight import preflight_summary, print_preflight_report
 except ImportError as e:
     print("❌ ERROR: Could not import preflight module. Make sure preflight.py is in the same directory.")
+    print("Tip: run `bash setup.sh` or `pip install -r requirements.txt` to install dependencies.")
     print(f"Details: {e}")
     sys.exit(1)
 
@@ -104,10 +105,10 @@ def init_copy_tracking_tables(db_path):
         mtime_refreshed INTEGER DEFAULT 0
     )''')
     # Safe ALTER in case table already exists without the new column
-    try:
+    c.execute("PRAGMA table_info(copied_files)")
+    cols = {row[1] for row in c.fetchall()}
+    if "mtime_refreshed" not in cols:
         c.execute("ALTER TABLE copied_files ADD COLUMN mtime_refreshed INTEGER DEFAULT 0")
-    except sqlite3.OperationalError:
-        pass
     c.execute('''CREATE TABLE IF NOT EXISTS skipped_files (
         filename TEXT PRIMARY KEY,
         reason TEXT,
@@ -649,6 +650,14 @@ if __name__ == "__main__":
                         )
                         if ts:
                             os.utime(dest_path, (ts / 1000, ts / 1000))
+                            try:
+                                conn = sqlite3.connect(db)
+                                cur = conn.cursor()
+                                cur.execute("UPDATE copied_files SET mtime_refreshed=1 WHERE file_id=?", (file_id,))
+                                conn.commit()
+                                conn.close()
+                            except sqlite3.Error:
+                                pass
                     return ("skipped_already", content_id)
                 shutil.copy2(src_path, dest_path)
                 if args.preserve_mtime:
