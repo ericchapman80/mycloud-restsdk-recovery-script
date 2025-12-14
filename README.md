@@ -66,17 +66,16 @@ python restsdk_public.py --resume --dumpdir=/mnt/nfs-media --log_file=copied_fil
 
 ## 🗄️ SQL Migration & Integration Points
 
-To enable hybrid log + database resumable logic, add the following tables to your SQLite database:
+To enable hybrid log + database resumable logic, add the following tables to your SQLite database (the script will create them if missing):
 
 ```sql
--- Table for tracking copied files
 CREATE TABLE IF NOT EXISTS copied_files (
-    file_id INTEGER PRIMARY KEY,
+    file_id TEXT PRIMARY KEY,
     filename TEXT,
-    copied_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    copied_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    mtime_refreshed INTEGER DEFAULT 0
 );
 
--- Table for tracking skipped/problem files
 CREATE TABLE IF NOT EXISTS skipped_files (
     filename TEXT PRIMARY KEY,
     reason TEXT,
@@ -88,16 +87,16 @@ CREATE TABLE IF NOT EXISTS skipped_files (
 
 ```sql
 SELECT f.*
-FROM FILES f
+FROM Files f
 LEFT JOIN copied_files c ON f.id = c.file_id
-LEFT JOIN skipped_files s ON f.filename = s.filename
+LEFT JOIN skipped_files s ON f.contentID = s.filename
 WHERE c.file_id IS NULL AND s.filename IS NULL;
 ```
 - This query returns only files that have not been copied and are not permanently skipped.
 
 ### Integration Points in Script
 - On `--resume` or `--create-log`, scan the destination and update both `copied_file.log` and the `copied_files` table.
-- After each successful copy, insert into `copied_files` and append to the log.
+- After each successful copy, insert into `copied_files` and append to the log; `mtime_refreshed` is set when mtimes are refreshed on existing files.
 - For skipped/problem files, insert into `skipped_files`.
 - Always filter files to process using the SQL join above, not by loading all copied/skipped files into memory.
 
