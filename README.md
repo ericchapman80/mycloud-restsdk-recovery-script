@@ -32,6 +32,21 @@ This script reads the database and a dump of the filesystem and copies the data 
 
 This script is designed to be safely interrupted and resumed at any time, ensuring no files are duplicated or missed. It uses a log file (e.g., `copied_file.log`) to track files that have been successfully copied. This log is automatically regenerated from the destination directory at the start of a resume (unless you specify otherwise), ensuring the log always reflects the true state of the destination.
 
+## 🧭 Preflight Checks (optional)
+There are two quick utilities to sanity-check hardware, filesystems, and filenames before a long copy:
+
+- `preflight.py` (used by `restsdk_public.py --preflight`): collects CPU/RAM, disk free space and I/O speed (writes/reads a temp file on the destination), file stats (counts/sizes and how many filenames contain `|`), estimates duration, suggests thread count, and warns if your destination filesystem (NTFS/FAT/SMB, etc.) may reject `|` in filenames—suggesting `--sanitize-pipes` when needed.
+- `preflight_check.py`: a standalone CLI (not wired into the main script) that prints similar hardware/disk info and a duration estimate. Run it directly if you want a lightweight, separate report.
+
+How to run:
+```sh
+# Recommended: integrated preflight via the main CLI
+python restsdk_public.py --preflight --filedir /path/to/source --dumpdir /path/to/dest
+
+# Standalone preflight_check
+python preflight_check.py --source /path/to/source --dest /path/to/dest
+```
+
 ### Key CLI Options
 - `--resume` : Resume a previous run. By default, regenerates the log file from the destination before resuming, ensuring accuracy.
 - `--regen-log` : Only regenerate the log file from the destination directory, then exit (no copying performed).
@@ -40,6 +55,7 @@ This script is designed to be safely interrupted and resumed at any time, ensuri
 - `--preserve-mtime` / `--no-preserve-mtime` : Enabled by default. Controls whether destination mtime is set from DB timestamps (imageDate/videoDate/cTime/birthTime) so restored photos sort by original capture time.
 - `--thread-count` : Number of threads to use (defaults to CPU count).
 - `--refresh-mtime-existing` : If the destination file already exists, refresh its mtime from DB timestamps without recopying the data.
+- `--sanitize-pipes` : Replace `|` with `-` in destination paths; use for Windows/NTFS/FAT/SMB targets that reject the pipe character.
 - `--io-buffer-size` : Optional buffer size in bytes for manual buffered copies (default 0 uses `shutil.copy2`); use only if you need to tune NAS/disk throughput.
 - `--io-max-concurrency` : Optional semaphore cap for concurrent disk I/O (default 0 = no cap); useful to limit I/O pressure on spinning disks/NAS.
 
@@ -47,6 +63,10 @@ This script is designed to be safely interrupted and resumed at any time, ensuri
 - If your NAS/spinning disk thrashes with many threads, set `--io-max-concurrency` to a small number (e.g., 4–8) to limit concurrent copies.
 - If you want to experiment with larger copy chunks, set `--io-buffer-size` (e.g., 4_194_304 for 4MB, 16_777_216 for 16MB). Leave it at 0 to stick with `shutil.copy2` (default and safest).
 - Defaults require no tuning; only change these if you have measured slowdowns or want to test throughput improvements.
+
+### When to use `--sanitize-pipes`
+- Needed for destinations that disallow `|` in filenames (Windows NTFS/FAT and many SMB shares backed by those filesystems).
+- Leave it off for Linux/macOS/EXT4/APFS targets to preserve exact names from the database.
 
 ### Usage Examples
 ```sh

@@ -8,6 +8,10 @@ import pprint
 import sqlite3
 import sys
 import time
+try:
+    import psutil
+except ImportError:
+    psutil = None
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Lock, Value
 from shutil import copyfile
@@ -86,6 +90,31 @@ def print_help():
     print("  --thread-count        Number of threads to use")
     print("  --log_level {DEBUG,INFO,WARNING}  Logging level (default INFO)")
     print("  --preserve-mtime      After copy, set destination mtime from DB timestamps (imageDate/videoDate/cTime/birthTime)")
+    print("  --refresh-mtime-existing  Refresh mtime on existing dest files without recopying when preserve-mtime is on")
+    print("  --sanitize-pipes      Replace '|' with '-' in destination paths (use for Windows/NTFS/SMB targets)")
+    print("  --io-buffer-size      Optional I/O buffer size in bytes for file copies (default: use shutil.copy2 defaults)")
+    print("  --io-max-concurrency  Optional max concurrent disk operations (semaphore). 0 disables limiting")
+
+PIPE_FS_TAGS = ("ntfs", "vfat", "fat", "msdos", "exfat", "cifs", "smb")
+
+def detect_fs_type(path):
+    """Best-effort detection of filesystem type for a path."""
+    if not psutil:
+        return (None, None)
+    target = os.path.abspath(path)
+    best = (None, None, -1)
+    for part in psutil.disk_partitions(all=True):
+        mp = part.mountpoint
+        if target == mp or target.startswith(mp.rstrip(os.sep) + os.sep):
+            if len(mp) > best[2]:
+                best = (part.fstype, mp, len(mp))
+    return (best[0], best[1])
+
+def is_pipe_sensitive_fs(fstype):
+    if not fstype:
+        return False
+    fs = fstype.lower()
+    return any(tag in fs for tag in PIPE_FS_TAGS)
 
 # --- SQL DDL/DML and Hybrid Copy Logic ---
 import sqlite3
@@ -260,6 +289,8 @@ def copy_file(root, file, skipnames, dumpdir, dry_run, log_file, disk_semaphore=
             newpath = fullpath.replace(paths, '')
         if newpath is not None:
             newpath = os.path.join(dumpdir, newpath.lstrip(os.sep))
+            if args.sanitize_pipes:
+                newpath = newpath.replace("|", "-")
         fullpath = str(os.path.join(root, file))
 
         if newpath in copied_files:
@@ -455,6 +486,11 @@ if __name__ == "__main__":
         default=0,
         help="Optional max concurrent disk operations (semaphore). 0 disables limiting.",
     )
+    parser.add_argument(
+        "--sanitize-pipes",
+        action="store_true",
+        help="Replace '|' with '-' in destination paths; useful for Windows/NTFS/FAT/SMB targets that disallow pipe characters.",
+    )
     args = parser.parse_args()
 
     logging.getLogger().setLevel(getattr(logging, args.log_level))
@@ -469,6 +505,11 @@ if __name__ == "__main__":
             sys.exit(1)
         summary = preflight_summary(args.filedir, args.dumpdir)
         print_preflight_report(summary, args.filedir, args.dumpdir)
+        if psutil:
+            dest_fs, dest_mp = detect_fs_type(args.dumpdir)
+            if is_pipe_sensitive_fs(dest_fs):
+                print(f"\n⚠️  Destination filesystem appears to be {dest_fs} ({dest_mp}); it may reject '|' in filenames.")
+                print("    Consider adding --sanitize-pipes if you see errors copying to this destination.")
         sys.exit(0)
 
     if args.regen_log or args.create_log:
@@ -526,6 +567,17 @@ if __name__ == "__main__":
         }
         for file in files
     }
+
+    # Warn early if destination filesystem likely rejects pipe characters
+    pipe_in_db = any("|" in meta["Name"] for meta in fileDIC.values())
+    dest_fs, dest_mp = detect_fs_type(dumpdir) if psutil else (None, None)
+    if pipe_in_db and is_pipe_sensitive_fs(dest_fs) and not args.sanitize_pipes:
+        msg = f"Destination filesystem appears to be {dest_fs} ({dest_mp}); it may reject '|' in filenames. Consider --sanitize-pipes."
+        print(f"⚠️  {msg}")
+        logging.warning(msg)
+    elif pipe_in_db and args.sanitize_pipes and dest_fs:
+        logging.info(f"Sanitizing '|' to '-' for destination filesystem type {dest_fs} ({dest_mp}).")
+
     skipnames = [filedir]
     root_dir_name = getRootDirs()
     if root_dir_name:
@@ -666,7 +718,8 @@ if __name__ == "__main__":
                 rel_path = idToPath2(file_id)
                 for skip in skipnames:
                     rel_path = rel_path.replace(skip, "")
-                rel_path = rel_path.replace("|", "-")
+                if args.sanitize_pipes:
+                    rel_path = rel_path.replace("|", "-")
                 dest_path = os.path.join(dumpdir, rel_path)
                 src_path = os.path.join(filedir, content_id)
                 os.makedirs(os.path.dirname(dest_path), exist_ok=True)

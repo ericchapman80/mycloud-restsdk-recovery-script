@@ -6,6 +6,8 @@ import socket
 import time
 from pathlib import Path
 
+PIPE_FS_TAGS = ("ntfs", "vfat", "fat", "msdos", "exfat", "cifs", "smb")
+
 def get_cpu_info():
     cpu_count = os.cpu_count()
     cpu_freq = psutil.cpu_freq()
@@ -27,12 +29,21 @@ def get_memory_info():
 
 def get_disk_info(path):
     usage = psutil.disk_usage(path)
+    fstype = None
+    best = (None, -1)
+    for part in psutil.disk_partitions(all=True):
+        mp = part.mountpoint
+        if path == mp or path.startswith(mp.rstrip(os.sep) + os.sep):
+            if len(mp) > best[1]:
+                best = (part, len(mp))
+    if best[0]:
+        fstype = best[0].fstype
     return {
         'total': usage.total,
         'used': usage.used,
         'free': usage.free,
         'percent': usage.percent,
-        'filesystem': platform.system() == 'Windows' and os.path.splitdrive(path)[0] or shutil.disk_usage(path),
+        'filesystem': fstype,
     }
 
 def get_network_info():
@@ -73,11 +84,14 @@ def get_file_stats(directory):
     small = 0
     medium = 0
     large = 0
+    pipe_names = 0
     for root, _, files in os.walk(directory):
         for file in files:
             try:
                 fp = os.path.join(root, file)
                 size = os.path.getsize(fp)
+                if "|" in file:
+                    pipe_names += 1
                 total_files += 1
                 total_size += size
                 if size < 1 * 1024 * 1024:
@@ -94,6 +108,7 @@ def get_file_stats(directory):
         'small_files': small,
         'medium_files': medium,
         'large_files': large,
+        'pipe_names': pipe_names,
     }
 
 def estimate_duration(total_size_gb, min_MBps):
@@ -136,16 +151,20 @@ def print_preflight_report(summary, source, dest):
     print("\n🚀  ===== Pre-flight Hardware & File System Check ===== 🚀\n")
     cpu = summary['cpu']
     mem = summary['memory']
+    dest_fs = summary['disk_dst'].get('filesystem')
     print(f"🖥️  CPU: {cpu['cpu_model']} | Cores: {cpu['cpu_count']} | Freq: {cpu['cpu_freq']} MHz")
     print(f"💾 RAM: {mem['total'] // (1024**3)} GB total | {mem['available'] // (1024**3)} GB available")
     print(f"📂 Source: {source}")
     print(f"  - Size: {summary['file_stats']['total_size_GB']:.2f} GB | Files: {summary['file_stats']['total_files']}")
+    print(f"  - Filenames containing '|': {summary['file_stats']['pipe_names']}")
     print(f"  - Small: {summary['file_stats']['small_files']} | Medium: {summary['file_stats']['medium_files']} | Large: {summary['file_stats']['large_files']}")
     print(f"💽 Dest: {dest}")
-    print(f"  - Free: {summary['disk_dst']['free'] // (1024**3)} GB | Total: {summary['disk_dst']['total'] // (1024**3)} GB")
+    print(f"  - Free: {summary['disk_dst']['free'] // (1024**3)} GB | Total: {summary['disk_dst']['total'] // (1024**3)} GB | FS: {dest_fs}")
     print(f"⚡ Disk Speed (dest): Write: {summary['disk_speed']['write_MBps']:.1f} MB/s | Read: {summary['disk_speed']['read_MBps']:.1f} MB/s")
     print(f"⏱️  Estimated Duration: {summary['est_min']:.1f} minutes (best case)")
     print(f"🔢 Recommended Threads: {summary['thread_count']}")
+    if summary['file_stats']['pipe_names'] > 0 and dest_fs and any(tag in dest_fs.lower() for tag in PIPE_FS_TAGS):
+        print("\n⚠️  Destination filesystem may reject '|' in filenames. Consider using --sanitize-pipes.")
     print("\n✨ Recommended Command:")
     cmd = f"python restsdk_public.py --db <path/to/index.db> --filedir {source} --dumpdir {dest} --log_file <path/to/logfile.log> --thread-count {summary['thread_count']}"
     print(f"\n📝 {cmd}\n")
