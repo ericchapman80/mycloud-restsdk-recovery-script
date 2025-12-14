@@ -223,12 +223,15 @@ def idToPath2(fileID):
 
 def filenameToID(filename):
     """
-    Search the data dictionary for an contentID that matches a corresponding filename from the filesystem return the identity key.
+    Return the DB id for a given filesystem filename.
+    Tries contentID first, then falls back to Name (for DBs where contentID != filename).
     Parameters: filename (str): The name of the file to search for.
     Returns: str or None: The key corresponding to the filename if found, or None if not found.
     """
     for keys, values in fileDIC.items():
         if values['contentID'] == filename:
+            return str(keys)
+        if values['Name'] == filename:
             return str(keys)
     return None
 
@@ -308,12 +311,12 @@ def copy_file(root, file, skipnames, dumpdir, dry_run, log_file):
                 try:
                     os.makedirs(os.path.dirname(newpath), exist_ok=True)
                     shutil.copy2(fullpath, newpath)
-                        if args.preserve_mtime:
-                            meta = fileDIC.get(fileID, {})
-                            ts = next(
-                                (
-                                    t
-                                    for t in [
+                    if args.preserve_mtime:
+                        meta = fileDIC.get(fileID, {})
+                        ts = next(
+                            (
+                                t
+                                for t in [
                                     meta.get("imageDate"),
                                     meta.get("videoDate"),
                                     meta.get("cTime"),
@@ -323,16 +326,16 @@ def copy_file(root, file, skipnames, dumpdir, dry_run, log_file):
                             ),
                             None,
                         )
-                            if ts:
-                                os.utime(newpath, (ts / 1000, ts / 1000))
-                                try:
-                                    conn = sqlite3.connect(db)
-                                    cur = conn.cursor()
-                                    cur.execute("UPDATE copied_files SET mtime_refreshed=1 WHERE file_id=?", (fileID,))
-                                    conn.commit()
-                                    conn.close()
-                                except sqlite3.Error:
-                                    pass
+                        if ts:
+                            os.utime(newpath, (ts / 1000, ts / 1000))
+                            try:
+                                conn = sqlite3.connect(db)
+                                cur = conn.cursor()
+                                cur.execute("UPDATE copied_files SET mtime_refreshed=1 WHERE file_id=?", (fileID,))
+                                conn.commit()
+                                conn.close()
+                            except sqlite3.Error:
+                                pass
                     with processed_files_counter.get_lock():
                         processed_files_counter.value += 1
                     progress = (processed_files_counter.value / total_files) * 100
