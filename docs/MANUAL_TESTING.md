@@ -37,5 +37,5 @@ Notes
 Performance sanity (optional)
 - Set an env var to control perf test size, then run pytest:
   - `export PERF_TEST_ROWS=20000` (for example)
-  - `python -m pytest tests/test_perf_regen_log.py`
+  - `python -m pytest -m perf`
 - On success you should see the perf test run; unset the env var to skip it.

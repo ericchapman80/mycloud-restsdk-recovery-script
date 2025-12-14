@@ -29,6 +29,7 @@ def seed_db(db_path: Path, rows: int):
     conn.close()
 
 
+@pytest.mark.perf
 @pytest.mark.skipif(os.environ.get("PERF_TEST_ROWS") is None, reason="Set PERF_TEST_ROWS to enable perf test")
 def test_regen_log_perf(tmp_path, perf_row_count):
     rows = perf_row_count
