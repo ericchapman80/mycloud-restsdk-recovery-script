@@ -40,6 +40,13 @@ This script is designed to be safely interrupted and resumed at any time, ensuri
 - `--preserve-mtime` / `--no-preserve-mtime` : Enabled by default. Controls whether destination mtime is set from DB timestamps (imageDate/videoDate/cTime/birthTime) so restored photos sort by original capture time.
 - `--thread-count` : Number of threads to use (defaults to CPU count).
 - `--refresh-mtime-existing` : If the destination file already exists, refresh its mtime from DB timestamps without recopying the data.
+- `--io-buffer-size` : Optional buffer size in bytes for manual buffered copies (default 0 uses `shutil.copy2`); use only if you need to tune NAS/disk throughput.
+- `--io-max-concurrency` : Optional semaphore cap for concurrent disk I/O (default 0 = no cap); useful to limit I/O pressure on spinning disks/NAS.
+
+### When to use the I/O tuning flags
+- If your NAS/spinning disk thrashes with many threads, set `--io-max-concurrency` to a small number (e.g., 4–8) to limit concurrent copies.
+- If you want to experiment with larger copy chunks, set `--io-buffer-size` (e.g., 4_194_304 for 4MB, 16_777_216 for 16MB). Leave it at 0 to stick with `shutil.copy2` (default and safest).
+- Defaults require no tuning; only change these if you have measured slowdowns or want to test throughput improvements.
 
 ### Usage Examples
 ```sh

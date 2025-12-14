@@ -246,7 +246,7 @@ def getRootDirs():
         if 'auth' in values['Name'] and '|' in values['Name']:
             return str(values['Name'])
         
-def copy_file(root, file, skipnames, dumpdir, dry_run, log_file):
+def copy_file(root, file, skipnames, dumpdir, dry_run, log_file, disk_semaphore=None, io_buffer_size=0):
     filename = str(file)
     print('FOUND FILE ' + filename + ' SEARCHING......', end="\n")
     print('Processing ' + str(processed_files_counter.value) + ' of ' + str(total_files) + ' files', end="\n")
@@ -311,7 +311,27 @@ def copy_file(root, file, skipnames, dumpdir, dry_run, log_file):
                 print('Copying ' + newpath)
                 try:
                     os.makedirs(os.path.dirname(newpath), exist_ok=True)
-                    shutil.copy2(fullpath, newpath)
+                    if disk_semaphore:
+                        with disk_semaphore:
+                            if io_buffer_size and io_buffer_size > 0:
+                                with open(fullpath, "rb") as fsrc, open(newpath, "wb") as fdst:
+                                    while True:
+                                        buf = fsrc.read(io_buffer_size)
+                                        if not buf:
+                                            break
+                                        fdst.write(buf)
+                            else:
+                                shutil.copy2(fullpath, newpath)
+                    else:
+                        if io_buffer_size and io_buffer_size > 0:
+                            with open(fullpath, "rb") as fsrc, open(newpath, "wb") as fdst:
+                                while True:
+                                    buf = fsrc.read(io_buffer_size)
+                                    if not buf:
+                                        break
+                                    fdst.write(buf)
+                        else:
+                            shutil.copy2(fullpath, newpath)
                     if args.preserve_mtime:
                         meta = fileDIC.get(fileID, {})
                         ts = next(
@@ -422,6 +442,18 @@ if __name__ == "__main__":
         "--refresh-mtime-existing",
         action="store_true",
         help="If destination file already exists, refresh its mtime from DB timestamps without recopying.",
+    )
+    parser.add_argument(
+        "--io-buffer-size",
+        type=int,
+        default=0,
+        help="Optional I/O buffer size in bytes for file copies (default: use shutil.copy2 defaults).",
+    )
+    parser.add_argument(
+        "--io-max-concurrency",
+        type=int,
+        default=0,
+        help="Optional max concurrent disk operations (semaphore). 0 disables limiting.",
     )
     args = parser.parse_args()
 
