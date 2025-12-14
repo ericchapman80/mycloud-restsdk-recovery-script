@@ -240,6 +240,7 @@ def test_refresh_mtime_existing(tmp_path, monkeypatch):
     class Args:
         preserve_mtime = True
         refresh_mtime_existing = True
+        sanitize_pipes = False
     restsdk_public.args = Args()
 
     before_mtime = dest_file.stat().st_mtime
