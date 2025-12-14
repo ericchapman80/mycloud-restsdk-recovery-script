@@ -37,6 +37,9 @@ This script is designed to be safely interrupted and resumed at any time, ensuri
 - `--regen-log` : Only regenerate the log file from the destination directory, then exit (no copying performed).
 - `--no-regen-log` : (Advanced) Use with `--resume` to skip regenerating the log and use the existing log file as-is.
 - `--log_file` : Path to the log file tracking copied files (required for resume/regenerate).
+- `--preserve-mtime` / `--no-preserve-mtime` : Enabled by default. Controls whether destination mtime is set from DB timestamps (imageDate/videoDate/cTime/birthTime) so restored photos sort by original capture time.
+- `--thread-count` : Number of threads to use (defaults to CPU count).
+- `--refresh-mtime-existing` : If the destination file already exists, refresh its mtime from DB timestamps without recopying the data.
 
 ### Usage Examples
 ```sh
@@ -48,6 +51,9 @@ python restsdk_public.py --resume --no-regen-log --dumpdir=/mnt/nfs-media --log_
 
 # Only regenerate the log file (no file copying)
 python restsdk_public.py --regen-log --dumpdir=/mnt/nfs-media --log_file=copied_file.log
+
+# Preserve original mtimes on destination (default on; disable with --no-preserve-mtime)
+python restsdk_public.py --resume --dumpdir=/mnt/nfs-media --log_file=copied_file.log ...
 ```
 
 ### How It Works
