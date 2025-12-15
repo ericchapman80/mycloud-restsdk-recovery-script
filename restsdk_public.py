@@ -265,6 +265,22 @@ def filenameToID(filename):
             return str(keys)
     return None
 
+def resolve_src_path(base_dir, cid):
+    """
+    Return the most likely source path for a contentID, trying flat and
+    first-character subdir layouts common on MyCloud dumps.
+    """
+    candidates = []
+    if cid:
+        candidates.append(os.path.join(base_dir, cid))
+        candidates.append(os.path.join(base_dir, cid[0], cid))
+    else:
+        candidates.append(base_dir)
+    for cand in candidates:
+        if os.path.exists(cand):
+            return cand
+    return candidates[0]
+
 def getRootDirs():
     """
     Returns the name of the root directory that contains the 'auth' folder with a '|' character in its name.
@@ -710,6 +726,19 @@ if __name__ == "__main__":
 
         results = {"copied": 0, "skipped_already": 0, "skipped_problem": 0, "errored": 0, "dry_run": 0}
 
+        def resolve_src_path(base_dir, cid):
+            """Return the most likely source path for a contentID, trying flat and first-char subdir layouts."""
+            candidates = []
+            if cid:
+                candidates.append(os.path.join(base_dir, cid))
+                candidates.append(os.path.join(base_dir, cid[0], cid))
+            else:
+                candidates.append(base_dir)
+            for cand in candidates:
+                if os.path.exists(cand):
+                    return cand
+            return candidates[0]
+
         def copy_worker(file_row):
             file_id, content_id, name, image_date, video_date, c_time, birth_time = file_row
             try:
@@ -727,7 +756,12 @@ if __name__ == "__main__":
                 if args.sanitize_pipes:
                     rel_path = rel_path.replace("|", "-")
                 dest_path = os.path.join(dumpdir, rel_path)
-                src_path = os.path.join(filedir, content_id)
+                src_path = resolve_src_path(filedir, content_id)
+                if not os.path.exists(src_path):
+                    msg = f"Source missing: {src_path}"
+                    print(f"[ERROR] {msg}")
+                    logging.error(msg)
+                    return ("skipped_problem", content_id)
                 os.makedirs(os.path.dirname(dest_path), exist_ok=True)
                 if os.path.exists(dest_path) and args.refresh_mtime_existing:
                     if args.preserve_mtime:

@@ -11,6 +11,7 @@ from restsdk_public import (
     insert_copied_file,
     insert_skipped_file,
     regenerate_copied_files_from_dest,
+    resolve_src_path,
 )
 
 
@@ -251,3 +252,20 @@ def test_refresh_mtime_existing(tmp_path, monkeypatch):
     assert int(after_mtime) == 1_600_000_000
     # counters should reflect skip path
     assert restsdk_public.skipped_files_counter.value == 1
+
+
+def test_resolve_src_path_flat(tmp_path):
+    base = tmp_path / "files"
+    base.mkdir()
+    cid = "abcdef"
+    (base / cid).write_text("data")
+    assert resolve_src_path(str(base), cid) == str(base / cid)
+
+
+def test_resolve_src_path_lettered(tmp_path):
+    base = tmp_path / "files"
+    sub = base / "a"
+    sub.mkdir(parents=True)
+    cid = "abcdef"
+    (sub / cid).write_text("data")
+    assert resolve_src_path(str(base), cid) == str(sub / cid)
