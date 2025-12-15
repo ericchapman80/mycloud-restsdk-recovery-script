@@ -265,22 +265,6 @@ def filenameToID(filename):
             return str(keys)
     return None
 
-def resolve_src_path(base_dir, cid):
-    """
-    Return the most likely source path for a contentID, trying flat and
-    first-character subdir layouts common on MyCloud dumps.
-    """
-    candidates = []
-    if cid:
-        candidates.append(os.path.join(base_dir, cid))
-        candidates.append(os.path.join(base_dir, cid[0], cid))
-    else:
-        candidates.append(base_dir)
-    for cand in candidates:
-        if os.path.exists(cand):
-            return cand
-    return candidates[0]
-
 def getRootDirs():
     """
     Returns the name of the root directory that contains the 'auth' folder with a '|' character in its name.
@@ -461,10 +445,32 @@ def get_dir_size(start_path='.'):
 
     return total_size
 
+def count_files(start_path='.'):
+    """Count files recursively under start_path."""
+    total = 0
+    for _, _, filenames in os.walk(start_path):
+        total += len(filenames)
+    return total
+
 if __name__ == "__main__":
 
     start_time = time.time()
     logging.info(f"Start time: {time.ctime(start_time)}")
+    run_start = start_time
+
+    def format_duration(seconds):
+        mins, secs = divmod(int(seconds), 60)
+        hrs, mins = divmod(mins, 60)
+        days, hrs = divmod(hrs, 24)
+        parts = []
+        if days:
+            parts.append(f"{days}d")
+        if hrs:
+            parts.append(f"{hrs}h")
+        if mins:
+            parts.append(f"{mins}m")
+        parts.append(f"{secs}s")
+        return " ".join(parts)
 
     parser = argparse.ArgumentParser(description="WD MyCloud REST SDK Recovery Tool")
     parser.add_argument("--preflight", action="store_true", help="Run pre-flight hardware/file check and print recommendations")
@@ -668,6 +674,7 @@ if __name__ == "__main__":
         print(f"The number of threads used in this run is {thread_count}")
 
         print("\nReconciliation Summary:")
+        dest_count = count_files(dumpdir)
         summary_data = [
             ("The size of the source directory", f"{filedir_size:.2f} GB"),
             ("The size of the destination directory", f"{dumpdir_size:.2f} GB"),
@@ -678,11 +685,21 @@ if __name__ == "__main__":
             ("Total files copied", copied_files_counter.value),
             ("Total files skipped", skipped_files_counter.value),
             ("Total files in the source directory", total_files),
-            ("Total files in the destination directory", len(os.listdir(dumpdir))),
+            ("Total files in the destination directory (recursive)", dest_count),
         ]
         for label, value in summary_data:
             print(f"{label}: {value}")
             logging.info(f"{label}: {value}")
+
+        elapsed = time.time() - run_start
+        elapsed_str = format_duration(elapsed)
+        files_per_sec = processed_files_counter.value / elapsed if elapsed > 0 else 0
+        print(f"Elapsed time: {elapsed_str} ({files_per_sec:.2f} files/sec)")
+        logging.info(f"Elapsed time: {elapsed_str} ({files_per_sec:.2f} files/sec)")
+        print(f"Started at: {time.ctime(run_start)}")
+        print(f"Finished at: {time.ctime(run_start + elapsed)}")
+        logging.info(f"Started at: {time.ctime(run_start)}")
+        logging.info(f"Finished at: {time.ctime(run_start + elapsed)}")
 
         if processed_files_counter.value != total_files:
             print("Warning: Not all files were processed. Check for errors or incomplete runs.")
@@ -725,19 +742,6 @@ if __name__ == "__main__":
         logging.info(f"Files to process: {len(files_to_copy)}")
 
         results = {"copied": 0, "skipped_already": 0, "skipped_problem": 0, "errored": 0, "dry_run": 0}
-
-        def resolve_src_path(base_dir, cid):
-            """Return the most likely source path for a contentID, trying flat and first-char subdir layouts."""
-            candidates = []
-            if cid:
-                candidates.append(os.path.join(base_dir, cid))
-                candidates.append(os.path.join(base_dir, cid[0], cid))
-            else:
-                candidates.append(base_dir)
-            for cand in candidates:
-                if os.path.exists(cand):
-                    return cand
-            return candidates[0]
 
         def copy_worker(file_row):
             file_id, content_id, name, image_date, video_date, c_time, birth_time = file_row
@@ -831,6 +835,14 @@ if __name__ == "__main__":
         print(f"Skipped (problem/skipped): {results['skipped_problem']}")
         print(f"Errored: {results['errored']}")
         print(f"Processed: {sum(results.values())}")
+        print(f"Started at: {time.ctime(run_start)}")
+        elapsed = time.time() - run_start
+        elapsed_str = format_duration(elapsed)
+        files_per_sec = sum(results.values()) / elapsed if elapsed > 0 else 0
+        print(f"Elapsed time: {elapsed_str} ({files_per_sec:.2f} files/sec)")
+        logging.info(f"Elapsed time: {elapsed_str} ({files_per_sec:.2f} files/sec)")
+        logging.info(f"Started at: {time.ctime(run_start)}")
+        logging.info(f"Finished at: {time.ctime(run_start + elapsed)}")
 
     if args.resume:
         run_resume_copy()
