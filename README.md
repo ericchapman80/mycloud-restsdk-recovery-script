@@ -91,6 +91,17 @@ python restsdk_public.py --resume --dumpdir=/mnt/nfs-media --log_file=copied_fil
 
 ---
 
+## 🧭 Preflight Check (optional)
+Use the integrated preflight to sanity-check hardware, filesystems, and filenames before a long copy. It collects CPU/RAM, disk free space and I/O speed (writes/reads a temp file on the destination), file stats (counts/sizes and how many filenames contain `|`), estimates duration, suggests thread count, and warns if your destination filesystem (NTFS/FAT/SMB, etc.) may reject `|` in filenames—suggesting `--sanitize-pipes` when needed.
+
+How to run:
+```sh
+python restsdk_public.py --preflight --filedir /path/to/source --dumpdir /path/to/dest
+# Optional: include --db /path/to/index.db to auto-verify/create copy-tracking tables (copied_files/skipped_files)
+```
+
+---
+
 ## 🗄️ SQL Migration & Integration Points
 
 To enable hybrid log + database resumable logic, add the following tables to your SQLite database (the script will create them if missing):

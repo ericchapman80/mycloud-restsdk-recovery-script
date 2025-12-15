@@ -503,6 +503,12 @@ if __name__ == "__main__":
             print("\n❗ Please provide both --filedir (source) and --dumpdir (destination) for pre-flight check.\n")
             print_help()
             sys.exit(1)
+        if args.db:
+            try:
+                init_copy_tracking_tables(args.db)
+                print(f"✅ Verified copy tracking tables in {args.db}")
+            except sqlite3.Error as e:
+                print(f"⚠️  Could not verify copy tracking tables in {args.db}: {e}")
         summary = preflight_summary(args.filedir, args.dumpdir)
         print_preflight_report(summary, args.filedir, args.dumpdir)
         if psutil:
