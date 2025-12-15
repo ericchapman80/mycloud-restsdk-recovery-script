@@ -56,11 +56,8 @@
         - Edge cases (missing/moved files) are handled by direct scanning and reconciliation.
 
 ## 7. Review Performance PR ⏳ **To Do**
-- **User Story:** As a developer, I want to review and incorporate suggestions from the open PR regarding performance improvements, ensuring best practices and code quality.  The requested changes are on this branch: https://github.com/ericchapman80/mycloud-restsdk-recovery-script/tree/devin/1747514727-optimize-file-copy
-    - **Implementation Approach:**
-        - Review changes in the PR for performance, correctness, and maintainability.
-        - Compare PR branch performance to the current main branch.
-        - Integrate the best changes, refactor as needed, and update documentation.
+- **User Story:** As a developer, I want to keep an eye on external perf ideas, but the old `devin/1747514727-optimize-file-copy` branch is not being merged (it regresses current features). If new perf work appears, review it selectively and only pull in the good pieces (e.g., optional I/O knobs already covered).
+    - **Implementation Approach:** Periodically re-evaluate external proposals; we already added optional `--io-buffer-size` and `--io-max-concurrency`, and preserved fidelity by default.
 
 ## 8. Task List Maintenance ✅ **Complete**
 - **User Story:** As a developer, I want this list of improvement and optimization tasks to be tracked in the repo, so that progress can be monitored and tasks can be assigned or prioritized.
