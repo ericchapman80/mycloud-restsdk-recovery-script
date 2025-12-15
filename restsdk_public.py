@@ -758,9 +758,10 @@ if __name__ == "__main__":
                 dest_path = os.path.join(dumpdir, rel_path)
                 src_path = resolve_src_path(filedir, content_id)
                 if not os.path.exists(src_path):
-                    msg = f"Source missing: {src_path}"
+                    msg = f"Source missing: {content_id} resolved to {src_path}"
                     print(f"[ERROR] {msg}")
                     logging.error(msg)
+                    insert_skipped_file(db, content_id, "source_missing")
                     return ("skipped_problem", content_id)
                 os.makedirs(os.path.dirname(dest_path), exist_ok=True)
                 if os.path.exists(dest_path) and args.refresh_mtime_existing:
