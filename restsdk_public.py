@@ -265,6 +265,23 @@ def filenameToID(filename):
             return str(keys)
     return None
 
+def resolve_src_path(base_dir, cid):
+    """
+    Return the most likely source path for a contentID, trying flat and
+    first-character subdir layouts common on MyCloud dumps.
+    """
+    candidates = []
+    if cid:
+        candidates.append(os.path.join(base_dir, cid))
+        if len(cid) > 0:
+            candidates.append(os.path.join(base_dir, cid[0], cid))
+    else:
+        candidates.append(base_dir)
+    for cand in candidates:
+        if os.path.exists(cand):
+            return cand
+    return candidates[0]
+
 def getRootDirs():
     """
     Returns the name of the root directory that contains the 'auth' folder with a '|' character in its name.
