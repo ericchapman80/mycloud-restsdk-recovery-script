@@ -359,27 +359,17 @@ def copy_file(root, file, skipnames, dumpdir, dry_run, log_file, disk_semaphore=
                 print('Copying ' + newpath)
                 try:
                     os.makedirs(os.path.dirname(newpath), exist_ok=True)
-                    if disk_semaphore:
-                        with disk_semaphore:
-                            if io_buffer_size and io_buffer_size > 0:
-                                with open(fullpath, "rb") as fsrc, open(newpath, "wb") as fdst:
-                                    while True:
-                                        buf = fsrc.read(io_buffer_size)
-                                        if not buf:
-                                            break
-                                        fdst.write(buf)
-                            else:
-                                shutil.copy2(fullpath, newpath)
-                    else:
-                        if io_buffer_size and io_buffer_size > 0:
-                            with open(fullpath, "rb") as fsrc, open(newpath, "wb") as fdst:
+                    # Single open at a time to avoid hitting per-process FD limits.
+                    if io_buffer_size and io_buffer_size > 0:
+                        with open(fullpath, "rb") as fsrc:
+                            with open(newpath, "wb") as fdst:
                                 while True:
                                     buf = fsrc.read(io_buffer_size)
                                     if not buf:
                                         break
                                     fdst.write(buf)
-                        else:
-                            shutil.copy2(fullpath, newpath)
+                    else:
+                        shutil.copy2(fullpath, newpath)
                     if args.preserve_mtime:
                         meta = fileDIC.get(fileID, {})
                         ts = next(
