@@ -140,6 +140,7 @@ def init_copy_tracking_tables(db_path):
     Adds mtime_refreshed flag to track whether we applied DB timestamps to the dest file.
     """
     conn = sqlite3.connect(db_path)
+    conn.execute("PRAGMA busy_timeout=5000")
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS copied_files (
         file_id TEXT PRIMARY KEY,
@@ -161,19 +162,31 @@ def init_copy_tracking_tables(db_path):
     conn.close()
 
 def insert_copied_file(db_path, file_id, filename):
-    conn = sqlite3.connect(db_path)
-    c = conn.cursor()
-    c.execute('''INSERT OR IGNORE INTO copied_files (file_id, filename, mtime_refreshed) VALUES (?, ?, 0)''', (str(file_id), str(filename)))
-    conn.commit()
-    conn.close()
+    def _op():
+        conn = sqlite3.connect(db_path)
+        conn.execute("PRAGMA busy_timeout=5000")
+        c = conn.cursor()
+        c.execute(
+            '''INSERT OR IGNORE INTO copied_files (file_id, filename, mtime_refreshed) VALUES (?, ?, 0)''',
+            (str(file_id), str(filename)),
+        )
+        conn.commit()
+        conn.close()
+    with_retry_db(_op)
 
 def insert_skipped_file(db_path, filename, reason):
-    conn = sqlite3.connect(db_path)
-    c = conn.cursor()
-    # Always use TEXT for filename and reason
-    c.execute('''INSERT OR IGNORE INTO skipped_files (filename, reason) VALUES (?, ?)''', (str(filename), str(reason)))
-    conn.commit()
-    conn.close()
+    def _op():
+        conn = sqlite3.connect(db_path)
+        conn.execute("PRAGMA busy_timeout=5000")
+        c = conn.cursor()
+        # Always use TEXT for filename and reason
+        c.execute(
+            '''INSERT OR IGNORE INTO skipped_files (filename, reason) VALUES (?, ?)''',
+            (str(filename), str(reason)),
+        )
+        conn.commit()
+        conn.close()
+    with_retry_db(_op)
 
 def regenerate_copied_files_from_dest(db_path, dumpdir, log_file):
     """
@@ -401,11 +414,14 @@ def copy_file(root, file, skipnames, dumpdir, dry_run, log_file, disk_semaphore=
                         if ts:
                             os.utime(newpath, (ts / 1000, ts / 1000))
                             try:
-                                conn = sqlite3.connect(db)
-                                cur = conn.cursor()
-                                cur.execute("UPDATE copied_files SET mtime_refreshed=1 WHERE file_id=?", (fileID,))
-                                conn.commit()
-                                conn.close()
+                                def _op():
+                                    conn = sqlite3.connect(db)
+                                    conn.execute("PRAGMA busy_timeout=5000")
+                                    cur = conn.cursor()
+                                    cur.execute("UPDATE copied_files SET mtime_refreshed=1 WHERE file_id=?", (fileID,))
+                                    conn.commit()
+                                    conn.close()
+                                with_retry_db(_op)
                             except sqlite3.Error:
                                 pass
                     with processed_files_counter.get_lock():
@@ -465,6 +481,24 @@ def get_dir_size(start_path='.'):
 
     return total_size
 
+def with_retry_db(fn, attempts=5, delay=0.1):
+    """
+    Retry wrapper for sqlite ops to reduce 'database is locked' errors under concurrency.
+    """
+    last_err = None
+    for _ in range(attempts):
+        try:
+            return fn()
+        except sqlite3.OperationalError as e:
+            msg = str(e).lower()
+            if "locked" in msg or "busy" in msg:
+                last_err = e
+                time.sleep(delay)
+                continue
+            raise
+    if last_err:
+        raise last_err
+
 def count_files(start_path='.'):
     """Count files recursively under start_path."""
     total = 0
@@ -477,6 +511,8 @@ if __name__ == "__main__":
     start_time = time.time()
     logging.info(f"Start time: {time.ctime(start_time)}")
     run_start = start_time
+    regen_elapsed = 0.0
+    copy_phase_start = run_start
 
     def format_duration(seconds):
         mins, secs = divmod(int(seconds), 60)
@@ -565,8 +601,10 @@ if __name__ == "__main__":
             print("\n❗ Please provide --dumpdir, --log_file, and --db for log regeneration.\n")
             sys.exit(1)
         print(f"Regenerating log file {args.log_file} from destination {args.dumpdir} and updating copied_files table...")
+        regen_start = time.time()
         regenerate_copied_files_from_dest(args.db, args.dumpdir, args.log_file)
-        print("Log file and copied_files table regeneration complete.")
+        regen_elapsed = time.time() - regen_start
+        print(f"Log file and copied_files table regeneration complete. Duration: {format_duration(regen_elapsed)}")
         sys.exit(0)
 
     if not args.db or not args.filedir or not args.dumpdir or not args.log_file:
@@ -644,6 +682,7 @@ if __name__ == "__main__":
     logging.info(f"Parameters: db={db}, filedir={filedir}, dumpdir={dumpdir}, dry_run={dry_run}, log_file={log_file}, create_log={args.create_log}, resume={args.resume}, thread_count={thread_count}")
 
     def run_standard_copy():
+        copy_phase_start = time.time()
         print(f"There are {total_files} files to copy from {filedir} to {dumpdir}")
         logging.info(f"There are {total_files} files to copy from {filedir} to {dumpdir}")
         print(f"There are {num_db_rows} rows in the database to process")
@@ -712,10 +751,14 @@ if __name__ == "__main__":
             logging.info(f"{label}: {value}")
 
         elapsed = time.time() - run_start
+        copy_elapsed = time.time() - copy_phase_start
         elapsed_str = format_duration(elapsed)
+        copy_elapsed_str = format_duration(copy_elapsed)
         files_per_sec = processed_files_counter.value / elapsed if elapsed > 0 else 0
         print(f"Elapsed time: {elapsed_str} ({files_per_sec:.2f} files/sec)")
         logging.info(f"Elapsed time: {elapsed_str} ({files_per_sec:.2f} files/sec)")
+        print(f"Copy phase duration: {copy_elapsed_str}")
+        logging.info(f"Copy phase duration: {copy_elapsed_str}")
         print(f"Started at: {time.ctime(run_start)}")
         print(f"Finished at: {time.ctime(run_start + elapsed)}")
         logging.info(f"Started at: {time.ctime(run_start)}")
@@ -738,15 +781,20 @@ if __name__ == "__main__":
     def run_resume_copy():
         if not args.no_regen_log:
             print(f"Regenerating log file {log_file} from destination {dumpdir} before resuming and updating copied_files table...")
+            regen_start = time.time()
             regenerate_copied_files_from_dest(db, dumpdir, log_file)
-            print("Log file and copied_files table regeneration complete. Resuming copy process...")
+            regen_elapsed = time.time() - regen_start
+            copy_phase_start = time.time()
+            print(f"Log file and copied_files table regeneration complete in {format_duration(regen_elapsed)}. Resuming copy process...")
         else:
             print("Skipping log regeneration (using existing log file as-is). Resuming copy process...")
+            copy_phase_start = time.time()
 
         conn = sqlite3.connect(db)
+        conn.execute("PRAGMA busy_timeout=5000")
         c = conn.cursor()
         c.execute(
-            """SELECT f.id, f.contentID, f.name, f.imageDate, f.videoDate, f.cTime, f.birthTime FROM files f
+            """SELECT f.id, f.contentID, f.name, f.imageDate, f.videoDate, f.cTime, f.birthTime, f.mimeType FROM files f
                LEFT JOIN copied_files c2 ON f.id = c2.file_id
                LEFT JOIN skipped_files s ON f.contentID = s.filename
                WHERE c2.file_id IS NULL AND s.filename IS NULL"""
@@ -764,8 +812,10 @@ if __name__ == "__main__":
         results = {"copied": 0, "skipped_already": 0, "skipped_problem": 0, "errored": 0, "dry_run": 0}
 
         def copy_worker(file_row):
-            file_id, content_id, name, image_date, video_date, c_time, birth_time = file_row
+            file_id, content_id, name, image_date, video_date, c_time, birth_time, mime_type = file_row
             try:
+                if mime_type == "application/x.wd.dir" or content_id is None:
+                    return ("skipped_problem", content_id or name)
                 if content_id in already_copied_set:
                     return ("skipped_already", content_id)
                 if content_id in skipped_set:
@@ -857,10 +907,16 @@ if __name__ == "__main__":
         print(f"Processed: {sum(results.values())}")
         print(f"Started at: {time.ctime(run_start)}")
         elapsed = time.time() - run_start
+        copy_elapsed = time.time() - copy_phase_start if 'copy_phase_start' in locals() else elapsed
         elapsed_str = format_duration(elapsed)
+        copy_elapsed_str = format_duration(copy_elapsed)
         files_per_sec = sum(results.values()) / elapsed if elapsed > 0 else 0
         print(f"Elapsed time: {elapsed_str} ({files_per_sec:.2f} files/sec)")
+        print(f"Regen duration: {format_duration(regen_elapsed)}")
+        print(f"Copy phase duration: {copy_elapsed_str}")
         logging.info(f"Elapsed time: {elapsed_str} ({files_per_sec:.2f} files/sec)")
+        logging.info(f"Regen duration: {format_duration(regen_elapsed)}")
+        logging.info(f"Copy phase duration: {copy_elapsed_str}")
         logging.info(f"Started at: {time.ctime(run_start)}")
         logging.info(f"Finished at: {time.ctime(run_start + elapsed)}")
 

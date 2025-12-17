@@ -199,6 +199,32 @@ def test_insert_copied_and_skipped(tmp_path):
     assert skipped == [("bar.txt", "missing in db")]
 
 
+def test_retry_wrapped_inserts_do_not_raise(tmp_path):
+    """
+    Ensure insert helpers succeed (or no-op) even when called back-to-back,
+    exercising the retry/busy_timeout path.
+    """
+    db_path = create_db_with_files(tmp_path)
+    init_copy_tracking_tables(str(db_path))
+
+    # First insert should succeed
+    insert_copied_file(str(db_path), "1", "foo.txt")
+    # Second insert is a no-op (OR IGNORE) but still should not raise
+    insert_copied_file(str(db_path), "1", "foo.txt")
+
+    # Similarly for skipped_files
+    insert_skipped_file(str(db_path), "bar.txt", "missing")
+    insert_skipped_file(str(db_path), "bar.txt", "missing")
+
+    conn = sqlite3.connect(str(db_path))
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM copied_files")
+    assert cur.fetchone()[0] == 1
+    cur.execute("SELECT COUNT(*) FROM skipped_files")
+    assert cur.fetchone()[0] == 1
+    conn.close()
+
+
 def test_refresh_mtime_existing(tmp_path, monkeypatch):
     db_path = create_db_with_files(tmp_path)
     init_copy_tracking_tables(str(db_path))
