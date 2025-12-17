@@ -124,6 +124,12 @@ def recommend_thread_count(cpu_count, file_stats):
     else:
         return min(max(2, cpu_count), 16)
 
+def recommend_thread_count_with_fd(cpu_count, file_stats, fd_limit):
+    """Cap threads based on both CPU and a conservative FD budget (2 FDs per copy, 100 FDs headroom)."""
+    fd_safe = max(2, min((fd_limit - 100) // 2, 32)) if fd_limit else 8
+    cpu_rec = recommend_thread_count(cpu_count, file_stats)
+    return min(cpu_rec, fd_safe)
+
 def preflight_summary(source, dest):
     cpu = get_cpu_info()
     mem = get_memory_info()
@@ -135,6 +141,8 @@ def preflight_summary(source, dest):
     min_MBps = min(disk_speed['write_MBps'], disk_speed['read_MBps'])
     est_min = estimate_duration(file_stats['total_size_GB'], min_MBps)
     thread_count = recommend_thread_count(cpu['cpu_count'], file_stats)
+    fd_limit = os.sysconf('SC_OPEN_MAX') if hasattr(os, 'sysconf') else None
+    fd_based_threads = recommend_thread_count_with_fd(cpu['cpu_count'], file_stats, fd_limit)
     return {
         'cpu': cpu,
         'memory': mem,
@@ -145,6 +153,8 @@ def preflight_summary(source, dest):
         'disk_speed': disk_speed,
         'est_min': est_min,
         'thread_count': thread_count,
+        'fd_limit': fd_limit,
+        'fd_based_threads': fd_based_threads,
     }
 
 def print_preflight_report(summary, source, dest):
