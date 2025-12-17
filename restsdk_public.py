@@ -621,6 +621,21 @@ if __name__ == "__main__":
 
     lock = Lock()
 
+    print("\n===== RUN STARTING =====")
+    print(f"Start time: {time.ctime(run_start)}")
+    print(f"DB: {db}")
+    print(f"Source: {filedir}")
+    print(f"Destination: {dumpdir}")
+    print(f"Log file: {log_file}")
+    print(f"Thread count: {thread_count}")
+    print(f"Dry run: {dry_run}")
+    print(f"Preserve mtime: {args.preserve_mtime}")
+    print(f"Refresh mtime on existing: {args.refresh_mtime_existing}")
+    print(f"Sanitize pipes: {args.sanitize_pipes}")
+    print(f"Resume: {args.resume}, Regen log: {args.regen_log}, No-regen-log: {args.no_regen_log}")
+    print("========================\n")
+    logging.info(f"Run starting at {time.ctime(run_start)} with db={db}, filedir={filedir}, dumpdir={dumpdir}, log_file={log_file}, threads={thread_count}, dry_run={dry_run}, preserve_mtime={args.preserve_mtime}, refresh_mtime_existing={args.refresh_mtime_existing}, sanitize_pipes={args.sanitize_pipes}, resume={args.resume}, regen_log={args.regen_log}, no_regen_log={args.no_regen_log}")
+
     filedir_size = get_dir_size(filedir) / (1024 * 1024 * 1024)
     print(f"The size of the directory {filedir} is {filedir_size:.2f} GB")
     logging.info(f"The size of the directory {filedir} is {filedir_size:.2f} GB")
