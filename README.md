@@ -101,6 +101,28 @@ python restsdk_public.py --preflight --filedir /path/to/source --dumpdir /path/t
 ```
 Notes:
 - Preflight reports your current open-file limit and suggests a thread count that stays under that limit (2 FDs per copy, with headroom). If you see a low FD limit, consider running `ulimit -n 65535` before starting, or use a lower `--thread-count`.
+- To raise the open-file limit for your session: `ulimit -n 65535` (run this in the shell before starting the script).
+
+Sample preflight output:
+```
+✅ Verified copy tracking tables in /mnt/backupdrive/restsdk/data/db/index.db
+🚀  ===== Pre-flight Hardware & File System Check ===== 🚀
+
+🖥️  CPU: x86_64 | Cores: 6 | Freq: 803.7 MHz
+💾 RAM: 11 GB total | 9 GB available
+📂 Source: /mnt/backupdrive/restsdk/data/files
+  - Size: 1804.21 GB | Files: 3583981
+  - Filenames containing '|': 0
+  - Small: 3258153 | Medium: 324156 | Large: 1672
+💽 Dest: /mnt/nfs-media
+  - Free: 4841 GB | Total: 7143 GB | FS: nfs
+⚡ Disk Speed (dest): Write: 105.9 MB/s | Read: 1804.5 MB/s
+⏱️  Estimated Duration: 290.8 minutes (best case)
+🔢 Recommended Threads: 12
+
+✨ Recommended Command:
+📝 python restsdk_public.py --db /mnt/backupdrive/restsdk/data/db/index.db --filedir /mnt/backupdrive/restsdk/data/files --dumpdir /mnt/nfs-media --log_file copied_file.log --thread-count 12
+```
 
 ---
 
