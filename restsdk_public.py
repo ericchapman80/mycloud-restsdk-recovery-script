@@ -12,6 +12,20 @@ try:
     import psutil
 except ImportError:
     psutil = None
+try:
+    from argparse import BooleanOptionalAction
+except ImportError:
+    class BooleanOptionalAction(argparse.Action):
+        def __init__(self, option_strings, dest, default=None, **kwargs):
+            _option_strings = []
+            for option in option_strings:
+                _option_strings.append(option)
+                if option.startswith('--'):
+                    _option_strings.append('--no-' + option[2:])
+            super().__init__(option_strings=_option_strings, dest=dest, nargs=0, default=default, **kwargs)
+
+        def __call__(self, parser, namespace, values, option_string=None):
+            setattr(namespace, self.dest, not option_string.startswith('--no-'))
 from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Lock, Value
 from shutil import copyfile
@@ -359,15 +373,14 @@ def copy_file(root, file, skipnames, dumpdir, dry_run, log_file, disk_semaphore=
                 print('Copying ' + newpath)
                 try:
                     os.makedirs(os.path.dirname(newpath), exist_ok=True)
-                    # Single open at a time to avoid hitting per-process FD limits.
+                    # Keep two FDs per copy (src/dest) to stay under limits.
                     if io_buffer_size and io_buffer_size > 0:
-                        with open(fullpath, "rb") as fsrc:
-                            with open(newpath, "wb") as fdst:
-                                while True:
-                                    buf = fsrc.read(io_buffer_size)
-                                    if not buf:
-                                        break
-                                    fdst.write(buf)
+                        with open(fullpath, "rb") as fsrc, open(newpath, "wb") as fdst:
+                            while True:
+                                buf = fsrc.read(io_buffer_size)
+                                if not buf:
+                                    break
+                                fdst.write(buf)
                     else:
                         shutil.copy2(fullpath, newpath)
                     if args.preserve_mtime:
@@ -494,7 +507,7 @@ if __name__ == "__main__":
     parser.add_argument("--log_level", type=str, choices=["DEBUG", "INFO", "WARNING"], default="INFO", help="Set the logging level (DEBUG, INFO, WARNING). Default is INFO.")
     parser.add_argument(
         "--preserve-mtime",
-        action=argparse.BooleanOptionalAction,
+        action=BooleanOptionalAction,
         default=True,
         help="After copy, set destination mtime to the best available timestamp from the DB (imageDate, videoDate, cTime). Enabled by default; use --no-preserve-mtime to disable.",
     )

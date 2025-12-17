@@ -99,6 +99,8 @@ How to run:
 python restsdk_public.py --preflight --filedir /path/to/source --dumpdir /path/to/dest
 # Optional: include --db /path/to/index.db to auto-verify/create copy-tracking tables (copied_files/skipped_files)
 ```
+Notes:
+- Preflight reports your current open-file limit and suggests a thread count that stays under that limit (2 FDs per copy, with headroom). If you see a low FD limit, consider running `ulimit -n 65535` before starting, or use a lower `--thread-count`.
 
 ---
 
