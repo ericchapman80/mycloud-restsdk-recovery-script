@@ -139,53 +139,50 @@ def init_copy_tracking_tables(db_path):
     Uses TEXT for file_id and filename to match Files table schema.
     Adds mtime_refreshed flag to track whether we applied DB timestamps to the dest file.
     """
-    conn = sqlite3.connect(db_path)
-    conn.execute("PRAGMA busy_timeout=5000")
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS copied_files (
-        file_id TEXT PRIMARY KEY,
-        filename TEXT,
-        copied_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        mtime_refreshed INTEGER DEFAULT 0
-    )''')
-    # Safe ALTER in case table already exists without the new column
-    c.execute("PRAGMA table_info(copied_files)")
-    cols = {row[1] for row in c.fetchall()}
-    if "mtime_refreshed" not in cols:
-        c.execute("ALTER TABLE copied_files ADD COLUMN mtime_refreshed INTEGER DEFAULT 0")
-    c.execute('''CREATE TABLE IF NOT EXISTS skipped_files (
-        filename TEXT PRIMARY KEY,
-        reason TEXT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-    )''')
-    conn.commit()
-    conn.close()
+    with sqlite3.connect(db_path) as conn:
+        conn.execute("PRAGMA busy_timeout=5000")
+        c = conn.cursor()
+        c.execute('''CREATE TABLE IF NOT EXISTS copied_files (
+            file_id TEXT PRIMARY KEY,
+            filename TEXT,
+            copied_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            mtime_refreshed INTEGER DEFAULT 0
+        )''')
+        # Safe ALTER in case table already exists without the new column
+        c.execute("PRAGMA table_info(copied_files)")
+        cols = {row[1] for row in c.fetchall()}
+        if "mtime_refreshed" not in cols:
+            c.execute("ALTER TABLE copied_files ADD COLUMN mtime_refreshed INTEGER DEFAULT 0")
+        c.execute('''CREATE TABLE IF NOT EXISTS skipped_files (
+            filename TEXT PRIMARY KEY,
+            reason TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )''')
+        conn.commit()
 
 def insert_copied_file(db_path, file_id, filename):
     def _op():
-        conn = sqlite3.connect(db_path)
-        conn.execute("PRAGMA busy_timeout=5000")
-        c = conn.cursor()
-        c.execute(
-            '''INSERT OR IGNORE INTO copied_files (file_id, filename, mtime_refreshed) VALUES (?, ?, 0)''',
-            (str(file_id), str(filename)),
-        )
-        conn.commit()
-        conn.close()
+        with sqlite3.connect(db_path) as conn:
+            conn.execute("PRAGMA busy_timeout=5000")
+            c = conn.cursor()
+            c.execute(
+                '''INSERT OR IGNORE INTO copied_files (file_id, filename, mtime_refreshed) VALUES (?, ?, 0)''',
+                (str(file_id), str(filename)),
+            )
+            conn.commit()
     with_retry_db(_op)
 
 def insert_skipped_file(db_path, filename, reason):
     def _op():
-        conn = sqlite3.connect(db_path)
-        conn.execute("PRAGMA busy_timeout=5000")
-        c = conn.cursor()
-        # Always use TEXT for filename and reason
-        c.execute(
-            '''INSERT OR IGNORE INTO skipped_files (filename, reason) VALUES (?, ?)''',
-            (str(filename), str(reason)),
-        )
-        conn.commit()
-        conn.close()
+        with sqlite3.connect(db_path) as conn:
+            conn.execute("PRAGMA busy_timeout=5000")
+            c = conn.cursor()
+            # Always use TEXT for filename and reason
+            c.execute(
+                '''INSERT OR IGNORE INTO skipped_files (filename, reason) VALUES (?, ?)''',
+                (str(filename), str(reason)),
+            )
+            conn.commit()
     with_retry_db(_op)
 
 def regenerate_copied_files_from_dest(db_path, dumpdir, log_file):
@@ -195,37 +192,37 @@ def regenerate_copied_files_from_dest(db_path, dumpdir, log_file):
     Provides progress output for user feedback during long scans.
     """
     tmp_log = log_file + ".tmp"
-    conn = sqlite3.connect(db_path)
-    c = conn.cursor()
     total_files = 0
     print("Scanning destination directory and regenerating log file (this may take a while for large datasets)...")
-    with open(tmp_log, 'w') as f:
-        for root, dirs, files in os.walk(dumpdir):
-            for file in files:
-                file_path = os.path.join(root, file)
-                f.write(file_path + '\n')
-                print(f"Checking destination file: {file}")
-                c.execute('SELECT id FROM Files WHERE name = ?', (file,))
-                row = c.fetchone()
-                file_id = row[0] if row else None
-                if file_id:
-                    print(f"  [MATCH] DB id: {file_id} for file: {file} -- inserting into copied_files table.")
-                    c.execute('INSERT OR IGNORE INTO copied_files (file_id, filename) VALUES (?, ?)', (file_id, file))
-                    if c.rowcount == 1:
-                        print(f"    [INSERTED] Inserted into copied_files: ({file_id}, {file})")
+    with sqlite3.connect(db_path) as conn:
+        conn.execute("PRAGMA busy_timeout=5000")
+        c = conn.cursor()
+        with open(tmp_log, 'w') as f:
+            for root, dirs, files in os.walk(dumpdir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    f.write(file_path + '\n')
+                    print(f"Checking destination file: {file}")
+                    c.execute('SELECT id FROM Files WHERE name = ?', (file,))
+                    row = c.fetchone()
+                    file_id = row[0] if row else None
+                    if file_id:
+                        print(f"  [MATCH] DB id: {file_id} for file: {file} -- inserting into copied_files table.")
+                        c.execute('INSERT OR IGNORE INTO copied_files (file_id, filename) VALUES (?, ?)', (file_id, file))
+                        if c.rowcount == 1:
+                            print(f"    [INSERTED] Inserted into copied_files: ({file_id}, {file})")
+                        else:
+                            print(f"    [SKIPPED] Entry already exists for: ({file_id}, {file})")
                     else:
-                        print(f"    [SKIPPED] Entry already exists for: ({file_id}, {file})")
-                else:
-                    print(f"  [NO MATCH] No DB entry found for destination file: {file}")
-                total_files += 1
-                #TODO: add this batch size as a pareameter to the cli
-                if total_files % 10000 == 0:
-                    print(f"  Processed {total_files} files so far...")
-                    conn.commit()
-                    print(f"  [COMMIT] Database commit after {total_files} files.")
-    print(f"Finished scanning. Total files processed: {total_files}")
-    conn.commit()
-    conn.close()
+                        print(f"  [NO MATCH] No DB entry found for destination file: {file}")
+                    total_files += 1
+                    #TODO: add this batch size as a pareameter to the cli
+                    if total_files % 10000 == 0:
+                        print(f"  Processed {total_files} files so far...")
+                        conn.commit()
+                        print(f"  [COMMIT] Database commit after {total_files} files.")
+        print(f"Finished scanning. Total files processed: {total_files}")
+        conn.commit()
     os.replace(tmp_log, log_file)
 
 def findNextParent(fileID):
@@ -415,12 +412,11 @@ def copy_file(root, file, skipnames, dumpdir, dry_run, log_file, disk_semaphore=
                             os.utime(newpath, (ts / 1000, ts / 1000))
                             try:
                                 def _op():
-                                    conn = sqlite3.connect(db)
-                                    conn.execute("PRAGMA busy_timeout=5000")
-                                    cur = conn.cursor()
-                                    cur.execute("UPDATE copied_files SET mtime_refreshed=1 WHERE file_id=?", (fileID,))
-                                    conn.commit()
-                                    conn.close()
+                                    with sqlite3.connect(db) as conn:
+                                        conn.execute("PRAGMA busy_timeout=5000")
+                                        cur = conn.cursor()
+                                        cur.execute("UPDATE copied_files SET mtime_refreshed=1 WHERE file_id=?", (fileID,))
+                                        conn.commit()
                                 with_retry_db(_op)
                             except sqlite3.Error:
                                 pass
@@ -641,20 +637,19 @@ if __name__ == "__main__":
     logging.info(f"The size of the directory {filedir} is {filedir_size:.2f} GB")
 
     try:
-        con = sqlite3.connect(db)
+        with sqlite3.connect(db) as con:
+            con.execute("PRAGMA busy_timeout=5000")
+            cur = con.cursor()
+            cur.execute("SELECT id, name, parentID, contentID, imageDate, videoDate, cTime, birthTime FROM files")
+            files = cur.fetchall()
+            num_db_rows = len(files)
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_contentID ON files (contentID)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_parentID ON files (parentID)")
+            con.commit()
     except sqlite3.Error:
         print(f"Error opening database at {db}")
         logging.exception("Error opening database")
         sys.exit(1)
-
-    cur = con.cursor()
-    cur.execute("SELECT id, name, parentID, contentID, imageDate, videoDate, cTime, birthTime FROM files")
-    files = cur.fetchall()
-    num_db_rows = len(files)
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_contentID ON files (contentID)")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_parentID ON files (parentID)")
-    con.commit()
-    con.close()
 
     fileDIC = {
         file[0]: {
@@ -805,21 +800,20 @@ if __name__ == "__main__":
             print("Skipping log regeneration (using existing log file as-is). Resuming copy process...")
             copy_phase_start = time.time()
 
-        conn = sqlite3.connect(db)
-        conn.execute("PRAGMA busy_timeout=5000")
-        c = conn.cursor()
-        c.execute(
-            """SELECT f.id, f.contentID, f.name, f.imageDate, f.videoDate, f.cTime, f.birthTime, f.mimeType FROM files f
-               LEFT JOIN copied_files c2 ON f.id = c2.file_id
-               LEFT JOIN skipped_files s ON f.contentID = s.filename
-               WHERE c2.file_id IS NULL AND s.filename IS NULL"""
-        )
-        files_to_copy = c.fetchall()
-        c.execute("SELECT filename FROM copied_files")
-        already_copied_set = set(row[0] for row in c.fetchall())
-        c.execute("SELECT filename FROM skipped_files")
-        skipped_set = set(row[0] for row in c.fetchall())
-        conn.close()
+        with sqlite3.connect(db) as conn:
+            conn.execute("PRAGMA busy_timeout=5000")
+            c = conn.cursor()
+            c.execute(
+                """SELECT f.id, f.contentID, f.name, f.imageDate, f.videoDate, f.cTime, f.birthTime, f.mimeType FROM files f
+                   LEFT JOIN copied_files c2 ON f.id = c2.file_id
+                   LEFT JOIN skipped_files s ON f.contentID = s.filename
+                   WHERE c2.file_id IS NULL AND s.filename IS NULL"""
+            )
+            files_to_copy = c.fetchall()
+            c.execute("SELECT filename FROM copied_files")
+            already_copied_set = set(row[0] for row in c.fetchall())
+            c.execute("SELECT filename FROM skipped_files")
+            skipped_set = set(row[0] for row in c.fetchall())
 
         print(f"Files to process: {len(files_to_copy)} (filtered by copied_files and skipped_files tables)")
         logging.info(f"Files to process: {len(files_to_copy)}")
@@ -866,11 +860,11 @@ if __name__ == "__main__":
                         if ts:
                             os.utime(dest_path, (ts / 1000, ts / 1000))
                             try:
-                                conn = sqlite3.connect(db)
-                                cur = conn.cursor()
-                                cur.execute("UPDATE copied_files SET mtime_refreshed=1 WHERE file_id=?", (file_id,))
-                                conn.commit()
-                                conn.close()
+                                with sqlite3.connect(db) as conn:
+                                    conn.execute("PRAGMA busy_timeout=5000")
+                                    cur = conn.cursor()
+                                    cur.execute("UPDATE copied_files SET mtime_refreshed=1 WHERE file_id=?", (file_id,))
+                                    conn.commit()
                             except sqlite3.Error:
                                 pass
                     return ("skipped_already", content_id)
@@ -899,15 +893,15 @@ if __name__ == "__main__":
             for status, rel in executor.map(copy_worker, files_to_copy):
                 results[status] += 1
 
-        conn = sqlite3.connect(db)
-        c = conn.cursor()
-        c.execute("SELECT COUNT(*) FROM copied_files")
-        copied_count = c.fetchone()[0]
-        c.execute("SELECT COUNT(*) FROM skipped_files")
-        skipped_count = c.fetchone()[0]
-        c.execute("SELECT COUNT(*) FROM files")
-        total_files_db = c.fetchone()[0]
-        conn.close()
+        with sqlite3.connect(db) as conn:
+            conn.execute("PRAGMA busy_timeout=5000")
+            c = conn.cursor()
+            c.execute("SELECT COUNT(*) FROM copied_files")
+            copied_count = c.fetchone()[0]
+            c.execute("SELECT COUNT(*) FROM skipped_files")
+            skipped_count = c.fetchone()[0]
+            c.execute("SELECT COUNT(*) FROM files")
+            total_files_db = c.fetchone()[0]
         dest_count = sum(len(files) for _, _, files in os.walk(dumpdir))
 
         print("\n===== SUMMARY =====")
