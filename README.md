@@ -147,7 +147,72 @@ The preflight analyzes your system and recommends threads based on the **most li
 
 ---
 
-## 🗄️ SQL Migration & Integration Points
+## � Monitoring & Troubleshooting
+
+While the script is running, use these commands in a separate terminal to monitor progress and health.
+
+### Watch Progress
+
+```bash
+# Follow the log file in real-time
+tail -f summary_*.log
+
+# Check how many files have been copied (in DB)
+sqlite3 /path/to/index.db "SELECT COUNT(*) FROM copied_files"
+
+# Check skipped files count
+sqlite3 /path/to/index.db "SELECT COUNT(*) FROM skipped_files"
+```
+
+### Monitor File Descriptors
+
+```bash
+# First, find the process ID
+ps aux | grep restsdk
+
+# Watch open file count (replace 12345 with actual PID)
+watch -n 30 'lsof -p 12345 2>/dev/null | wc -l'
+```
+
+**What to look for:**
+
+| Value | Status | Meaning |
+|-------|--------|---------|
+| < 100 | ✅ Normal | Healthy operation |
+| 100-500 | ✅ OK | Working hard, still fine |
+| Growing constantly | ⚠️ Warning | Possible file descriptor leak |
+| > 10,000 | 🔴 Problem | Approaching system limits, may crash |
+
+With the v2.0 fixes, you should see a **stable, low number** (typically under 50) that doesn't keep climbing.
+
+### Check Destination Space
+
+```bash
+# Monitor free space on destination
+watch -n 60 'df -h /path/to/destination'
+```
+
+### Troubleshooting Common Issues
+
+**"Too many open files" error:**
+
+- This was fixed in v2.0 with context managers for all SQLite connections
+- If you still see this, try reducing `--thread-count`
+- Check your system limit: `ulimit -n` (increase with `ulimit -n 65535` if needed)
+
+**Script seems stuck:**
+
+- Check if files are being written: `ls -lt /path/to/destination | head`
+- Check for errors in the log: `grep -i error summary_*.log`
+
+**Resume not finding previously copied files:**
+
+- Make sure you're using the same `--dumpdir` path
+- The script matches by full relative path, so directory structure must match
+
+---
+
+## ��️ SQL Migration & Integration Points
 
 To enable hybrid log + database resumable logic, add the following tables to your SQLite database (the script will create them if missing):
 
