@@ -1,0 +1,567 @@
+
+===== RUN STARTING =====
+Start time: Wed Dec 17 23:52:38 2025
+DB: /mnt/backupdrive/restsdk/data/db/index.db
+Source: /mnt/backupdrive/restsdk/data/files
+Destination: /mnt/nfs-media
+Log file: /home/chapman/projects/mycloud-restsdk-recovery-script/copied_file.log
+Thread count: 6
+Dry run: False
+Preserve mtime: True
+Refresh mtime on existing: True
+Sanitize pipes: False
+Resume: True, Regen log: False, No-regen-log: False
+========================
+
+The size of the directory /mnt/backupdrive/restsdk/data/files is 1804.21 GB
+Regenerating log file /home/chapman/projects/mycloud-restsdk-recovery-script/copied_file.log from destination /mnt/nfs-media before resuming and updating copied_files table...
+Building path-to-ID lookup from database (this enables accurate matching)...
+Building path lookup for 1655974 files...
+Built lookup with 1655973 file paths
+Scanning destination directory and regenerating log file...
+  [NO MATCH] .DS_Store (not in source DB - may be manually added)
+  [NO MATCH] ._Chapman-Fall-2019 (not in source DB - may be manually added)
+  [NO MATCH] .TemporaryItems (not in source DB - may be manually added)
+  [NO MATCH] Chapman Flood-20240823T154436Z-001.zip (not in source DB - may be manually added)
+  [NO MATCH] Refinance2016.zip (not in source DB - may be manually added)
+  [NO MATCH] KonnorFootballDocuments2024.zip (not in source DB - may be manually added)
+  [NO MATCH] copied_file.log (not in source DB - may be manually added)
+  [NO MATCH] index.db (not in source DB - may be manually added)
+  [NO MATCH] #recycle/desktop.ini (not in source DB - may be manually added)
+  [NO MATCH] #recycle/.com.apple.timemachine.supported-904497dd-63e5-4222-bd3e-d45449c92f81 (not in source DB - may be manually added)
+  Progress: 10000 files scanned, 0 matched, 10000 unmatched...
+  Progress: 20000 files scanned, 0 matched, 20000 unmatched...
+  Progress: 30000 files scanned, 0 matched, 30000 unmatched...
+  Progress: 40000 files scanned, 0 matched, 40000 unmatched...
+  Progress: 50000 files scanned, 0 matched, 50000 unmatched...
+  Progress: 60000 files scanned, 0 matched, 60000 unmatched...
+  Progress: 70000 files scanned, 0 matched, 70000 unmatched...
+  Progress: 80000 files scanned, 0 matched, 80000 unmatched...
+  Progress: 90000 files scanned, 0 matched, 90000 unmatched...
+  Progress: 100000 files scanned, 0 matched, 100000 unmatched...
+  Progress: 110000 files scanned, 0 matched, 110000 unmatched...
+  Progress: 120000 files scanned, 0 matched, 120000 unmatched...
+  Progress: 130000 files scanned, 0 matched, 130000 unmatched...
+  Progress: 140000 files scanned, 0 matched, 140000 unmatched...
+  Progress: 150000 files scanned, 0 matched, 150000 unmatched...
+  Progress: 160000 files scanned, 0 matched, 160000 unmatched...
+  Progress: 170000 files scanned, 0 matched, 170000 unmatched...
+  Progress: 180000 files scanned, 0 matched, 180000 unmatched...
+  Progress: 190000 files scanned, 0 matched, 190000 unmatched...
+  Progress: 200000 files scanned, 0 matched, 200000 unmatched...
+  Progress: 210000 files scanned, 0 matched, 210000 unmatched...
+  Progress: 220000 files scanned, 0 matched, 220000 unmatched...
+  Progress: 230000 files scanned, 0 matched, 230000 unmatched...
+  Progress: 240000 files scanned, 0 matched, 240000 unmatched...
+  Progress: 250000 files scanned, 0 matched, 250000 unmatched...
+  Progress: 260000 files scanned, 0 matched, 260000 unmatched...
+  Progress: 270000 files scanned, 0 matched, 270000 unmatched...
+  Progress: 280000 files scanned, 0 matched, 280000 unmatched...
+  Progress: 290000 files scanned, 0 matched, 290000 unmatched...
+  Progress: 300000 files scanned, 0 matched, 300000 unmatched...
+  Progress: 310000 files scanned, 0 matched, 310000 unmatched...
+  Progress: 320000 files scanned, 0 matched, 320000 unmatched...
+
+Finished scanning destination directory.
+  Total files scanned: 327156
+  Matched to source DB: 0
+  Not in source DB: 327156 (these are ignored - may be manually added files)
+Log file and copied_files table regeneration complete in 13m 27s. Resuming copy process...
+Files to process: 1409894 (filtered by copied_files and skipped_files tables)
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7190.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7256_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7264_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7260_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7259_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7258_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7262_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7263_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7253_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7249_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7257_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7232_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7155.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7159.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7230_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7164.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7252_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7261_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7147.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7152.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7151.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7229_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7137.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7139.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7146.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7129.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7118.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7122.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7142.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7150.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7145.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7121.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7127.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7120.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7214_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7123.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7217_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7215_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7173_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7143_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7144.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7175_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7108.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7106.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7101.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7100.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7128_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7080.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7071.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7117_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7076.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7116_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7078.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7074.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7073.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7102.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7124.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7112_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7113_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7197_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7125.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7085.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7081.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7114_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7088.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7110_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7089.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7107_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7111_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7092.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7057.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7058.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7096.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7093.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7097.JPG
+[COPIED] /OSxBackup/.DS_Store
+[COPIED] /OSxBackup/._.DS_Store
+[COPIED] /OSxData/.DS_Store
+[COPIED] /OSxData/._.DS_Store
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7037.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7039.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7090.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7029.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7059.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7038.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7033.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7030.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7087.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7084_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7056_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7062_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7064_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7034.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7040_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7036.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7063_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7017.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7018.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7016.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7098_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7021.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7013.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7010.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7014.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7007.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7008.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7032_3.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6997.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6959.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6983.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6963.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6971.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7011.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6974.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6970.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6960.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6980.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6953.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6955.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6977.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7043_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7045_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6806 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6804 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7031_3.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7044_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_4206.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6936 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6990 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6946.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6797 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6949.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6895 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6932 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7027_3.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6926 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7012.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6886 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6973_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6993_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7006_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7019_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7041_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6994_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6877 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6976_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6978_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6991_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6992_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6972_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6852 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6947.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6990_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6850 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6996_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6942.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_5497_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_7024_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6617 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6979_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6752 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2860.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6793 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2701.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2712.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6717 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6643 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6614 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6702 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6735 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6625 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6731 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6740 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2858.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2864.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6700 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2659.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2563.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2559.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6657 copy.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2571.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2513.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2561.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2570.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2558.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_6969_1.HEIC
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2562.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2476.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2556.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2457.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2580.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2512.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2564.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2569.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2557.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/DSC_6723.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2663_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2307.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2308.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2788_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2521_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2801_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2510.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2508.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2539_2.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2310.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2554_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2518_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2448.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2298.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2511_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2299.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2297.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2682_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2358.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2698_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2447.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2309.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2304.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2357.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2344.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2305.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2303.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2306.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2346.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2296.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2345.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2496_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2348.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2489_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2490_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2482_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2356.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2488_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2498_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2456_2.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2481_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2359.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2295.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2293.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2643_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2292.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2288.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2287.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2480_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2509_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2275.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2492_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2274.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2339_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2341_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2337_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2294.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2336_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2270.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2302_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2340_2.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2342_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2343_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2338_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2272.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2271.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2269.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2335_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2267.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2268.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2334_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2266.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2281_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2276_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2300_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2134.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2131.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2278_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2144.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2176.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2273.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2265.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2286_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2263.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2264.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2283_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2290_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2280_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2009.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2285_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2255.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2254.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2234.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2253.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2008.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2004.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2262.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2015.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2010.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2014.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2007.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2012.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2003.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2011.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2117_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2013.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2114_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2113_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1913.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1875.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2115_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2140_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1874.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2005.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1986.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2090_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1995.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2016_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1985.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1973.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1984.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2006.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1987.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1988.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1994.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1993.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1972.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2249.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1989.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1633.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1876.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1998_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1769.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1726.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2002_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1656.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2001_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1873.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_2233_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1999_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1629.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1631.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1681.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1831.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1619.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1991_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1620.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1630.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1624_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1615.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1627.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1724.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1607.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1623.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1997_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1599.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1820_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1618.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1743_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1778_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1729_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1880_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1992_1.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1696.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1617.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1616.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1621.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1628_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1591.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1582.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1625_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1996_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1583.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1586.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1579.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1622.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1585.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1581.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1578.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1555.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1587.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1553.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1574.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1554.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1580.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1563.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1443.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1573.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1559.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1560.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1531.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1538.PNG
+[ERROR] IMG_1436.JPG: [Errno 24] Too many open files: '/iPhone-Ash Camera Roll Backup/IMG_1436.JPG'
+[ERROR] IMG_1552.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/c/cx5xiqnk5ctgkmcxwpeojvh4'
+[ERROR] IMG_1539.PNG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/g/gqmexghsqdja7nfeir7vauhl'
+[ERROR] IMG_1548.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/u/uzossvbpjbpenclzmvaloavk'
+[ERROR] IMG_1435.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/m/mxj6qur524bskcjlnxkubqix'
+[ERROR] IMG_1556.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/3/3jzj2h7qmuexkjxst7tgx5yr'
+[ERROR] IMG_1545.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/z/zytvyvyibrs4tb6gzmvep4r7'
+[ERROR] IMG_1470.PNG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/t/t22sgkdzbxeph3pvpmkpyo6y'
+[ERROR] IMG_1476.PNG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/3/3fhn5bssh7jdyct5lv5wmrc7'
+[ERROR] IMG_1547.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/p/pyc5cb257l2etkogwvkq4dyw'
+[ERROR] IMG_1546.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/s/s3uzbmgmxhbw2awbokubv6qk'
+[ERROR] IMG_1610_1.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/i/ixfu7jmmdo7bauqi5isaoigi'
+[ERROR] IMG_1613_1.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/q/qs34pei2st6bb5mpmldod2mg'
+[ERROR] IMG_1608_1.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/2/2mkhii2ru5oejka4x7irw25e'
+[ERROR] IMG_1596_1.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/p/p4y67kg3qlkcueepqt24mglh'
+[ERROR] IMG_1603_1.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/5/54mz77azncd2s573pnsh2b4j'
+[ERROR] IMG_1601_1.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/v/v3ptcvqfzkstogtfwi6yrntr'
+[ERROR] IMG_1611_1.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/f/fy2m3dlmpibk7xow534vyky4'
+[ERROR] IMG_1600_2.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/y/y7jkx76xkqifa23o7vxgd3pu'
+[ERROR] IMG_1602_1.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/3/37uuk66gdyq7hew7pm7s3dmd'
+[ERROR] IMG_1609_1.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/4/4ylc6mkvntf5zcx36hjtt74t'
+[ERROR] IMG_1614_1.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/7/7zhs7z26lmorat55zomtsnpv'
+[ERROR] IMG_1422.PNG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/o/opghavf3vnvip6pnza7gddoa'
+[ERROR] IMG_1437_1.PNG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/k/kllfrsgqobdqdwuqyjbxa5fs'
+[ERROR] IMG_1575_1.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/h/hmcgd4w7qdgcnsxqn5ank6pp'
+[ERROR] IMG_1364.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/i/iull7vu3wsmz7qgfa4snftvq'
+[ERROR] IMG_1432.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/s/sn65lqhhevdp6ah4oejlpecy'
+[ERROR] IMG_1414_1.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/5/5quiq5z2na3gs6wthw32muqz'
+[ERROR] IMG_1530_1.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/k/k2ujw7elodec2bsvxziy2xj7'
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1475.PNG
+[ERROR] IMG_1365.JPG: [Errno 24] Too many open files: '/mnt/backupdrive/restsdk/data/files/n/n6yuqm6zee55e3bratg4zqbm'
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1426.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1557.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1577_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1442.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1415.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1418_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1434.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1404.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1595_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1410.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1558.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1385.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1409.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1431.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1387.PNG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1374.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1392.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1353.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1416.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1413_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1354.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1411_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1390.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1356.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1412_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1355.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1347.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1339.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1351.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1346.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1316.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1349.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1314.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1313.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1345.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1430_1.JPG
+[COPIED] /iPhone-Ash Camera Roll Backup/IMG_1311.JPG
+Traceback (most recent call last):
+  File "/home/chapman/projects/mycloud-restsdk-recovery-script/restsdk_public.py", line 969, in copy_worker
+    shutil.copy2(src_path, dest_path)
+  File "/usr/lib/python3.12/shutil.py", line 475, in copy2
+    copyfile(src, dst, follow_symlinks=follow_symlinks)
+  File "/usr/lib/python3.12/shutil.py", line 262, in copyfile
+    with open(dst, 'wb') as fdst:
+         ^^^^^^^^^^^^^^^
+OSError: [Errno 24] Too many open files: '/iPhone-Ash Camera Roll Backup/IMG_1436.JPG'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/chapman/projects/mycloud-restsdk-recovery-script/restsdk_public.py", line 1033, in <module>
+    run_resume_copy()
+  File "/home/chapman/projects/mycloud-restsdk-recovery-script/restsdk_public.py", line 993, in run_resume_copy
+    for status, rel in executor.map(copy_worker, files_to_copy):
+  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 619, in result_iterator
+    yield _result_or_cancel(fs.pop())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 317, in _result_or_cancel
+    return fut.result(timeout)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/usr/lib/python3.12/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/chapman/projects/mycloud-restsdk-recovery-script/restsdk_public.py", line 989, in copy_worker
+    insert_skipped_file(db, content_id or name, f"copy_error: {type(copy_err).__name__}")
+  File "/home/chapman/projects/mycloud-restsdk-recovery-script/restsdk_public.py", line 186, in insert_skipped_file
+    with_retry_db(_op)
+  File "/home/chapman/projects/mycloud-restsdk-recovery-script/restsdk_public.py", line 580, in with_retry_db
+    return fn()
+           ^^^^
+  File "/home/chapman/projects/mycloud-restsdk-recovery-script/restsdk_public.py", line 181, in _op
+    c.execute(
+sqlite3.OperationalError: unable to open database file
