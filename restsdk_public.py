@@ -188,12 +188,56 @@ def insert_skipped_file(db_path, filename, reason):
 def regenerate_copied_files_from_dest(db_path, dumpdir, log_file):
     """
     Scan the destination directory, update copied_files table and regenerate log file.
-    Uses contentID for matching, as this is the on-disk filename.
+    Matches by FULL RELATIVE PATH to handle duplicate filenames in different directories.
     Provides progress output for user feedback during long scans.
     """
     tmp_log = log_file + ".tmp"
     total_files = 0
-    print("Scanning destination directory and regenerating log file (this may take a while for large datasets)...")
+    matched_files = 0
+    unmatched_files = 0
+    
+    print("Building path-to-ID lookup from database (this enables accurate matching)...")
+    
+    # Build a lookup of reconstructed_path -> file_id for accurate matching
+    # This handles duplicate filenames in different directories correctly
+    path_to_file_id = {}
+    with sqlite3.connect(db_path) as conn:
+        conn.execute("PRAGMA busy_timeout=5000")
+        c = conn.cursor()
+        c.execute("SELECT id, name, parentID, contentID FROM files")
+        all_files = c.fetchall()
+    
+    # Build temporary fileDIC for path reconstruction
+    temp_fileDIC = {
+        row[0]: {"Name": row[1], "Parent": row[2], "contentID": row[3]}
+        for row in all_files
+    }
+    
+    def reconstruct_path(file_id):
+        """Reconstruct the relative path for a file_id."""
+        parts = []
+        current_id = file_id
+        while current_id is not None:
+            entry = temp_fileDIC.get(current_id)
+            if not entry:
+                break
+            parts.append(entry["Name"])
+            current_id = entry["Parent"]
+        return "/".join(reversed(parts)) if parts else None
+    
+    print(f"Building path lookup for {len(temp_fileDIC)} files...")
+    for file_id, meta in temp_fileDIC.items():
+        # Skip directories (they have no contentID or are marked as dirs)
+        if not meta.get("contentID"):
+            continue
+        rel_path = reconstruct_path(file_id)
+        if rel_path:
+            # Normalize path separators
+            rel_path = rel_path.replace("\\", "/").lstrip("/")
+            path_to_file_id[rel_path] = file_id
+    print(f"Built lookup with {len(path_to_file_id)} file paths")
+    
+    print("Scanning destination directory and regenerating log file...")
     with sqlite3.connect(db_path) as conn:
         conn.execute("PRAGMA busy_timeout=5000")
         c = conn.cursor()
@@ -202,26 +246,40 @@ def regenerate_copied_files_from_dest(db_path, dumpdir, log_file):
                 for file in files:
                     file_path = os.path.join(root, file)
                     f.write(file_path + '\n')
-                    print(f"Checking destination file: {file}")
-                    c.execute('SELECT id FROM Files WHERE name = ?', (file,))
-                    row = c.fetchone()
-                    file_id = row[0] if row else None
+                    
+                    # Compute relative path from dumpdir
+                    rel_path = os.path.relpath(file_path, dumpdir)
+                    rel_path = rel_path.replace("\\", "/").lstrip("/")
+                    
+                    # Try to match by full relative path (most accurate)
+                    file_id = path_to_file_id.get(rel_path)
+                    
+                    # If not found, try with pipes (in case --sanitize-pipes was used)
+                    if not file_id and "-" in rel_path:
+                        rel_path_with_pipes = rel_path.replace("-", "|")
+                        file_id = path_to_file_id.get(rel_path_with_pipes)
+                    
                     if file_id:
-                        print(f"  [MATCH] DB id: {file_id} for file: {file} -- inserting into copied_files table.")
-                        c.execute('INSERT OR IGNORE INTO copied_files (file_id, filename) VALUES (?, ?)', (file_id, file))
+                        c.execute('INSERT OR IGNORE INTO copied_files (file_id, filename) VALUES (?, ?)', 
+                                  (str(file_id), str(file)))
                         if c.rowcount == 1:
-                            print(f"    [INSERTED] Inserted into copied_files: ({file_id}, {file})")
-                        else:
-                            print(f"    [SKIPPED] Entry already exists for: ({file_id}, {file})")
+                            matched_files += 1
+                            if matched_files <= 10 or matched_files % 1000 == 0:
+                                print(f"  [MATCH] {rel_path} -> file_id={file_id}")
                     else:
-                        print(f"  [NO MATCH] No DB entry found for destination file: {file}")
+                        unmatched_files += 1
+                        if unmatched_files <= 10:
+                            print(f"  [NO MATCH] {rel_path} (not in source DB - may be manually added)")
+                    
                     total_files += 1
-                    #TODO: add this batch size as a pareameter to the cli
                     if total_files % 10000 == 0:
-                        print(f"  Processed {total_files} files so far...")
+                        print(f"  Progress: {total_files} files scanned, {matched_files} matched, {unmatched_files} unmatched...")
                         conn.commit()
-                        print(f"  [COMMIT] Database commit after {total_files} files.")
-        print(f"Finished scanning. Total files processed: {total_files}")
+        
+        print(f"\nFinished scanning destination directory.")
+        print(f"  Total files scanned: {total_files}")
+        print(f"  Matched to source DB: {matched_files}")
+        print(f"  Not in source DB: {unmatched_files} (these are ignored - may be manually added files)")
         conn.commit()
     os.replace(tmp_log, log_file)
 
