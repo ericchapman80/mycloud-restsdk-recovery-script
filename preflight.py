@@ -117,18 +117,74 @@ def estimate_duration(total_size_gb, min_MBps):
     total_MB = total_size_gb * 1024
     return total_MB / min_MBps / 60  # in minutes
 
-def recommend_thread_count(cpu_count, file_stats):
-    # For many small files, more threads help; for large files, fewer threads
+def recommend_thread_count(cpu_count, file_stats, disk_speed_MBps=None, dest_fs=None):
+    """
+    Recommend thread count based on multiple factors:
+    - CPU count
+    - File size distribution  
+    - Disk write speed (I/O bottleneck)
+    - Filesystem type (NFS/network filesystems need fewer threads)
+    
+    Returns: (recommended_threads, explanation_dict)
+    """
+    # Base recommendation from CPU and file sizes
     if file_stats['small_files'] > file_stats['medium_files'] + file_stats['large_files']:
-        return min(max(4, cpu_count * 2), 32)
+        cpu_rec = min(max(4, cpu_count * 2), 32)
+        cpu_reason = f"many small files (2x CPU cores, max 32)"
     else:
-        return min(max(2, cpu_count), 16)
+        cpu_rec = min(max(2, cpu_count), 16)
+        cpu_reason = f"mixed/large files (1x CPU cores, max 16)"
+    
+    # Cap based on disk write speed - more threads don't help if disk is the bottleneck
+    # Rule of thumb: ~1 thread per 20 MB/s of write throughput (accounts for overhead)
+    if disk_speed_MBps and disk_speed_MBps > 0:
+        io_rec = max(2, min(int(disk_speed_MBps / 20) + 1, 16))
+        io_reason = f"{disk_speed_MBps:.0f} MB/s write speed"
+    else:
+        io_rec = cpu_rec
+        io_reason = "unknown (defaulting to CPU-based)"
+    
+    # For network filesystems (NFS, CIFS, SMB), cap at CPU count to avoid contention
+    is_network_fs = dest_fs and any(tag in dest_fs.lower() for tag in ['nfs', 'cifs', 'smb', 'fuse'])
+    if is_network_fs:
+        net_rec = cpu_count
+        net_reason = f"{dest_fs} (network filesystem, capped at CPU count)"
+    else:
+        net_rec = cpu_rec
+        net_reason = f"{dest_fs or 'local'} (no network cap)"
+    
+    # Return the most conservative recommendation with explanation
+    final = min(cpu_rec, io_rec, net_rec)
+    
+    # Determine limiting factor
+    if final == io_rec and io_rec < cpu_rec:
+        limiting = "disk I/O speed"
+    elif final == net_rec and net_rec < cpu_rec:
+        limiting = "network filesystem"
+    else:
+        limiting = "CPU/file characteristics"
+    
+    explanation = {
+        'cpu_rec': cpu_rec,
+        'cpu_reason': cpu_reason,
+        'io_rec': io_rec,
+        'io_reason': io_reason,
+        'net_rec': net_rec,
+        'net_reason': net_reason,
+        'limiting_factor': limiting,
+    }
+    
+    return final, explanation
 
-def recommend_thread_count_with_fd(cpu_count, file_stats, fd_limit):
-    """Cap threads based on both CPU and a conservative FD budget (2 FDs per copy, 100 FDs headroom)."""
+def recommend_thread_count_with_fd(cpu_count, file_stats, fd_limit, disk_speed_MBps=None, dest_fs=None):
+    """Cap threads based on CPU, FD limit, disk speed, and filesystem type."""
     fd_safe = max(2, min((fd_limit - 100) // 2, 32)) if fd_limit else 8
-    cpu_rec = recommend_thread_count(cpu_count, file_stats)
-    return min(cpu_rec, fd_safe)
+    base_rec, explanation = recommend_thread_count(cpu_count, file_stats, disk_speed_MBps, dest_fs)
+    final = min(base_rec, fd_safe)
+    if final < base_rec:
+        explanation['limiting_factor'] = 'file descriptor limit'
+    explanation['fd_rec'] = fd_safe
+    return final, explanation
 
 def preflight_summary(source, dest):
     cpu = get_cpu_info()
@@ -140,9 +196,17 @@ def preflight_summary(source, dest):
     disk_speed = disk_speed_test(dest)
     min_MBps = min(disk_speed['write_MBps'], disk_speed['read_MBps'])
     est_min = estimate_duration(file_stats['total_size_GB'], min_MBps)
-    thread_count = recommend_thread_count(cpu['cpu_count'], file_stats)
+    dest_fs = disk_dst.get('filesystem')
     fd_limit = os.sysconf('SC_OPEN_MAX') if hasattr(os, 'sysconf') else None
-    fd_based_threads = recommend_thread_count_with_fd(cpu['cpu_count'], file_stats, fd_limit)
+    # Use smart thread recommendation considering all factors
+    thread_count, thread_explanation = recommend_thread_count(
+        cpu['cpu_count'], file_stats, 
+        disk_speed['write_MBps'], dest_fs
+    )
+    fd_based_threads, _ = recommend_thread_count_with_fd(
+        cpu['cpu_count'], file_stats, fd_limit,
+        disk_speed['write_MBps'], dest_fs
+    )
     return {
         'cpu': cpu,
         'memory': mem,
@@ -153,6 +217,7 @@ def preflight_summary(source, dest):
         'disk_speed': disk_speed,
         'est_min': est_min,
         'thread_count': thread_count,
+        'thread_explanation': thread_explanation,
         'fd_limit': fd_limit,
         'fd_based_threads': fd_based_threads,
     }
@@ -172,7 +237,11 @@ def print_preflight_report(summary, source, dest):
     print(f"  - Free: {summary['disk_dst']['free'] // (1024**3)} GB | Total: {summary['disk_dst']['total'] // (1024**3)} GB | FS: {dest_fs}")
     print(f"⚡ Disk Speed (dest): Write: {summary['disk_speed']['write_MBps']:.1f} MB/s | Read: {summary['disk_speed']['read_MBps']:.1f} MB/s")
     print(f"⏱️  Estimated Duration: {summary['est_min']:.1f} minutes (best case)")
-    print(f"🔢 Recommended Threads: {summary['thread_count']}")
+    thread_exp = summary['thread_explanation']
+    print(f"🔢 Recommended Threads: {summary['thread_count']} (limited by: {thread_exp['limiting_factor']})")
+    print(f"   ├─ CPU-based: {thread_exp['cpu_rec']} ({thread_exp['cpu_reason']})")
+    print(f"   ├─ I/O-based: {thread_exp['io_rec']} ({thread_exp['io_reason']})")
+    print(f"   └─ FS-based:  {thread_exp['net_rec']} ({thread_exp['net_reason']})")
     if summary['file_stats']['pipe_names'] > 0 and dest_fs and any(tag in dest_fs.lower() for tag in PIPE_FS_TAGS):
         print("\n⚠️  Destination filesystem may reject '|' in filenames. Consider using --sanitize-pipes.")
     print("\n✨ Recommended Command:")
