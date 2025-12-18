@@ -252,6 +252,8 @@ def test_refresh_mtime_existing(tmp_path, monkeypatch):
     restsdk_public.skipped_files_counter = restsdk_public.Value("i", 0)
     restsdk_public.lock = restsdk_public.Lock()
     restsdk_public.copied_files = set()
+    # Build reverse lookup dictionaries for O(1) filename->ID mapping
+    restsdk_public.build_reverse_lookups()
 
     src_dir = tmp_path / "src"
     dest_dir = tmp_path / "dest"
