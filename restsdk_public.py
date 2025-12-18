@@ -7,6 +7,7 @@ import shutil
 import pprint
 import sqlite3
 import sys
+import threading
 import time
 try:
     import psutil
@@ -914,7 +915,20 @@ if __name__ == "__main__":
         print(f"Files to process: {len(files_to_copy)} (filtered by copied_files and skipped_files tables)")
         logging.info(f"Files to process: {len(files_to_copy)}")
 
+        # Check and report file descriptor limit
+        try:
+            import resource
+            soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+            print(f"File descriptor limit: soft={soft}, hard={hard}")
+            if soft < 1024:
+                print(f"⚠️  Warning: Low file descriptor limit ({soft}). Consider running 'ulimit -n 65535' before starting.")
+        except:
+            pass
+
         results = {"copied": 0, "skipped_already": 0, "skipped_problem": 0, "errored": 0, "dry_run": 0}
+        
+        # Semaphore to limit concurrent file operations and prevent FD exhaustion
+        io_semaphore = threading.Semaphore(max(2, thread_count))
 
         def copy_worker(file_row):
             file_id, content_id, name, image_date, video_date, c_time, birth_time, mime_type = file_row
@@ -934,6 +948,8 @@ if __name__ == "__main__":
                     rel_path = rel_path.replace(skip, "")
                 if args.sanitize_pipes:
                     rel_path = rel_path.replace("|", "-")
+                # Strip leading slashes so os.path.join works correctly
+                rel_path = rel_path.lstrip(os.sep)
                 dest_path = os.path.join(dumpdir, rel_path)
                 src_path = resolve_src_path(filedir, content_id)
                 if not os.path.exists(src_path):
@@ -966,7 +982,9 @@ if __name__ == "__main__":
                     # Record in copied_files since it exists at destination
                     insert_copied_file(db, file_id, content_id)
                     return ("skipped_already", content_id)
-                shutil.copy2(src_path, dest_path)
+                # Use semaphore to limit concurrent file operations
+                with io_semaphore:
+                    shutil.copy2(src_path, dest_path)
                 if args.preserve_mtime:
                     ts = next(
                         (
