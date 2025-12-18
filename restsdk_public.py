@@ -227,13 +227,13 @@ def regenerate_copied_files_from_dest(db_path, dumpdir, log_file):
 
 def findNextParent(fileID):
     """
-    Finds the next parent directory from the data dicstionary
+    Finds the next parent directory from the data dictionary.
     Args: fileID (str): The ID of the file to find the next parent for.
     Returns: str: The ID of the next parent db item in the chain.
     """
-    for key, value in fileDIC.items():
-        if key == fileID:
-            return value['Parent']
+    # O(1) direct lookup instead of O(n) loop
+    entry = fileDIC.get(fileID)
+    return entry['Parent'] if entry else None
         
 def hasAnotherParent(fileID):
     """
@@ -275,18 +275,42 @@ def idToPath2(fileID):
         path = fileDIC[fileID]['Name']
     return path
 
+# Reverse lookup dictionaries for O(1) filename->ID mapping (built after fileDIC is populated)
+_contentID_to_fileID = {}
+_name_to_fileID = {}
+
+def build_reverse_lookups():
+    """
+    Build reverse lookup dictionaries for O(1) filename->ID mapping.
+    Must be called after fileDIC is populated.
+    """
+    global _contentID_to_fileID, _name_to_fileID
+    _contentID_to_fileID = {}
+    _name_to_fileID = {}
+    for file_id, meta in fileDIC.items():
+        cid = meta.get('contentID')
+        name = meta.get('Name')
+        if cid:
+            _contentID_to_fileID[cid] = file_id
+        if name:
+            _name_to_fileID[name] = file_id
+    logging.info(f"Built reverse lookups: {len(_contentID_to_fileID)} contentIDs, {len(_name_to_fileID)} names")
+
 def filenameToID(filename):
     """
     Return the DB id for a given filesystem filename.
     Tries contentID first, then falls back to Name (for DBs where contentID != filename).
+    Uses O(1) lookup via pre-built reverse dictionaries.
     Parameters: filename (str): The name of the file to search for.
     Returns: str or None: The key corresponding to the filename if found, or None if not found.
     """
-    for keys, values in fileDIC.items():
-        if values['contentID'] == filename:
-            return str(keys)
-        if values['Name'] == filename:
-            return str(keys)
+    # O(1) lookup instead of O(n) loop
+    file_id = _contentID_to_fileID.get(filename)
+    if file_id is not None:
+        return str(file_id)
+    file_id = _name_to_fileID.get(filename)
+    if file_id is not None:
+        return str(file_id)
     return None
 
 def resolve_src_path(base_dir, cid):
@@ -316,7 +340,9 @@ def getRootDirs():
         if 'auth' in values['Name'] and '|' in values['Name']:
             return str(values['Name'])
         
-def copy_file(root, file, skipnames, dumpdir, dry_run, log_file, disk_semaphore=None, io_buffer_size=0):
+def copy_file(root, file, skipnames, dumpdir, dry_run, log_file, disk_semaphore=None, io_buffer_size=0, db_path=None):
+    # Use provided db_path or fall back to global db
+    _db = db_path if db_path else globals().get('db')
     filename = str(file)
     print('FOUND FILE ' + filename + ' SEARCHING......', end="\n")
     print('Processing ' + str(processed_files_counter.value) + ' of ' + str(total_files) + ' files', end="\n")
@@ -410,16 +436,17 @@ def copy_file(root, file, skipnames, dumpdir, dry_run, log_file, disk_semaphore=
                         )
                         if ts:
                             os.utime(newpath, (ts / 1000, ts / 1000))
-                            try:
-                                def _op():
-                                    with sqlite3.connect(db) as conn:
-                                        conn.execute("PRAGMA busy_timeout=5000")
-                                        cur = conn.cursor()
-                                        cur.execute("UPDATE copied_files SET mtime_refreshed=1 WHERE file_id=?", (fileID,))
-                                        conn.commit()
-                                with_retry_db(_op)
-                            except sqlite3.Error:
-                                pass
+                            if _db:
+                                try:
+                                    def _op():
+                                        with sqlite3.connect(_db) as conn:
+                                            conn.execute("PRAGMA busy_timeout=5000")
+                                            cur = conn.cursor()
+                                            cur.execute("UPDATE copied_files SET mtime_refreshed=1 WHERE file_id=?", (fileID,))
+                                            conn.commit()
+                                    with_retry_db(_op)
+                                except sqlite3.Error:
+                                    pass
                     with processed_files_counter.get_lock():
                         processed_files_counter.value += 1
                     progress = (processed_files_counter.value / total_files) * 100
@@ -428,13 +455,21 @@ def copy_file(root, file, skipnames, dumpdir, dry_run, log_file, disk_semaphore=
                     print(f'Progress: {progress:.2f}%')
                     with lock:
                         with open(log_file, 'a') as f:
-                            f.write(fullpath + '\n')
-                except:
-                    print('Error copying file ' + fullpath + ' to ' + newpath)
-                    logging.info('Error copying file ' + fullpath + ' to ' + newpath)
+                            f.write(newpath + '\n')  # Write destination path to match what we check
+                    # Record in database for resume capability
+                    if _db:
+                        insert_copied_file(_db, fileID, filename)
+                except Exception as e:
+                    print(f'Error copying file {fullpath} to {newpath}: {e}')
+                    logging.error(f'Error copying file {fullpath} to {newpath}: {e}')
+                    # Record as skipped so we don't retry forever on permanent errors
+                    if _db:
+                        insert_skipped_file(_db, filename, f'copy_error: {type(e).__name__}')
     else:
-        print('Error: Unable to find file ' + filename + ' in the database')
-        logging.info('Error: Unable to find file ' + filename + ' in the database')
+        print(f'Warning: Unable to find file {filename} in the database')
+        logging.warning(f'Unable to find file {filename} in the database')
+        if _db:
+            insert_skipped_file(_db, filename, 'not_in_database')
         with processed_files_counter.get_lock():
             processed_files_counter.value += 1
         progress = (processed_files_counter.value / total_files) * 100
@@ -664,6 +699,9 @@ if __name__ == "__main__":
         for file in files
     }
 
+    # Build reverse lookup dictionaries for O(1) filename->ID mapping
+    build_reverse_lookups()
+
     # Warn early if destination filesystem likely rejects pipe characters
     pipe_in_db = any("|" in meta["Name"] for meta in fileDIC.values())
     dest_fs, dest_mp = detect_fs_type(dumpdir) if psutil else (None, None)
@@ -867,6 +905,8 @@ if __name__ == "__main__":
                                     conn.commit()
                             except sqlite3.Error:
                                 pass
+                    # Record in copied_files since it exists at destination
+                    insert_copied_file(db, file_id, content_id)
                     return ("skipped_already", content_id)
                 shutil.copy2(src_path, dest_path)
                 if args.preserve_mtime:
@@ -887,6 +927,8 @@ if __name__ == "__main__":
             except Exception as copy_err:
                 logging.error(f"Error copying {name}: {copy_err}")
                 print(f"[ERROR] {name}: {copy_err}")
+                # Record in skipped_files so we don't retry forever on permanent errors
+                insert_skipped_file(db, content_id or name, f"copy_error: {type(copy_err).__name__}")
                 return ("errored", name)
 
         with ThreadPoolExecutor(max_workers=thread_count) as executor:
