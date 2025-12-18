@@ -34,6 +34,25 @@ import datetime
 from queue import Queue
 from threading import Thread
 
+# Increase file descriptor limit at startup (prevents "Too many open files" errors)
+def _increase_fd_limit():
+    """Attempt to increase the file descriptor limit to 65536 or max available."""
+    try:
+        import resource
+        soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+        target = min(65536, hard)  # Don't exceed hard limit
+        if soft < target:
+            resource.setrlimit(resource.RLIMIT_NOFILE, (target, hard))
+            new_soft, _ = resource.getrlimit(resource.RLIMIT_NOFILE)
+            print(f"Increased file descriptor limit: {soft} → {new_soft}")
+        else:
+            print(f"File descriptor limit already sufficient: {soft}")
+    except (ImportError, ValueError, OSError) as e:
+        print(f"Warning: Could not increase file descriptor limit: {e}")
+        print("Consider running: ulimit -n 65536")
+
+_increase_fd_limit()
+
 # Preflight import
 try:
     from preflight import preflight_summary, print_preflight_report
