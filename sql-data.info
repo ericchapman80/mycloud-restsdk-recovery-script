@@ -103,3 +103,12 @@ drwxrwxrwx 1 1024 users         44 May 15  2025 Chapman-Christmas-2021
 -rwxrwxrwx 1 1024 users       4096 Mar 29  2024 ._Chapman-Fall-2019
 drwxrwxrwx 1 1024 users         34 May 14  2025 Chapman-Fall-2019
 drwxrwxrwx 1 1024 users         34 May 13  2025 Chapman-Fall-2020
+
+
+Finished scanning destination directory.
+  Total files scanned: 671828
+  Matched to source DB: 0
+  Not in source DB: 671828 (these are ignored - may be manually added files)
+Log file and copied_files table regeneration complete in 16m 59s. Resuming copy process...
+Files to process: 1063891 (filtered by copied_files and skipped_files tables)
+File descriptor limit: soft=65536, hard=1048576
