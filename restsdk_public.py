@@ -297,8 +297,10 @@ def regenerate_copied_files_from_dest(db_path, dumpdir, log_file):
                         file_id = path_to_file_id.get(rel_path_with_pipes)
                     
                     if file_id:
+                        # Store content_id in filename column for consistency with resume mode
+                        content_id = temp_fileDIC[file_id].get("contentID", file)
                         c.execute('INSERT OR IGNORE INTO copied_files (file_id, filename) VALUES (?, ?)', 
-                                  (str(file_id), str(file)))
+                                  (str(file_id), str(content_id)))
                         if c.rowcount == 1:
                             matched_files += 1
                             if matched_files <= 10 or matched_files % 1000 == 0:
@@ -551,15 +553,17 @@ def copy_file(root, file, skipnames, dumpdir, dry_run, log_file, disk_semaphore=
                     with lock:
                         with open(log_file, 'a') as f:
                             f.write(newpath + '\n')  # Write destination path to match what we check
-                    # Record in database for resume capability
+                    # Record in database for resume capability (store content_id for consistency)
                     if _db:
-                        insert_copied_file(_db, fileID, filename)
+                        content_id = fileDIC.get(fileID, {}).get("contentID", filename)
+                        insert_copied_file(_db, fileID, content_id)
                 except Exception as e:
                     print(f'Error copying file {fullpath} to {newpath}: {e}')
                     logging.error(f'Error copying file {fullpath} to {newpath}: {e}')
-                    # Record as skipped so we don't retry forever on permanent errors
+                    # Record as skipped so we don't retry forever on permanent errors (use content_id for consistency)
                     if _db:
-                        insert_skipped_file(_db, filename, f'copy_error: {type(e).__name__}')
+                        content_id = fileDIC.get(fileID, {}).get("contentID", filename)
+                        insert_skipped_file(_db, content_id, f'copy_error: {type(e).__name__}')
     else:
         print(f'Warning: Unable to find file {filename} in the database')
         logging.warning(f'Unable to find file {filename} in the database')
@@ -949,8 +953,10 @@ if __name__ == "__main__":
                    WHERE c2.file_id IS NULL AND s.filename IS NULL"""
             )
             files_to_copy = c.fetchall()
+            # Load content_ids from copied_files for fast lookup
             c.execute("SELECT filename FROM copied_files")
             already_copied_set = set(row[0] for row in c.fetchall())
+            # Load skipped content_ids  
             c.execute("SELECT filename FROM skipped_files")
             skipped_set = set(row[0] for row in c.fetchall())
 
@@ -977,9 +983,10 @@ if __name__ == "__main__":
             try:
                 if mime_type == "application/x.wd.dir" or content_id is None:
                     return ("skipped_problem", content_id or name)
-                if content_id in already_copied_set:
+                # Note: SQL query already filters by file_id, these are safety checks
+                if content_id and content_id in already_copied_set:
                     return ("skipped_already", content_id)
-                if content_id in skipped_set:
+                if content_id and content_id in skipped_set:
                     return ("skipped_problem", content_id)
                 if dry_run:
                     print(f"[DRY RUN] Would copy: {content_id}")
