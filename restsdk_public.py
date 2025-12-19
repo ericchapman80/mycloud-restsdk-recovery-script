@@ -245,7 +245,18 @@ def regenerate_copied_files_from_dest(db_path, dumpdir, log_file):
             current_id = entry["Parent"]
         return "/".join(reversed(parts)) if parts else None
     
+    # Find root directory names to strip (same logic as copy function's skipnames)
+    root_dirs_to_strip = []
+    for fid, meta in temp_fileDIC.items():
+        name = meta.get("Name", "")
+        if 'auth' in name and '|' in name:
+            root_dirs_to_strip.append(name)
+            break  # Only need the first one
+    
     print(f"Building path lookup for {len(temp_fileDIC)} files...")
+    if root_dirs_to_strip:
+        print(f"  (stripping root dir prefix: {root_dirs_to_strip[0][:30]}...)")
+    
     for file_id, meta in temp_fileDIC.items():
         # Skip directories (they have no contentID or are marked as dirs)
         if not meta.get("contentID"):
@@ -253,8 +264,14 @@ def regenerate_copied_files_from_dest(db_path, dumpdir, log_file):
         rel_path = reconstruct_path(file_id)
         if rel_path:
             # Normalize path separators
-            rel_path = rel_path.replace("\\", "/").lstrip("/")
-            path_to_file_id[rel_path] = file_id
+            rel_path = rel_path.replace("\\", "/")
+            # Strip root directory names (same transformation as copy function)
+            for root_dir in root_dirs_to_strip:
+                rel_path = rel_path.replace(root_dir + "/", "")
+                rel_path = rel_path.replace(root_dir, "")
+            rel_path = rel_path.lstrip("/")
+            if rel_path:  # Only add if path is not empty after stripping
+                path_to_file_id[rel_path] = file_id
     print(f"Built lookup with {len(path_to_file_id)} file paths")
     
     print("Scanning destination directory and regenerating log file...")
@@ -741,7 +758,13 @@ if __name__ == "__main__":
     print(f"Preserve mtime: {args.preserve_mtime}")
     print(f"Refresh mtime on existing: {args.refresh_mtime_existing}")
     print(f"Sanitize pipes: {args.sanitize_pipes}")
-    print(f"Resume: {args.resume}, Regen log: {args.regen_log}, No-regen-log: {args.no_regen_log}")
+    if args.resume:
+        will_regen = "Yes (default)" if not args.no_regen_log else "No (--no-regen-log)"
+        print(f"Resume mode: ON, Will regenerate log: {will_regen}")
+    elif args.regen_log:
+        print(f"Regen-log-only mode: ON (will regenerate and exit)")
+    else:
+        print(f"Normal copy mode")
     print("========================\n")
     logging.info(f"Run starting at {time.ctime(run_start)} with db={db}, filedir={filedir}, dumpdir={dumpdir}, log_file={log_file}, threads={thread_count}, dry_run={dry_run}, preserve_mtime={args.preserve_mtime}, refresh_mtime_existing={args.refresh_mtime_existing}, sanitize_pipes={args.sanitize_pipes}, resume={args.resume}, regen_log={args.regen_log}, no_regen_log={args.no_regen_log}")
 
