@@ -192,6 +192,31 @@ With the v2.0 fixes, you should see a **stable, low number** (typically under 50
 watch -n 60 'df -h /path/to/destination'
 ```
 
+### Verify Correct Operation
+
+After starting a run, verify files are going to the right place:
+
+```bash
+# Check output shows correct paths (should include your dumpdir prefix)
+head -100 run.out | grep COPIED
+# ✅ Good: [COPIED] /mnt/nfs-media/iPhone-Ash Camera Roll Backup/IMG_1234.JPG
+# 🔴 Bad:  [COPIED] /iPhone-Ash Camera Roll Backup/IMG_1234.JPG
+
+# Verify files are in destination (not root filesystem)
+ls -lt /path/to/destination | head   # Should show recent timestamps
+ls -la / | grep -i iphone            # Should be empty!
+
+# Check recently modified directories (sorted by time, newest first)
+ls -lt /path/to/destination | head -20
+
+# Grep for errors in output
+grep -iE 'error|warning|failed' run.out | head -20
+
+# Count errors vs successes
+grep -c "COPIED" run.out
+grep -c "ERROR" run.out
+```
+
 ### Troubleshooting Common Issues
 
 **"Too many open files" error:**
