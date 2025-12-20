@@ -147,9 +147,70 @@ The preflight analyzes your system and recommends threads based on the **most li
 
 ---
 
-## � Monitoring & Troubleshooting
+## 📊 Monitoring & Troubleshooting
 
 While the script is running, use these commands in a separate terminal to monitor progress and health.
+
+### System Health Monitor (`monitor.sh`)
+
+A standalone monitoring utility that tracks system health every 30 seconds and alerts you to potential issues before they cause a lockup.
+
+**What it monitors:**
+- Script status (running/stopped)
+- NFS mount status (OK/stalled/unmounted)
+- Memory usage %
+- System load average
+- Open file descriptors
+- Disk I/O wait %
+- `copied_files` count from database
+
+**Alerts for:**
+- NFS stall (timeout on directory listing)
+- Script stopped unexpectedly
+- Memory usage > 90%
+
+**How to run:**
+
+```bash
+# Run in background (recommended for long operations)
+nohup ./monitor.sh /path/to/monitor.log 30 > /dev/null 2>&1 &
+
+# Run interactively to watch live
+./monitor.sh /path/to/monitor.log 30
+
+# Arguments:
+#   $1 = log file path (default: monitor.log)
+#   $2 = interval in seconds (default: 30)
+```
+
+**Watch the monitor log remotely:**
+
+```bash
+tail -f /path/to/monitor.log
+```
+
+**Sample output:**
+
+```
+=== Monitor Started: Thu Dec 19 21:00:00 2025 ===
+[2025-12-19 21:00:30] #1 | Script: RUNNING | NFS: OK | Mem: 45.2% (4521MB/10000MB) | Load: 2.1 1.8 1.5 | FDs: 48 | IOWait: 3% | Copied: 361386
+[2025-12-19 21:01:00] #2 | Script: RUNNING | NFS: OK | Mem: 46.1% (4610MB/10000MB) | Load: 2.3 1.9 1.6 | FDs: 52 | IOWait: 5% | Copied: 361842
+```
+
+**Recommended: Run monitor alongside copy script:**
+
+```bash
+# Terminal 1: Start the copy script
+nohup sudo python restsdk_public.py --resume ... > run.out 2>&1 &
+
+# Terminal 2: Start the monitor
+nohup ./monitor.sh /home/user/monitor.log 30 > /dev/null 2>&1 &
+
+# Terminal 3: Watch both logs
+tail -f run.out monitor.log
+```
+
+---
 
 ### Watch Progress
 
