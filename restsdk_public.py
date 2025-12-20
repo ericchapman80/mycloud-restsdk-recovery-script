@@ -321,6 +321,14 @@ def regenerate_copied_files_from_dest(db_path, dumpdir, log_file):
         print(f"  Not in source DB: {unmatched_files} (these are ignored - may be manually added files)")
         conn.commit()
     os.replace(tmp_log, log_file)
+    
+    # Free memory from temporary dictionaries used only for log regeneration
+    del temp_fileDIC
+    del path_to_file_id
+    del all_files
+    import gc
+    gc.collect()
+    print("  (freed temporary path lookup memory)")
 
 def findNextParent(fileID):
     """
@@ -1083,6 +1091,13 @@ if __name__ == "__main__":
         with ThreadPoolExecutor(max_workers=thread_count) as executor:
             for status, rel in executor.map(copy_worker, files_to_copy):
                 results[status] += 1
+
+        # Free memory from large data structures no longer needed
+        del files_to_copy
+        del already_copied_set
+        del skipped_set
+        import gc
+        gc.collect()
 
         with sqlite3.connect(db) as conn:
             conn.execute("PRAGMA busy_timeout=5000")
