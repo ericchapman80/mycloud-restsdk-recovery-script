@@ -112,6 +112,13 @@ Finished scanning destination directory.
 Log file and copied_files table regeneration complete in 16m 59s. Resuming copy process...
 Files to process: 1063891 (filtered by copied_files and skipped_files tables)
 File descriptor limit: soft=65536, hard=1048576
+
+
 192.168.172.10:/volume1/shared-media on /mnt/nfs-media type nfs (rw,relatime,vers=3,rsize=8192,wsize=8192,namlen=255,hard,proto=tcp,timeo=600,retrans=2,sec=sys,mountaddr=192.168.172.10,mountvers=3,mountport=892,mountproto=udp,local_lock=none,addr=192.168.172.10)
 192.168.172.10:/volume1/shared-media /mnt/nfs-media nfs nouser,rsize=8192,wsize=8192,atime,auto,rw,dev,exec,suid 0 0
 #Synology-DS220:/volume1/shared-media /mnt/nfs-media nfs nouser,rsize=8192,wsize=8192,atime,auto,rw,dev,exec,suid 0 0
+
+sudo nano /etc/fstab
+192.168.172.10:/volume1/shared-media /mnt/nfs-media nfs soft,timeo=30,retrans=3,rsize=131072,wsize=131072,noatime,rw 0 0
+sudo umount /mnt/nfs-media
+sudo mount /mnt/nfs-media
