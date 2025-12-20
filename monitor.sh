@@ -2,13 +2,15 @@
 # Monitor script for restsdk copy operations
 # Run alongside the main script to track system health and catch issues early
 
-LOGFILE="${1:-/home/chapman/projects/mycloud-restsdk-recovery-script/monitor.log}"
+LOGFILE="${1:-monitor.log}"
 INTERVAL="${2:-30}"  # seconds between checks
-NFS_MOUNT="/mnt/nfs-media"
-DB_PATH="/mnt/backupdrive/restsdk/data/db/index.db"
+NFS_MOUNT="${3:-/mnt/nfs-media}"
+TRACKING_DB="${4:-}"  # Optional: path to tracking database with copied_files table
 
 echo "=== Monitor Started: $(date) ===" | tee -a "$LOGFILE"
 echo "Logging to: $LOGFILE (interval: ${INTERVAL}s)" | tee -a "$LOGFILE"
+echo "NFS Mount: $NFS_MOUNT" | tee -a "$LOGFILE"
+[ -n "$TRACKING_DB" ] && echo "Tracking DB: $TRACKING_DB" | tee -a "$LOGFILE"
 echo ""
 
 check_count=0
@@ -17,38 +19,97 @@ while true; do
     check_count=$((check_count + 1))
     timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     
-    # Memory usage
-    mem_info=$(free -m | awk 'NR==2{printf "%.1f%% (%dMB/%dMB)", $3*100/$2, $3, $2}')
+    # Memory usage (works on both Linux and macOS)
+    if [ -f /proc/meminfo ]; then
+        # Linux
+        mem_info=$(free -m 2>/dev/null | awk 'NR==2{printf "%.1f%% (%dMB/%dMB)", $3*100/$2, $3, $2}')
+    else
+        # macOS fallback
+        mem_info=$(vm_stat 2>/dev/null | awk '/Pages (free|active|inactive|speculative)/ {sum+=$NF} END {printf "%.0f pages used", sum}' || echo "N/A")
+    fi
     
-    # Load average
-    load=$(cat /proc/loadavg | awk '{print $1, $2, $3}')
+    # Load average (works on both Linux and macOS)
+    if [ -f /proc/loadavg ]; then
+        load=$(cat /proc/loadavg | awk '{print $1, $2, $3}')
+    else
+        load=$(sysctl -n vm.loadavg 2>/dev/null | tr -d '{}' || uptime | awk -F'load average:' '{print $2}' | xargs)
+    fi
     
-    # Open file descriptors for python processes
-    fd_count=$(ls /proc/*/fd 2>/dev/null | wc -l)
-    python_fd=$(lsof -c python 2>/dev/null | wc -l)
+    # Open file descriptors for python processes (try multiple methods)
+    python_fd="N/A"
+    # Try lsof first (works on both Linux and macOS)
+    if command -v lsof &>/dev/null; then
+        # Match python, python3, Python, etc.
+        python_fd=$(lsof -c python -c Python 2>/dev/null | wc -l | xargs)
+        [ "$python_fd" = "0" ] && python_fd=$(lsof 2>/dev/null | grep -i python | wc -l | xargs)
+    fi
+    # Fallback: count from /proc on Linux
+    if [ "$python_fd" = "0" ] || [ "$python_fd" = "N/A" ]; then
+        python_pids=$(pgrep -f "python" 2>/dev/null)
+        if [ -n "$python_pids" ]; then
+            python_fd=0
+            for pid in $python_pids; do
+                if [ -d "/proc/$pid/fd" ]; then
+                    count=$(ls -1 /proc/$pid/fd 2>/dev/null | wc -l)
+                    python_fd=$((python_fd + count))
+                fi
+            done
+        fi
+    fi
     
     # NFS mount status
     nfs_status="OK"
-    if ! mountpoint -q "$NFS_MOUNT" 2>/dev/null; then
-        nfs_status="UNMOUNTED!"
-    elif ! timeout 5 ls "$NFS_MOUNT" >/dev/null 2>&1; then
-        nfs_status="STALLED!"
+    if [ -n "$NFS_MOUNT" ] && [ "$NFS_MOUNT" != "none" ]; then
+        if ! mountpoint -q "$NFS_MOUNT" 2>/dev/null && ! mount | grep -q "$NFS_MOUNT"; then
+            nfs_status="UNMOUNTED!"
+        elif ! timeout 5 ls "$NFS_MOUNT" >/dev/null 2>&1; then
+            nfs_status="STALLED!"
+        fi
+    else
+        nfs_status="N/A"
     fi
     
-    # Copied files count (with timeout to avoid blocking)
+    # Copied files count - try multiple sources
     copied_count="N/A"
-    if [ -f "$DB_PATH" ]; then
-        copied_count=$(timeout 5 sqlite3 "$DB_PATH" "SELECT COUNT(*) FROM copied_files" 2>/dev/null || echo "DB_LOCKED")
+    # Method 1: Check tracking database if provided
+    if [ -n "$TRACKING_DB" ] && [ -f "$TRACKING_DB" ]; then
+        copied_count=$(timeout 5 sqlite3 "$TRACKING_DB" "SELECT COUNT(*) FROM copied_files" 2>/dev/null || echo "DB_ERR")
+    fi
+    # Method 2: Parse from run.out if tracking DB not available
+    if [ "$copied_count" = "N/A" ] || [ "$copied_count" = "DB_ERR" ]; then
+        if [ -f "run.out" ]; then
+            # Count [COPIED] lines in run.out
+            copied_count=$(grep -c "\[COPIED\]" run.out 2>/dev/null || echo "0")
+            copied_count="${copied_count} (from log)"
+        fi
     fi
     
-    # Disk I/O wait
-    iowait=$(iostat -c 1 2 2>/dev/null | tail -1 | awk '{print $4}' || echo "N/A")
+    # Disk I/O wait (Linux only, graceful fallback)
+    iowait="N/A"
+    if command -v iostat &>/dev/null; then
+        # iostat output varies; try to get iowait %
+        iowait=$(iostat -c 1 2 2>/dev/null | awk '/^ *(avg-cpu|[0-9])/ {iow=$4} END {if(iow!="") print iow; else print "N/A"}')
+    elif [ -f /proc/stat ]; then
+        # Fallback: calculate from /proc/stat (crude but works)
+        read cpu user nice system idle iowait_raw irq softirq < /proc/stat
+        total=$((user + nice + system + idle + iowait_raw + irq + softirq))
+        if [ "$total" -gt 0 ]; then
+            iowait=$(awk "BEGIN {printf \"%.1f\", $iowait_raw * 100 / $total}")
+        fi
+    fi
     
-    # Process status
-    script_running=$(pgrep -f "restsdk_public.py" >/dev/null && echo "RUNNING" || echo "STOPPED")
+    # Process status - check for both scripts
+    script_status="STOPPED"
+    if pgrep -f "restsdk_public.py" >/dev/null 2>&1; then
+        script_status="restsdk"
+    elif pgrep -f "create_symlink_farm.py" >/dev/null 2>&1; then
+        script_status="symlink"
+    elif pgrep -f "rsync" >/dev/null 2>&1; then
+        script_status="rsync"
+    fi
     
     # Log entry
-    log_entry="[$timestamp] #$check_count | Script: $script_running | NFS: $nfs_status | Mem: $mem_info | Load: $load | FDs: $python_fd | IOWait: ${iowait}% | Copied: $copied_count"
+    log_entry="[$timestamp] #$check_count | Script: $script_status | NFS: $nfs_status | Mem: $mem_info | Load: $load | FDs: $python_fd | IOWait: ${iowait}% | Copied: $copied_count"
     
     echo "$log_entry" | tee -a "$LOGFILE"
     
@@ -57,8 +118,8 @@ while true; do
         echo "  ⚠️  ALERT: NFS appears stalled! Check mount." | tee -a "$LOGFILE"
     fi
     
-    if [ "$script_running" = "STOPPED" ]; then
-        echo "  ⚠️  ALERT: Script is not running!" | tee -a "$LOGFILE"
+    if [ "$script_status" = "STOPPED" ]; then
+        echo "  ⚠️  ALERT: No copy process running!" | tee -a "$LOGFILE"
     fi
     
     # Check for high memory usage (>90%)

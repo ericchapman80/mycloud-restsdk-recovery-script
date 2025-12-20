@@ -413,9 +413,46 @@ def create_symlink_farm(
     return created, skipped_no_content, skipped_no_source, errors
 
 
+def check_dependencies() -> dict:
+    """Check for required and optional dependencies."""
+    import shutil
+    
+    deps = {
+        'rsync': shutil.which('rsync'),
+        'sqlite3_cli': shutil.which('sqlite3'),
+    }
+    return deps
+
+
+def print_install_instructions():
+    """Print instructions for installing missing dependencies."""
+    print()
+    print(colorize("Install rsync:", Colors.BOLD))
+    print()
+    print("  macOS:    brew install rsync")
+    print("  Ubuntu:   sudo apt install rsync")
+    print("  Fedora:   sudo dnf install rsync")
+    print("  Arch:     sudo pacman -S rsync")
+    print()
+
+
 def run_wizard() -> int:
     """Run interactive wizard mode."""
     print_header("Symlink Farm Creator - Interactive Wizard")
+    
+    # Check dependencies first
+    deps = check_dependencies()
+    if not deps['rsync']:
+        print_warning("rsync is not installed!")
+        print("""
+rsync is required to copy files from the symlink farm to your destination.
+Without it, you can still create the farm but won't be able to sync files.
+""")
+        print_install_instructions()
+        if not prompt_yes_no("Continue anyway?", default=True):
+            return 1
+    else:
+        print_success(f"rsync found: {deps['rsync']}")
     
     print("""
 This tool helps you create a "symlink farm" - a directory structure that
