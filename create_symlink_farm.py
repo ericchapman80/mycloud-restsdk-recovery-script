@@ -10,6 +10,10 @@ defined in the database. This farm can then be used with rsync to:
 3. Identify missing or extra files
 
 Usage:
+    # Interactive wizard mode (recommended for new users)
+    python create_symlink_farm.py --wizard
+    
+    # Command-line mode
     python create_symlink_farm.py --db /path/to/index.db --source /path/to/files --farm /tmp/farm
 
 Then use rsync:
@@ -20,8 +24,134 @@ import argparse
 import os
 import sqlite3
 import sys
+import time
 from pathlib import Path
 from typing import Dict, Optional, Tuple
+
+
+# ANSI color codes for terminal output
+class Colors:
+    HEADER = '\033[95m'
+    BLUE = '\033[94m'
+    CYAN = '\033[96m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+
+
+def colorize(text: str, color: str) -> str:
+    """Add color to text if terminal supports it."""
+    if sys.stdout.isatty():
+        return f"{color}{text}{Colors.ENDC}"
+    return text
+
+
+def print_header(text: str):
+    """Print a styled header."""
+    print()
+    print(colorize("=" * 60, Colors.CYAN))
+    print(colorize(f"  {text}", Colors.BOLD + Colors.CYAN))
+    print(colorize("=" * 60, Colors.CYAN))
+    print()
+
+
+def print_step(step_num: int, text: str):
+    """Print a numbered step."""
+    print(colorize(f"\n📌 Step {step_num}: ", Colors.BOLD + Colors.YELLOW) + text)
+
+
+def print_success(text: str):
+    """Print a success message."""
+    print(colorize(f"✅ {text}", Colors.GREEN))
+
+
+def print_warning(text: str):
+    """Print a warning message."""
+    print(colorize(f"⚠️  {text}", Colors.YELLOW))
+
+
+def print_error(text: str):
+    """Print an error message."""
+    print(colorize(f"❌ {text}", Colors.RED))
+
+
+def print_info(text: str):
+    """Print an info message."""
+    print(colorize(f"ℹ️  {text}", Colors.BLUE))
+
+
+def prompt_path(prompt: str, must_exist: bool = True, is_dir: bool = True) -> str:
+    """Prompt user for a path with validation."""
+    while True:
+        print()
+        path = input(colorize(f"{prompt}: ", Colors.BOLD)).strip()
+        
+        if not path:
+            print_error("Path cannot be empty. Please try again.")
+            continue
+        
+        path = os.path.expanduser(path)  # Expand ~ to home directory
+        
+        if must_exist:
+            if is_dir and not os.path.isdir(path):
+                print_error(f"Directory not found: {path}")
+                print_info("Please check the path and try again.")
+                continue
+            elif not is_dir and not os.path.isfile(path):
+                print_error(f"File not found: {path}")
+                print_info("Please check the path and try again.")
+                continue
+        
+        return path
+
+
+def prompt_yes_no(prompt: str, default: bool = True) -> bool:
+    """Prompt user for yes/no with default."""
+    default_str = "[Y/n]" if default else "[y/N]"
+    while True:
+        response = input(colorize(f"{prompt} {default_str}: ", Colors.BOLD)).strip().lower()
+        if not response:
+            return default
+        if response in ('y', 'yes'):
+            return True
+        if response in ('n', 'no'):
+            return False
+        print_error("Please enter 'y' or 'n'")
+
+
+def format_number(n: int) -> str:
+    """Format number with commas."""
+    return f"{n:,}"
+
+
+def format_duration(seconds: float) -> str:
+    """Format duration in human-readable format."""
+    if seconds < 60:
+        return f"{seconds:.1f} seconds"
+    elif seconds < 3600:
+        mins = seconds / 60
+        return f"{mins:.1f} minutes"
+    else:
+        hours = seconds / 3600
+        return f"{hours:.1f} hours"
+
+
+def print_progress_bar(current: int, total: int, width: int = 40, prefix: str = ""):
+    """Print a progress bar."""
+    if total == 0:
+        return
+    
+    percent = current / total
+    filled = int(width * percent)
+    bar = "█" * filled + "░" * (width - filled)
+    
+    sys.stdout.write(f"\r{prefix}[{bar}] {percent*100:.1f}% ({format_number(current)}/{format_number(total)})")
+    sys.stdout.flush()
+    
+    if current >= total:
+        print()  # New line when complete
 
 
 def load_files_from_db(db_path: str) -> Dict[str, dict]:
@@ -188,14 +318,14 @@ def create_symlink_farm(
         Tuple of (created, skipped_no_content, skipped_no_source, errors)
     """
     # Load files from database
-    print(f"Loading files from database: {db_path}")
+    print_info(f"Loading files from database...")
     file_dic = load_files_from_db(db_path)
-    print(f"Loaded {len(file_dic)} file records")
+    print_success(f"Loaded {format_number(len(file_dic))} file records")
     
     # Find root directory to strip
     root_dir = find_root_dir_name(file_dic)
     if root_dir:
-        print(f"Will strip root directory: {root_dir[:50]}...")
+        print_info(f"Will strip root directory: {root_dir[:50]}...")
     
     # Statistics
     created = 0
@@ -208,10 +338,18 @@ def create_symlink_farm(
         os.makedirs(farm_dir, exist_ok=True)
     
     total = len(file_dic)
+    start_time = time.time()
+    last_update = start_time
+    
+    print_info(f"Creating symlinks for {format_number(total)} files...")
+    print()
+    
     for i, (file_id, meta) in enumerate(file_dic.items()):
-        # Progress
-        if (i + 1) % 50000 == 0:
-            print(f"Progress: {i + 1}/{total} ({(i + 1) * 100 // total}%)")
+        # Progress bar - update every 0.5 seconds or every 1000 files
+        current_time = time.time()
+        if current_time - last_update >= 0.5 or (i + 1) % 1000 == 0 or i == total - 1:
+            print_progress_bar(i + 1, total, prefix="Progress: ")
+            last_update = current_time
         
         content_id = meta.get('contentID')
         
@@ -275,42 +413,208 @@ def create_symlink_farm(
     return created, skipped_no_content, skipped_no_source, errors
 
 
+def run_wizard() -> int:
+    """Run interactive wizard mode."""
+    print_header("Symlink Farm Creator - Interactive Wizard")
+    
+    print("""
+This tool helps you create a "symlink farm" - a directory structure that
+mirrors your original files but uses symbolic links instead of copies.
+
+You can then use this farm with rsync to:
+  • Verify your existing backup is complete
+  • Copy any missing files
+  • Identify extra/duplicate files
+""")
+    
+    # Step 1: Database path
+    print_step(1, "Locate your MyCloud database")
+    print("""
+The database file is usually named 'index.db' and located in:
+  /mnt/backupdrive/restsdk/data/db/index.db
+  
+This file contains the metadata about all your files.
+""")
+    db_path = prompt_path("Enter the path to index.db", must_exist=True, is_dir=False)
+    print_success(f"Found database: {db_path}")
+    
+    # Step 2: Source files directory
+    print_step(2, "Locate your source files directory")
+    print("""
+This is the directory containing the actual file data, usually:
+  /mnt/backupdrive/restsdk/data/files
+  
+Files here have cryptic names like 'a22236cwsmelmd4on2qs2jdf'.
+""")
+    source_dir = prompt_path("Enter the path to the source files directory", must_exist=True, is_dir=True)
+    print_success(f"Found source directory: {source_dir}")
+    
+    # Step 3: Farm output directory
+    print_step(3, "Choose output directory for symlink farm")
+    print("""
+This is where the symlink farm will be created. It should be on the
+SAME filesystem as the source files (for symlinks to work).
+
+Recommended: /tmp/restore-farm or somewhere on the backup drive.
+""")
+    farm_dir = prompt_path("Enter the output directory path", must_exist=False)
+    
+    if os.path.exists(farm_dir) and os.listdir(farm_dir):
+        print_warning(f"Directory is not empty: {farm_dir}")
+        if not prompt_yes_no("Continue anyway?", default=False):
+            print_info("Wizard cancelled.")
+            return 0
+    
+    # Step 4: Options
+    print_step(4, "Configure options")
+    
+    sanitize_pipes = False
+    print("""
+Some filenames may contain the '|' character which can cause issues
+on Windows/NTFS/SMB destinations.
+""")
+    if prompt_yes_no("Replace '|' with '-' in filenames?", default=False):
+        sanitize_pipes = True
+        print_success("Will sanitize pipe characters")
+    
+    dry_run = prompt_yes_no("Do a dry run first (no files created)?", default=True)
+    if dry_run:
+        print_info("Dry run mode - no symlinks will be created")
+    
+    # Step 5: Confirmation
+    print_step(5, "Confirm and run")
+    print_header("Configuration Summary")
+    print(f"  📁 Database:    {db_path}")
+    print(f"  📂 Source:      {source_dir}")
+    print(f"  🔗 Farm output: {farm_dir}")
+    print(f"  🔧 Sanitize |:  {'Yes' if sanitize_pipes else 'No'}")
+    print(f"  🧪 Dry run:     {'Yes' if dry_run else 'No'}")
+    print()
+    
+    if not prompt_yes_no("Proceed with these settings?", default=True):
+        print_info("Wizard cancelled.")
+        return 0
+    
+    # Run the farm creation
+    print_header("Creating Symlink Farm")
+    start_time = time.time()
+    
+    created, skipped_no_content, skipped_no_source, errors = create_symlink_farm(
+        db_path=db_path,
+        source_dir=source_dir,
+        farm_dir=farm_dir,
+        sanitize_pipes=sanitize_pipes,
+        dry_run=dry_run,
+        verbose=False
+    )
+    
+    elapsed = time.time() - start_time
+    
+    # Summary
+    print_header("Summary")
+    print(f"  ✅ Symlinks created:     {format_number(created)}")
+    print(f"  📁 Directories skipped:  {format_number(skipped_no_content)}")
+    print(f"  ⚠️  Missing source files: {format_number(skipped_no_source)}")
+    print(f"  ❌ Errors:               {format_number(errors)}")
+    print(f"  ⏱️  Time elapsed:         {format_duration(elapsed)}")
+    print()
+    
+    if dry_run:
+        print_info("This was a DRY RUN - no symlinks were actually created.")
+        print()
+        if prompt_yes_no("Would you like to run for real now?", default=True):
+            print_header("Creating Symlink Farm (for real)")
+            created, skipped_no_content, skipped_no_source, errors = create_symlink_farm(
+                db_path=db_path,
+                source_dir=source_dir,
+                farm_dir=farm_dir,
+                sanitize_pipes=sanitize_pipes,
+                dry_run=False,
+                verbose=False
+            )
+            print_header("Final Summary")
+            print(f"  ✅ Symlinks created:     {format_number(created)}")
+            print(f"  📁 Directories skipped:  {format_number(skipped_no_content)}")
+            print(f"  ⚠️  Missing source files: {format_number(skipped_no_source)}")
+            print(f"  ❌ Errors:               {format_number(errors)}")
+    
+    # Next steps
+    if not dry_run or created > 0:
+        print_header("Next Steps")
+        print("""
+Now you can use rsync to verify or sync your backup:
+""")
+        print(colorize("1. Verify what's different (dry run):", Colors.BOLD))
+        print(f"   rsync -avnL --checksum {farm_dir}/ /your/destination/")
+        print()
+        print(colorize("2. Copy missing files:", Colors.BOLD))
+        print(f"   rsync -avL --progress {farm_dir}/ /your/destination/")
+        print()
+        print(colorize("3. Find extra files in destination:", Colors.BOLD))
+        print(f"   rsync -avnL /your/destination/ {farm_dir}/")
+        print()
+        print_info("Replace '/your/destination/' with your actual NFS path (e.g., /mnt/nfs-media/)")
+    
+    return 0 if errors == 0 else 1
+
+
 def main():
     parser = argparse.ArgumentParser(
-        description='Create a symlink farm from MyCloud database for rsync verification/copying'
+        description='Create a symlink farm from MyCloud database for rsync verification/copying',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Interactive wizard (recommended for new users)
+  python create_symlink_farm.py --wizard
+  
+  # Command-line mode
+  python create_symlink_farm.py --db /path/to/index.db --source /path/to/files --farm /tmp/farm
+  
+  # Dry run first
+  python create_symlink_farm.py --db index.db --source /files --farm /tmp/farm --dry-run
+"""
     )
-    parser.add_argument('--db', required=True, help='Path to SQLite database (index.db)')
-    parser.add_argument('--source', required=True, help='Source directory containing files')
-    parser.add_argument('--farm', required=True, help='Output directory for symlink farm')
+    parser.add_argument('--wizard', '-w', action='store_true', help='Run interactive wizard (recommended)')
+    parser.add_argument('--db', help='Path to SQLite database (index.db)')
+    parser.add_argument('--source', help='Source directory containing files')
+    parser.add_argument('--farm', help='Output directory for symlink farm')
     parser.add_argument('--sanitize-pipes', action='store_true', help='Replace | with - in paths')
     parser.add_argument('--dry-run', '-n', action='store_true', help='Dry run - do not create symlinks')
     parser.add_argument('--verbose', '-v', action='store_true', help='Verbose output')
     
     args = parser.parse_args()
     
+    # If wizard mode or no arguments, run wizard
+    if args.wizard or (not args.db and not args.source and not args.farm):
+        return run_wizard()
+    
+    # Command-line mode - validate required args
+    if not args.db or not args.source or not args.farm:
+        print_error("Missing required arguments. Use --wizard for interactive mode or provide --db, --source, and --farm.")
+        parser.print_help()
+        sys.exit(1)
+    
     # Validate inputs
     if not os.path.exists(args.db):
-        print(f"Error: Database not found: {args.db}")
+        print_error(f"Database not found: {args.db}")
         sys.exit(1)
     
     if not os.path.isdir(args.source):
-        print(f"Error: Source directory not found: {args.source}")
+        print_error(f"Source directory not found: {args.source}")
         sys.exit(1)
     
     if os.path.exists(args.farm) and os.listdir(args.farm):
-        print(f"Warning: Farm directory is not empty: {args.farm}")
-        response = input("Continue? [y/N] ")
-        if response.lower() != 'y':
+        print_warning(f"Farm directory is not empty: {args.farm}")
+        if not prompt_yes_no("Continue?", default=False):
             sys.exit(0)
     
-    print("=" * 60)
-    print("Symlink Farm Creator")
-    print("=" * 60)
-    print(f"Database: {args.db}")
-    print(f"Source:   {args.source}")
-    print(f"Farm:     {args.farm}")
-    print(f"Dry run:  {args.dry_run}")
-    print("=" * 60)
+    print_header("Symlink Farm Creator")
+    print(f"  📁 Database: {args.db}")
+    print(f"  📂 Source:   {args.source}")
+    print(f"  🔗 Farm:     {args.farm}")
+    print(f"  🧪 Dry run:  {args.dry_run}")
+    
+    start_time = time.time()
     
     created, skipped_no_content, skipped_no_source, errors = create_symlink_farm(
         db_path=args.db,
@@ -321,22 +625,24 @@ def main():
         verbose=args.verbose
     )
     
-    print("=" * 60)
-    print("Summary:")
-    print(f"  Symlinks created:     {created}")
-    print(f"  Skipped (no content): {skipped_no_content} (directories)")
-    print(f"  Skipped (no source):  {skipped_no_source}")
-    print(f"  Errors:               {errors}")
-    print("=" * 60)
+    elapsed = time.time() - start_time
     
-    if not args.dry_run:
-        print("\nNext steps:")
+    print_header("Summary")
+    print(f"  ✅ Symlinks created:     {format_number(created)}")
+    print(f"  📁 Directories skipped:  {format_number(skipped_no_content)}")
+    print(f"  ⚠️  Missing source files: {format_number(skipped_no_source)}")
+    print(f"  ❌ Errors:               {format_number(errors)}")
+    print(f"  ⏱️  Time elapsed:         {format_duration(elapsed)}")
+    
+    if not args.dry_run and created > 0:
+        print()
+        print_info("Next steps:")
         print(f"  # Verify farm structure:")
         print(f"  find {args.farm} -type l | head -20")
-        print(f"")
+        print()
         print(f"  # Copy to destination with rsync:")
         print(f"  rsync -avL --progress {args.farm}/ /mnt/nfs-media/")
-        print(f"")
+        print()
         print(f"  # Dry-run to see what would be copied:")
         print(f"  rsync -avnL {args.farm}/ /mnt/nfs-media/")
     
