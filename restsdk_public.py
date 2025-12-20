@@ -834,6 +834,12 @@ if __name__ == "__main__":
             }
             for file in files
         }
+    
+    # Free the raw DB results now that fileDIC is built
+    del files
+    import gc
+    gc.collect()
+    print(f"  (built fileDIC with {len(fileDIC)} entries, freed raw DB results)")
 
     # Build reverse lookup dictionaries for O(1) filename->ID mapping
     build_reverse_lookups()
