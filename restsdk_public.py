@@ -932,6 +932,7 @@ if __name__ == "__main__":
             logging.info("Starting a new run. No log file found.")
 
     def run_resume_copy():
+        regen_elapsed = 0.0  # Initialize to avoid UnboundLocalError when --no-regen-log
         if not args.no_regen_log:
             print(f"Regenerating log file {log_file} from destination {dumpdir} before resuming and updating copied_files table...")
             regen_start = time.time()
