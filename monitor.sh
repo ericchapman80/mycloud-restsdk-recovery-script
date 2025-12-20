@@ -38,19 +38,26 @@ while true; do
     # Open file descriptors for our specific script processes
     python_fd=0
     
-    # Get PIDs for our scripts
+    # Get PIDs for our scripts - use multiple methods to find them
+    script_pids=""
+    # Method 1: pgrep with full match
     script_pids=$(pgrep -f "restsdk_public.py|create_symlink_farm.py" 2>/dev/null)
+    # Method 2: If empty, try ps + grep (works better with sudo)
+    if [ -z "$script_pids" ]; then
+        script_pids=$(ps aux 2>/dev/null | grep -E "python.*restsdk_public|python.*create_symlink_farm" | grep -v grep | awk '{print $2}')
+    fi
     
     if [ -n "$script_pids" ]; then
         for pid in $script_pids; do
             if [ -d "/proc/$pid/fd" ]; then
-                count=$(ls /proc/$pid/fd 2>/dev/null | wc -l)
+                # Use ls -1 and timeout to avoid hanging on busy system
+                count=$(timeout 2 ls -1 /proc/$pid/fd 2>/dev/null | wc -l)
                 python_fd=$((python_fd + count))
             fi
         done
     fi
     
-    # Show N/A if nothing found
+    # Show N/A if nothing found, otherwise show count
     [ "$python_fd" = "0" ] && python_fd="N/A"
     
     # NFS mount status
