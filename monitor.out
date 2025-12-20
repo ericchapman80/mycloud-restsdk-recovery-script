@@ -226,3 +226,298 @@ NFS Mount: /mnt/nfs-media
 [2025-12-19 23:49:17] #35 | Script: restsdk | NFS: STALLED! | Mem: 98.8% (11314MB/11454MB) | Load: 61.38 53.17 45.17 | FDs: 5 | IOWait: 76.01% | Copied: 21743 (from log)
   ⚠️  ALERT: NFS appears stalled! Check mount.
   ⚠️  ALERT: Memory usage critical: 99%!
+=== Monitor Started: Sat Dec 20 08:21:35 AM EST 2025 ===
+Logging to: /home/chapman/projects/mycloud-restsdk-recovery-script/monitor.log (interval: 30s)
+NFS Mount: /mnt/nfs-media
+[2025-12-20 08:21:35] #1 | Script: restsdk | NFS: OK | Mem: 14.7% (1689MB/11454MB) | Load: 0.75 0.32 0.23 | FDs: N/A | IOWait: 15.82% | Copied: 0
+0 (from log)
+[2025-12-20 08:22:06] #2 | Script: restsdk | NFS: OK | Mem: 14.9% (1702MB/11454MB) | Load: 0.92 0.40 0.26 | FDs: N/A | IOWait: 15.76% | Copied: 0
+0 (from log)
+[2025-12-20 08:22:37] #3 | Script: restsdk | NFS: OK | Mem: 14.9% (1711MB/11454MB) | Load: 1.10 0.50 0.30 | FDs: N/A | IOWait: 15.74% | Copied: 0
+0 (from log)
+[2025-12-20 08:23:08] #4 | Script: restsdk | NFS: OK | Mem: 15.1% (1732MB/11454MB) | Load: 1.06 0.55 0.32 | FDs: N/A | IOWait: 15.48% | Copied: 0
+0 (from log)
+[2025-12-20 08:23:40] #5 | Script: restsdk | NFS: OK | Mem: 15.2% (1746MB/11454MB) | Load: 1.11 0.61 0.35 | FDs: N/A | IOWait: 15.23% | Copied: 0
+0 (from log)
+[2025-12-20 08:24:11] #6 | Script: restsdk | NFS: OK | Mem: 15.5% (1781MB/11454MB) | Load: 1.07 0.65 0.38 | FDs: N/A | IOWait: 15.25% | Copied: 0
+0 (from log)
+[2025-12-20 08:24:42] #7 | Script: restsdk | NFS: OK | Mem: 15.6% (1792MB/11454MB) | Load: 1.10 0.70 0.40 | FDs: N/A | IOWait: 14.90% | Copied: 0
+0 (from log)
+[2025-12-20 08:25:13] #8 | Script: restsdk | NFS: OK | Mem: 16.0% (1832MB/11454MB) | Load: 1.12 0.75 0.43 | FDs: N/A | IOWait: 15.14% | Copied: 0
+0 (from log)
+[2025-12-20 08:25:44] #9 | Script: restsdk | NFS: OK | Mem: 16.2% (1857MB/11454MB) | Load: 1.06 0.78 0.45 | FDs: N/A | IOWait: 15.08% | Copied: 0
+0 (from log)
+[2025-12-20 08:26:16] #10 | Script: restsdk | NFS: OK | Mem: 16.4% (1884MB/11454MB) | Load: 1.14 0.83 0.48 | FDs: N/A | IOWait: 15.48% | Copied: 0
+0 (from log)
+[2025-12-20 08:26:47] #11 | Script: restsdk | NFS: OK | Mem: 16.8% (1926MB/11454MB) | Load: 1.09 0.85 0.50 | FDs: N/A | IOWait: 15.42% | Copied: 0
+0 (from log)
+[2025-12-20 08:27:18] #12 | Script: restsdk | NFS: OK | Mem: 16.9% (1934MB/11454MB) | Load: 1.19 0.90 0.53 | FDs: N/A | IOWait: 15.37% | Copied: 0
+0 (from log)
+[2025-12-20 08:27:49] #13 | Script: restsdk | NFS: OK | Mem: 17.2% (1966MB/11454MB) | Load: 1.16 0.92 0.55 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:28:20] #14 | Script: restsdk | NFS: OK | Mem: 19.9% (2282MB/11454MB) | Load: 1.14 0.95 0.57 | FDs: N/A | IOWait: 1.69% | Copied: 0
+0 (from log)
+[2025-12-20 08:28:51] #15 | Script: restsdk | NFS: OK | Mem: 40.6% (4655MB/11454MB) | Load: 1.08 0.95 0.59 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:29:23] #16 | Script: restsdk | NFS: OK | Mem: 40.6% (4646MB/11454MB) | Load: 1.13 0.97 0.61 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:29:54] #17 | Script: restsdk | NFS: OK | Mem: 40.5% (4644MB/11454MB) | Load: 1.08 0.98 0.62 | FDs: N/A | IOWait: 0.17% | Copied: 0
+0 (from log)
+[2025-12-20 08:30:25] #18 | Script: restsdk | NFS: OK | Mem: 40.6% (4648MB/11454MB) | Load: 1.04 0.98 0.64 | FDs: N/A | IOWait: 1.19% | Copied: 0
+0 (from log)
+[2025-12-20 08:30:56] #19 | Script: restsdk | NFS: OK | Mem: 40.6% (4650MB/11454MB) | Load: 1.28 1.05 0.67 | FDs: N/A | IOWait: 3.92% | Copied: 0
+0 (from log)
+[2025-12-20 08:31:27] #20 | Script: restsdk | NFS: OK | Mem: 40.6% (4656MB/11454MB) | Load: 1.17 1.04 0.68 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:31:58] #21 | Script: restsdk | NFS: OK | Mem: 40.7% (4659MB/11454MB) | Load: 1.10 1.03 0.70 | FDs: N/A | IOWait: 1.36% | Copied: 0
+0 (from log)
+[2025-12-20 08:32:30] #22 | Script: restsdk | NFS: OK | Mem: 40.5% (4640MB/11454MB) | Load: 1.05 1.03 0.71 | FDs: N/A | IOWait: 0.17% | Copied: 0
+0 (from log)
+[2025-12-20 08:33:01] #23 | Script: restsdk | NFS: OK | Mem: 40.6% (4645MB/11454MB) | Load: 1.03 1.02 0.72 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:33:32] #24 | Script: restsdk | NFS: OK | Mem: 40.6% (4645MB/11454MB) | Load: 1.47 1.13 0.77 | FDs: N/A | IOWait: 0.17% | Copied: 0
+0 (from log)
+[2025-12-20 08:34:03] #25 | Script: restsdk | NFS: OK | Mem: 40.6% (4647MB/11454MB) | Load: 1.79 1.25 0.82 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:34:34] #26 | Script: restsdk | NFS: OK | Mem: 40.5% (4643MB/11454MB) | Load: 1.51 1.23 0.83 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:35:06] #27 | Script: restsdk | NFS: OK | Mem: 40.6% (4649MB/11454MB) | Load: 1.71 1.31 0.87 | FDs: N/A | IOWait: 0.17% | Copied: 0
+0 (from log)
+[2025-12-20 08:35:37] #28 | Script: restsdk | NFS: OK | Mem: 40.5% (4643MB/11454MB) | Load: 1.43 1.28 0.88 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:36:08] #29 | Script: restsdk | NFS: OK | Mem: 40.9% (4684MB/11454MB) | Load: 1.88 1.40 0.93 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:36:39] #30 | Script: restsdk | NFS: OK | Mem: 41.3% (4730MB/11454MB) | Load: 1.53 1.36 0.93 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:37:10] #31 | Script: restsdk | NFS: OK | Mem: 40.6% (4652MB/11454MB) | Load: 1.36 1.33 0.94 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:37:41] #32 | Script: restsdk | NFS: OK | Mem: 40.7% (4666MB/11454MB) | Load: 1.22 1.30 0.94 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:38:13] #33 | Script: restsdk | NFS: OK | Mem: 41.2% (4714MB/11454MB) | Load: 1.27 1.30 0.96 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:38:44] #34 | Script: restsdk | NFS: OK | Mem: 40.6% (4646MB/11454MB) | Load: 1.23 1.29 0.97 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:39:15] #35 | Script: restsdk | NFS: OK | Mem: 41.2% (4724MB/11454MB) | Load: 1.19 1.27 0.97 | FDs: N/A | IOWait: 0.17% | Copied: 0
+0 (from log)
+[2025-12-20 08:39:46] #36 | Script: restsdk | NFS: OK | Mem: 40.5% (4643MB/11454MB) | Load: 1.29 1.29 0.99 | FDs: N/A | IOWait: 0.17% | Copied: 0
+0 (from log)
+[2025-12-20 08:40:17] #37 | Script: restsdk | NFS: OK | Mem: 40.5% (4638MB/11454MB) | Load: 1.37 1.31 1.01 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:40:48] #38 | Script: restsdk | NFS: OK | Mem: 41.0% (4699MB/11454MB) | Load: 1.29 1.30 1.01 | FDs: N/A | IOWait: 0.17% | Copied: 0
+0 (from log)
+[2025-12-20 08:41:20] #39 | Script: restsdk | NFS: OK | Mem: 40.5% (4642MB/11454MB) | Load: 1.55 1.36 1.04 | FDs: N/A | IOWait: 0.17% | Copied: 0
+0 (from log)
+[2025-12-20 08:41:51] #40 | Script: restsdk | NFS: OK | Mem: 40.5% (4639MB/11454MB) | Load: 1.41 1.34 1.05 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:42:22] #41 | Script: restsdk | NFS: OK | Mem: 40.5% (4637MB/11454MB) | Load: 1.31 1.32 1.05 | FDs: N/A | IOWait: 0.51% | Copied: 0
+0 (from log)
+[2025-12-20 08:42:53] #42 | Script: restsdk | NFS: OK | Mem: 40.5% (4634MB/11454MB) | Load: 1.18 1.29 1.05 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:43:24] #43 | Script: restsdk | NFS: OK | Mem: 40.4% (4633MB/11454MB) | Load: 1.36 1.32 1.07 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:43:55] #44 | Script: restsdk | NFS: OK | Mem: 40.5% (4643MB/11454MB) | Load: 1.39 1.34 1.08 | FDs: N/A | IOWait: 0.17% | Copied: 0
+0 (from log)
+[2025-12-20 08:44:27] #45 | Script: restsdk | NFS: OK | Mem: 40.5% (4637MB/11454MB) | Load: 1.30 1.32 1.08 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:44:58] #46 | Script: restsdk | NFS: OK | Mem: 40.5% (4634MB/11454MB) | Load: 1.24 1.30 1.09 | FDs: N/A | IOWait: 0.17% | Copied: 0
+0 (from log)
+[2025-12-20 08:45:29] #47 | Script: restsdk | NFS: OK | Mem: 40.5% (4636MB/11454MB) | Load: 1.27 1.31 1.09 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:46:00] #48 | Script: restsdk | NFS: OK | Mem: 40.5% (4642MB/11454MB) | Load: 1.21 1.29 1.09 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:46:31] #49 | Script: restsdk | NFS: OK | Mem: 40.5% (4639MB/11454MB) | Load: 1.25 1.29 1.10 | FDs: N/A | IOWait: 0.17% | Copied: 0
+0 (from log)
+[2025-12-20 08:47:02] #50 | Script: restsdk | NFS: OK | Mem: 40.6% (4647MB/11454MB) | Load: 1.23 1.28 1.10 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:47:34] #51 | Script: restsdk | NFS: OK | Mem: 40.6% (4656MB/11454MB) | Load: 1.35 1.30 1.11 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:48:05] #52 | Script: restsdk | NFS: OK | Mem: 40.6% (4646MB/11454MB) | Load: 1.38 1.31 1.12 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:48:36] #53 | Script: restsdk | NFS: OK | Mem: 40.5% (4644MB/11454MB) | Load: 1.55 1.36 1.14 | FDs: N/A | IOWait: 0.17% | Copied: 0
+0 (from log)
+[2025-12-20 08:49:07] #54 | Script: restsdk | NFS: OK | Mem: 40.6% (4653MB/11454MB) | Load: 1.59 1.39 1.16 | FDs: N/A | IOWait: 0.17% | Copied: 0
+0 (from log)
+[2025-12-20 08:49:38] #55 | Script: restsdk | NFS: OK | Mem: 40.5% (4637MB/11454MB) | Load: 1.89 1.48 1.20 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:50:10] #56 | Script: restsdk | NFS: OK | Mem: 40.6% (4646MB/11454MB) | Load: 1.71 1.49 1.21 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:50:41] #57 | Script: restsdk | NFS: OK | Mem: 40.5% (4637MB/11454MB) | Load: 1.43 1.44 1.20 | FDs: N/A | IOWait: 0.17% | Copied: 0
+0 (from log)
+[2025-12-20 08:51:12] #58 | Script: restsdk | NFS: OK | Mem: 40.5% (4634MB/11454MB) | Load: 1.32 1.41 1.20 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:51:43] #59 | Script: restsdk | NFS: OK | Mem: 40.5% (4634MB/11454MB) | Load: 1.47 1.44 1.22 | FDs: N/A | IOWait: 0.00% | Copied: 0
+0 (from log)
+[2025-12-20 08:52:14] #60 | Script: restsdk | NFS: OK | Mem: 32.0% (3663MB/11454MB) | Load: 1.57 1.46 1.23 | FDs: N/A | IOWait: 2.04% | Copied: 0
+0 (from log)
+[2025-12-20 08:52:45] #61 | Script: restsdk | NFS: OK | Mem: 34.6% (3959MB/11454MB) | Load: 1.42 1.44 1.23 | FDs: N/A | IOWait: 15.23% | Copied: 0
+0 (from log)
+[2025-12-20 08:53:17] #62 | Script: restsdk | NFS: OK | Mem: 42.4% (4858MB/11454MB) | Load: 1.41 1.43 1.23 | FDs: N/A | IOWait: 2.73% | Copied: 2 (from log)
+[2025-12-20 08:53:48] #63 | Script: restsdk | NFS: OK | Mem: 51.5% (5904MB/11454MB) | Load: 1.91 1.55 1.28 | FDs: N/A | IOWait: 17.63% | Copied: 209 (from log)
+[2025-12-20 08:54:19] #64 | Script: restsdk | NFS: OK | Mem: 51.6% (5910MB/11454MB) | Load: 2.13 1.64 1.32 | FDs: N/A | IOWait: 25.30% | Copied: 491 (from log)
+[2025-12-20 08:54:50] #65 | Script: restsdk | NFS: OK | Mem: 52.2% (5984MB/11454MB) | Load: 2.27 1.73 1.36 | FDs: N/A | IOWait: 24.10% | Copied: 826 (from log)
+[2025-12-20 08:55:21] #66 | Script: restsdk | NFS: OK | Mem: 53.9% (6175MB/11454MB) | Load: 2.66 1.87 1.42 | FDs: N/A | IOWait: 26.06% | Copied: 1177 (from log)
+[2025-12-20 08:55:52] #67 | Script: restsdk | NFS: OK | Mem: 54.1% (6195MB/11454MB) | Load: 2.65 1.95 1.46 | FDs: N/A | IOWait: 21.76% | Copied: 1548 (from log)
+[2025-12-20 08:56:24] #68 | Script: restsdk | NFS: OK | Mem: 55.1% (6311MB/11454MB) | Load: 2.71 2.03 1.51 | FDs: N/A | IOWait: 0.17% | Copied: 1845 (from log)
+[2025-12-20 08:56:55] #69 | Script: restsdk | NFS: OK | Mem: 55.8% (6386MB/11454MB) | Load: 2.45 2.04 1.53 | FDs: N/A | IOWait: 12.90% | Copied: 2137 (from log)
+[2025-12-20 08:57:26] #70 | Script: restsdk | NFS: OK | Mem: 56.5% (6470MB/11454MB) | Load: 3.16 2.26 1.62 | FDs: N/A | IOWait: 1.69% | Copied: 2498 (from log)
+[2025-12-20 08:57:57] #71 | Script: restsdk | NFS: OK | Mem: 56.9% (6519MB/11454MB) | Load: 2.93 2.30 1.66 | FDs: N/A | IOWait: 16.89% | Copied: 2782 (from log)
+[2025-12-20 08:58:28] #72 | Script: restsdk | NFS: OK | Mem: 57.7% (6614MB/11454MB) | Load: 2.77 2.32 1.68 | FDs: N/A | IOWait: 21.98% | Copied: 3131 (from log)
+[2025-12-20 08:59:00] #73 | Script: restsdk | NFS: OK | Mem: 58.6% (6714MB/11454MB) | Load: 2.35 2.26 1.69 | FDs: N/A | IOWait: 11.90% | Copied: 3466 (from log)
+[2025-12-20 08:59:31] #74 | Script: restsdk | NFS: OK | Mem: 59.4% (6802MB/11454MB) | Load: 2.23 2.24 1.70 | FDs: N/A | IOWait: 23.76% | Copied: 3815 (from log)
+[2025-12-20 09:00:02] #75 | Script: restsdk | NFS: OK | Mem: 60.3% (6903MB/11454MB) | Load: 2.20 2.23 1.72 | FDs: N/A | IOWait: 12.41% | Copied: 4108 (from log)
+[2025-12-20 09:00:33] #76 | Script: restsdk | NFS: OK | Mem: 61.1% (6995MB/11454MB) | Load: 2.17 2.22 1.73 | FDs: N/A | IOWait: 19.32% | Copied: 4480 (from log)
+[2025-12-20 09:01:04] #77 | Script: restsdk | NFS: OK | Mem: 62.5% (7155MB/11454MB) | Load: 2.33 2.25 1.76 | FDs: N/A | IOWait: 24.91% | Copied: 4774 (from log)
+[2025-12-20 09:01:35] #78 | Script: restsdk | NFS: OK | Mem: 62.7% (7179MB/11454MB) | Load: 2.30 2.25 1.78 | FDs: N/A | IOWait: 23.17% | Copied: 5138 (from log)
+[2025-12-20 09:02:07] #79 | Script: restsdk | NFS: OK | Mem: 63.4% (7260MB/11454MB) | Load: 2.42 2.29 1.81 | FDs: N/A | IOWait: 24.83% | Copied: 5425 (from log)
+[2025-12-20 09:02:38] #80 | Script: restsdk | NFS: OK | Mem: 64.0% (7332MB/11454MB) | Load: 2.79 2.39 1.86 | FDs: N/A | IOWait: 25.21% | Copied: 5637 (from log)
+[2025-12-20 09:03:09] #81 | Script: restsdk | NFS: OK | Mem: 65.0% (7441MB/11454MB) | Load: 2.83 2.43 1.89 | FDs: N/A | IOWait: 23.63% | Copied: 5928 (from log)
+[2025-12-20 09:03:40] #82 | Script: restsdk | NFS: OK | Mem: 65.4% (7489MB/11454MB) | Load: 2.60 2.42 1.91 | FDs: N/A | IOWait: 22.43% | Copied: 6211 (from log)
+[2025-12-20 09:04:11] #83 | Script: restsdk | NFS: OK | Mem: 66.0% (7562MB/11454MB) | Load: 2.63 2.44 1.93 | FDs: N/A | IOWait: 21.54% | Copied: 6498 (from log)
+[2025-12-20 09:04:42] #84 | Script: restsdk | NFS: OK | Mem: 66.8% (7652MB/11454MB) | Load: 2.82 2.51 1.97 | FDs: N/A | IOWait: 22.60% | Copied: 6784 (from log)
+[2025-12-20 09:05:14] #85 | Script: restsdk | NFS: OK | Mem: 67.4% (7721MB/11454MB) | Load: 2.63 2.49 1.99 | FDs: N/A | IOWait: 25.68% | Copied: 7020 (from log)
+[2025-12-20 09:05:45] #86 | Script: restsdk | NFS: OK | Mem: 67.6% (7743MB/11454MB) | Load: 2.40 2.45 2.00 | FDs: N/A | IOWait: 24.96% | Copied: 7253 (from log)
+[2025-12-20 09:06:16] #87 | Script: restsdk | NFS: OK | Mem: 68.4% (7830MB/11454MB) | Load: 2.42 2.46 2.01 | FDs: N/A | IOWait: 23.30% | Copied: 7560 (from log)
+[2025-12-20 09:06:47] #88 | Script: restsdk | NFS: OK | Mem: 68.9% (7892MB/11454MB) | Load: 2.20 2.40 2.00 | FDs: N/A | IOWait: 19.42% | Copied: 7784 (from log)
+[2025-12-20 09:07:18] #89 | Script: restsdk | NFS: OK | Mem: 69.4% (7953MB/11454MB) | Load: 2.27 2.39 2.01 | FDs: N/A | IOWait: 25.30% | Copied: 8087 (from log)
+[2025-12-20 09:07:49] #90 | Script: restsdk | NFS: OK | Mem: 70.8% (8104MB/11454MB) | Load: 2.16 2.35 2.01 | FDs: N/A | IOWait: 16.27% | Copied: 8315 (from log)
+[2025-12-20 09:08:21] #91 | Script: restsdk | NFS: OK | Mem: 70.8% (8115MB/11454MB) | Load: 2.11 2.33 2.01 | FDs: N/A | IOWait: 26.20% | Copied: 8610 (from log)
+[2025-12-20 09:08:52] #92 | Script: restsdk | NFS: OK | Mem: 71.4% (8178MB/11454MB) | Load: 2.07 2.29 2.01 | FDs: N/A | IOWait: 24.40% | Copied: 8824 (from log)
+[2025-12-20 09:09:23] #93 | Script: restsdk | NFS: OK | Mem: 72.0% (8250MB/11454MB) | Load: 2.44 2.36 2.04 | FDs: N/A | IOWait: 22.39% | Copied: 9036 (from log)
+[2025-12-20 09:09:54] #94 | Script: restsdk | NFS: OK | Mem: 72.7% (8322MB/11454MB) | Load: 2.59 2.41 2.07 | FDs: N/A | IOWait: 20.65% | Copied: 9312 (from log)
+[2025-12-20 09:10:25] #95 | Script: restsdk | NFS: OK | Mem: 73.1% (8377MB/11454MB) | Load: 2.52 2.41 2.08 | FDs: N/A | IOWait: 24.23% | Copied: 9526 (from log)
+[2025-12-20 09:10:57] #96 | Script: restsdk | NFS: OK | Mem: 73.6% (8435MB/11454MB) | Load: 2.51 2.42 2.09 | FDs: N/A | IOWait: 23.30% | Copied: 9815 (from log)
+[2025-12-20 09:11:28] #97 | Script: restsdk | NFS: OK | Mem: 74.3% (8505MB/11454MB) | Load: 2.41 2.39 2.10 | FDs: N/A | IOWait: 20.41% | Copied: 10050 (from log)
+[2025-12-20 09:11:59] #98 | Script: restsdk | NFS: OK | Mem: 74.8% (8571MB/11454MB) | Load: 2.56 2.42 2.11 | FDs: N/A | IOWait: 23.88% | Copied: 10284 (from log)
+[2025-12-20 09:12:30] #99 | Script: restsdk | NFS: OK | Mem: 75.6% (8659MB/11454MB) | Load: 2.47 2.42 2.12 | FDs: N/A | IOWait: 19.28% | Copied: 10517 (from log)
+[2025-12-20 09:13:01] #100 | Script: restsdk | NFS: OK | Mem: 76.1% (8718MB/11454MB) | Load: 2.58 2.44 2.14 | FDs: N/A | IOWait: 21.98% | Copied: 10745 (from log)
+[2025-12-20 09:13:32] #101 | Script: restsdk | NFS: OK | Mem: 76.8% (8791MB/11454MB) | Load: 2.41 2.42 2.14 | FDs: N/A | IOWait: 22.18% | Copied: 11041 (from log)
+[2025-12-20 09:14:04] #102 | Script: restsdk | NFS: OK | Mem: 77.4% (8864MB/11454MB) | Load: 2.66 2.49 2.17 | FDs: N/A | IOWait: 17.04% | Copied: 11263 (from log)
+[2025-12-20 09:14:35] #103 | Script: restsdk | NFS: OK | Mem: 78.0% (8932MB/11454MB) | Load: 2.55 2.48 2.18 | FDs: N/A | IOWait: 24.36% | Copied: 11549 (from log)
+[2025-12-20 09:15:06] #104 | Script: restsdk | NFS: OK | Mem: 78.8% (9026MB/11454MB) | Load: 2.60 2.50 2.20 | FDs: N/A | IOWait: 24.23% | Copied: 11763 (from log)
+[2025-12-20 09:15:37] #105 | Script: restsdk | NFS: OK | Mem: 79.3% (9080MB/11454MB) | Load: 2.44 2.46 2.20 | FDs: N/A | IOWait: 17.75% | Copied: 12038 (from log)
+[2025-12-20 09:16:08] #106 | Script: restsdk | NFS: OK | Mem: 79.8% (9143MB/11454MB) | Load: 2.21 2.40 2.18 | FDs: N/A | IOWait: 15.73% | Copied: 12316 (from log)
+[2025-12-20 09:16:40] #107 | Script: restsdk | NFS: OK | Mem: 80.2% (9184MB/11454MB) | Load: 2.38 2.43 2.20 | FDs: N/A | IOWait: 22.64% | Copied: 12534 (from log)
+[2025-12-20 09:17:11] #108 | Script: restsdk | NFS: OK | Mem: 80.8% (9253MB/11454MB) | Load: 2.47 2.45 2.21 | FDs: N/A | IOWait: 30.49% | Copied: 12840 (from log)
+[2025-12-20 09:17:42] #109 | Script: restsdk | NFS: OK | Mem: 81.5% (9337MB/11454MB) | Load: 2.89 2.55 2.25 | FDs: N/A | IOWait: 22.74% | Copied: 13073 (from log)
+[2025-12-20 09:18:13] #110 | Script: restsdk | NFS: OK | Mem: 82.0% (9389MB/11454MB) | Load: 2.77 2.54 2.26 | FDs: N/A | IOWait: 0.17% | Copied: 13304 (from log)
+[2025-12-20 09:18:44] #111 | Script: restsdk | NFS: OK | Mem: 82.7% (9477MB/11454MB) | Load: 2.46 2.49 2.25 | FDs: N/A | IOWait: 22.74% | Copied: 13597 (from log)
+[2025-12-20 09:19:16] #112 | Script: restsdk | NFS: OK | Mem: 83.3% (9542MB/11454MB) | Load: 2.41 2.47 2.25 | FDs: N/A | IOWait: 24.27% | Copied: 13884 (from log)
+[2025-12-20 09:19:47] #113 | Script: restsdk | NFS: OK | Mem: 84.1% (9630MB/11454MB) | Load: 2.37 2.46 2.26 | FDs: N/A | IOWait: 16.35% | Copied: 14161 (from log)
+[2025-12-20 09:20:18] #114 | Script: restsdk | NFS: OK | Mem: 84.9% (9721MB/11454MB) | Load: 2.69 2.52 2.29 | FDs: N/A | IOWait: 8.50% | Copied: 14432 (from log)
+[2025-12-20 09:20:49] #115 | Script: restsdk | NFS: OK | Mem: 85.7% (9820MB/11454MB) | Load: 2.54 2.51 2.29 | FDs: N/A | IOWait: 21.84% | Copied: 14757 (from log)
+[2025-12-20 09:21:20] #116 | Script: restsdk | NFS: OK | Mem: 86.5% (9902MB/11454MB) | Load: 2.37 2.46 2.28 | FDs: N/A | IOWait: 21.88% | Copied: 15103 (from log)
+[2025-12-20 09:21:51] #117 | Script: restsdk | NFS: OK | Mem: 87.3% (10003MB/11454MB) | Load: 2.40 2.47 2.28 | FDs: N/A | IOWait: 17.12% | Copied: 15403 (from log)
+[2025-12-20 09:22:23] #118 | Script: restsdk | NFS: OK | Mem: 88.1% (10096MB/11454MB) | Load: 2.37 2.45 2.28 | FDs: N/A | IOWait: 19.76% | Copied: 15701 (from log)
+[2025-12-20 09:22:54] #119 | Script: restsdk | NFS: OK | Mem: 88.9% (10183MB/11454MB) | Load: 2.73 2.54 2.32 | FDs: N/A | IOWait: 20.07% | Copied: 15993 (from log)
+[2025-12-20 09:23:25] #120 | Script: restsdk | NFS: OK | Mem: 89.8% (10283MB/11454MB) | Load: 2.57 2.51 2.32 | FDs: N/A | IOWait: 18.26% | Copied: 16281 (from log)
+[2025-12-20 09:23:56] #121 | Script: restsdk | NFS: OK | Mem: 90.4% (10358MB/11454MB) | Load: 2.55 2.51 2.32 | FDs: N/A | IOWait: 22.35% | Copied: 16623 (from log)
+[2025-12-20 09:24:27] #122 | Script: restsdk | NFS: OK | Mem: 91.1% (10429MB/11454MB) | Load: 2.39 2.48 2.32 | FDs: N/A | IOWait: 12.78% | Copied: 16956 (from log)
+  ⚠️  ALERT: Memory usage critical: 91%!
+[2025-12-20 09:24:59] #123 | Script: restsdk | NFS: OK | Mem: 92.1% (10551MB/11454MB) | Load: 2.37 2.46 2.32 | FDs: N/A | IOWait: 19.42% | Copied: 17225 (from log)
+  ⚠️  ALERT: Memory usage critical: 92%!
+[2025-12-20 09:25:30] #124 | Script: restsdk | NFS: OK | Mem: 91.9% (10528MB/11454MB) | Load: 2.44 2.47 2.32 | FDs: N/A | IOWait: 21.73% | Copied: 17504 (from log)
+  ⚠️  ALERT: Memory usage critical: 92%!
+[2025-12-20 09:26:01] #125 | Script: restsdk | NFS: OK | Mem: 91.4% (10464MB/11454MB) | Load: 2.56 2.49 2.34 | FDs: N/A | IOWait: 11.75% | Copied: 17804 (from log)
+  ⚠️  ALERT: Memory usage critical: 91%!
+[2025-12-20 09:26:32] #126 | Script: restsdk | NFS: OK | Mem: 90.5% (10371MB/11454MB) | Load: 2.42 2.46 2.33 | FDs: N/A | IOWait: 18.74% | Copied: 18103 (from log)
+  ⚠️  ALERT: Memory usage critical: 91%!
+[2025-12-20 09:27:03] #127 | Script: restsdk | NFS: OK | Mem: 90.5% (10369MB/11454MB) | Load: 2.49 2.48 2.34 | FDs: N/A | IOWait: 16.15% | Copied: 18391 (from log)
+  ⚠️  ALERT: Memory usage critical: 91%!
+[2025-12-20 09:27:35] #128 | Script: restsdk | NFS: OK | Mem: 91.2% (10445MB/11454MB) | Load: 2.96 2.60 2.39 | FDs: N/A | IOWait: 21.71% | Copied: 18670 (from log)
+  ⚠️  ALERT: Memory usage critical: 91%!
+[2025-12-20 09:28:06] #129 | Script: restsdk | NFS: OK | Mem: 92.0% (10538MB/11454MB) | Load: 2.61 2.55 2.37 | FDs: N/A | IOWait: 19.11% | Copied: 19013 (from log)
+  ⚠️  ALERT: Memory usage critical: 92%!
+[2025-12-20 09:28:37] #130 | Script: restsdk | NFS: OK | Mem: 92.6% (10611MB/11454MB) | Load: 2.29 2.48 2.36 | FDs: N/A | IOWait: 22.09% | Copied: 19278 (from log)
+  ⚠️  ALERT: Memory usage critical: 93%!
+[2025-12-20 09:29:08] #131 | Script: restsdk | NFS: OK | Mem: 93.5% (10706MB/11454MB) | Load: 2.12 2.41 2.34 | FDs: N/A | IOWait: 17.15% | Copied: 19614 (from log)
+  ⚠️  ALERT: Memory usage critical: 93%!
+[2025-12-20 09:29:39] #132 | Script: restsdk | NFS: OK | Mem: 94.2% (10786MB/11454MB) | Load: 2.17 2.39 2.33 | FDs: N/A | IOWait: 19.25% | Copied: 19899 (from log)
+  ⚠️  ALERT: Memory usage critical: 94%!
+[2025-12-20 09:30:11] #133 | Script: restsdk | NFS: OK | Mem: 94.9% (10875MB/11454MB) | Load: 2.13 2.35 2.32 | FDs: N/A | IOWait: 9.88% | Copied: 20199 (from log)
+  ⚠️  ALERT: Memory usage critical: 95%!
+[2025-12-20 09:30:42] #134 | Script: restsdk | NFS: OK | Mem: 94.8% (10864MB/11454MB) | Load: 2.07 2.31 2.31 | FDs: N/A | IOWait: 21.29% | Copied: 20496 (from log)
+  ⚠️  ALERT: Memory usage critical: 95%!
+[2025-12-20 09:31:13] #135 | Script: restsdk | NFS: OK | Mem: 95.5% (10944MB/11454MB) | Load: 2.34 2.35 2.32 | FDs: N/A | IOWait: 15.99% | Copied: 20782 (from log)
+  ⚠️  ALERT: Memory usage critical: 96%!
+[2025-12-20 09:31:44] #136 | Script: restsdk | NFS: OK | Mem: 96.1% (11011MB/11454MB) | Load: 2.07 2.28 2.30 | FDs: N/A | IOWait: 19.97% | Copied: 21064 (from log)
+  ⚠️  ALERT: Memory usage critical: 96%!
+[2025-12-20 09:32:15] #137 | Script: restsdk | NFS: OK | Mem: 96.7% (11079MB/11454MB) | Load: 2.24 2.30 2.30 | FDs: N/A | IOWait: 17.83% | Copied: 21334 (from log)
+  ⚠️  ALERT: Memory usage critical: 97%!
+[2025-12-20 09:32:47] #138 | Script: restsdk | NFS: OK | Mem: 97.0% (11116MB/11454MB) | Load: 2.26 2.30 2.30 | FDs: N/A | IOWait: 25.85% | Copied: 21601 (from log)
+  ⚠️  ALERT: Memory usage critical: 97%!
+[2025-12-20 09:33:18] #139 | Script: restsdk | NFS: OK | Mem: 97.4% (11161MB/11454MB) | Load: 5.04 3.00 2.54 | FDs: N/A | IOWait: 40.65% | Copied: 21731 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:33:50] #140 | Script: restsdk | NFS: OK | Mem: 97.4% (11157MB/11454MB) | Load: 9.83 4.37 3.01 | FDs: N/A | IOWait: 75.77% | Copied: 21797 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:34:39] #141 | Script: restsdk | NFS: OK | Mem: 98.1% (11242MB/11454MB) | Load: 11.82 5.83 3.58 | FDs: N/A | IOWait: 67.52% | Copied: 21935 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:35:21] #142 | Script: restsdk | NFS: OK | Mem: 98.3% (11256MB/11454MB) | Load: 13.59 7.05 4.09 | FDs: N/A | IOWait: 69.82% | Copied: 22006 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:36:05] #143 | Script: restsdk | NFS: OK | Mem: 98.3% (11261MB/11454MB) | Load: 15.54 8.53 4.75 | FDs: N/A | IOWait: 69.89% | Copied: 22006 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:37:03] #144 | Script: restsdk | NFS: OK | Mem: 98.2% (11253MB/11454MB) | Load: 16.57 10.02 5.48 | FDs: N/A | IOWait: 73.19% | Copied: 22075 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:38:01] #145 | Script: restsdk | NFS: OK | Mem: 98.3% (11257MB/11454MB) | Load: 17.98 11.55 6.27 | FDs: N/A | IOWait: 66.25% | Copied: 22075 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:39:00] #146 | Script: restsdk | NFS: OK | Mem: 98.3% (11262MB/11454MB) | Load: 19.92 13.27 7.21 | FDs: N/A | IOWait: 72.16% | Copied: 22075 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:40:12] #147 | Script: restsdk | NFS: OK | Mem: 98.4% (11268MB/11454MB) | Load: 20.54 14.80 8.19 | FDs: N/A | IOWait: 79.56% | Copied: 22075 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:41:11] #148 | Script: restsdk | NFS: OK | Mem: 98.4% (11268MB/11454MB) | Load: 21.97 16.16 9.06 | FDs: N/A | IOWait: 75.66% | Copied: 22075 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:42:26] #149 | Script: restsdk | NFS: OK | Mem: 98.3% (11254MB/11454MB) | Load: 22.55 17.61 10.12 | FDs: N/A | IOWait: 74.42% | Copied: 22075 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:43:36] #150 | Script: restsdk | NFS: OK | Mem: 98.3% (11264MB/11454MB) | Load: 21.36 18.35 10.90 | FDs: N/A | IOWait: 73.99% | Copied: 22075 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:44:28] #151 | Script: restsdk | NFS: OK | Mem: 98.4% (11266MB/11454MB) | Load: 18.54 18.04 11.18 | FDs: N/A | IOWait: 71.61% | Copied: 22075 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:45:14] #152 | Script: restsdk | NFS: OK | Mem: 98.4% (11267MB/11454MB) | Load: 18.19 17.91 11.53 | FDs: N/A | IOWait: 72.89% | Copied: 22075 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:46:20] #153 | Script: restsdk | NFS: OK | Mem: 98.3% (11260MB/11454MB) | Load: 18.72 18.14 12.01 | FDs: N/A | IOWait: 74.77% | Copied: 22075 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:47:18] #154 | Script: restsdk | NFS: OK | Mem: 98.3% (11263MB/11454MB) | Load: 20.03 18.51 12.55 | FDs: N/A | IOWait: 74.30% | Copied: 22149 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:48:39] #155 | Script: restsdk | NFS: OK | Mem: 98.3% (11261MB/11454MB) | Load: 21.89 19.47 13.35 | FDs: N/A | IOWait: 73.17% | Copied: 22149 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:49:59] #156 | Script: restsdk | NFS: OK | Mem: 98.3% (11261MB/11454MB) | Load: 23.13 20.44 14.20 | FDs: N/A | IOWait: 76.31% | Copied: 22149 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:51:07] #157 | Script: restsdk | NFS: OK | Mem: 98.3% (11261MB/11454MB) | Load: 20.15 20.25 14.57 | FDs: N/A | IOWait: 68.25% | Copied: 22149 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:51:48] #158 | Script: restsdk | NFS: OK | Mem: 98.3% (11257MB/11454MB) | Load: 19.01 19.87 14.71 | FDs: N/A | IOWait: 71.52% | Copied: 22149 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:53:17] #159 | Script: restsdk | NFS: OK | Mem: 98.3% (11256MB/11454MB) | Load: 24.13 21.48 15.76 | FDs: N/A | IOWait: 73.81% | Copied: 22149 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:54:19] #160 | Script: restsdk | NFS: OK | Mem: 98.3% (11264MB/11454MB) | Load: 23.49 21.75 16.21 | FDs: N/A | IOWait: 75.04% | Copied: 22149 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:55:15] #161 | Script: restsdk | NFS: OK | Mem: 98.3% (11261MB/11454MB) | Load: 22.68 21.76 16.56 | FDs: N/A | IOWait: 76.74% | Copied: 22149 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:56:28] #162 | Script: restsdk | NFS: OK | Mem: 98.3% (11265MB/11454MB) | Load: 23.25 22.10 17.08 | FDs: N/A | IOWait: 78.81% | Copied: 22149 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:58:09] #163 | Script: restsdk | NFS: OK | Mem: 98.3% (11257MB/11454MB) | Load: 27.01 23.93 18.27 | FDs: N/A | IOWait: 79.15% | Copied: 22149 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 09:59:53] #164 | Script: restsdk | NFS: OK | Mem: 98.3% (11262MB/11454MB) | Load: 27.69 25.38 19.42 | FDs: N/A | IOWait: 77.10% | Copied: 22224 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 10:01:23] #165 | Script: restsdk | NFS: OK | Mem: 98.3% (11265MB/11454MB) | Load: 27.53 25.95 20.15 | FDs: N/A | IOWait: 75.77% | Copied: 22224 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 10:02:46] #166 | Script: restsdk | NFS: OK | Mem: 98.3% (11265MB/11454MB) | Load: 24.48 25.51 20.52 | FDs: N/A | IOWait: 74.85% | Copied: 22224 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 10:03:58] #167 | Script: restsdk | NFS: OK | Mem: 98.3% (11265MB/11454MB) | Load: 22.81 24.90 20.67 | FDs: N/A | IOWait: 75.00% | Copied: 22224 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 10:05:13] #168 | Script: restsdk | NFS: OK | Mem: 98.3% (11257MB/11454MB) | Load: 25.12 25.00 21.03 | FDs: N/A | IOWait: 74.96% | Copied: 22224 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 10:06:25] #169 | Script: restsdk | NFS: OK | Mem: 98.3% (11264MB/11454MB) | Load: 26.28 25.33 21.45 | FDs: N/A | IOWait: 75.38% | Copied: 22224 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 10:07:58] #170 | Script: restsdk | NFS: OK | Mem: 98.3% (11263MB/11454MB) | Load: 29.21 26.55 22.27 | FDs: N/A | IOWait: 75.35% | Copied: 22224 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 10:09:53] #171 | Script: restsdk | NFS: OK | Mem: 98.3% (11257MB/11454MB) | Load: 32.15 28.63 23.53 | FDs: N/A | IOWait: 78.06% | Copied: 22224 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 10:11:34] #172 | Script: restsdk | NFS: OK | Mem: 98.3% (11262MB/11454MB) | Load: 32.34 29.74 24.46 | FDs: N/A | IOWait: 79.37% | Copied: 22224 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 10:31:13] #173 | Script: restsdk | NFS: OK | Mem: 98.3% (11257MB/11454MB) | Load: 108.38 126.67 114.70 | FDs: N/A | IOWait: 74.13% | Copied: 22224 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 10:48:24] #174 | Script: restsdk | NFS: OK | Mem: 98.4% (11267MB/11454MB) | Load: 53.52 88.25 101.71 | FDs: N/A | IOWait: 77.48% | Copied: 22224 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 10:52:31] #175 | Script: restsdk | NFS: OK | Mem: 98.3% (11264MB/11454MB) | Load: 54.21 69.56 90.78 | FDs: N/A | IOWait: 61.33% | Copied: 22224 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
+[2025-12-20 10:56:33] #176 | Script: restsdk | NFS: OK | Mem: 98.4% (11266MB/11454MB) | Load: 52.85 60.32 82.10 | FDs: N/A | IOWait: 71.14% | Copied: 22224 (from log)
+  ⚠️  ALERT: Memory usage critical: 98%!
