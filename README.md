@@ -72,6 +72,42 @@ python preflight_check.py --source /path/to/source --dest /path/to/dest
 - If you want to experiment with larger copy chunks, set `--io-buffer-size` (e.g., 4_194_304 for 4MB, 16_777_216 for 16MB). Leave it at 0 to stick with `shutil.copy2` (default and safest).
 - Defaults require no tuning; only change these if you have measured slowdowns or want to test throughput improvements.
 
+### 🔋 Low-Memory Mode
+
+For systems with limited RAM (< 16GB) or very large file databases (500K+ files), use `--low-memory` to reduce RAM usage by ~40%.
+
+**What it does:**
+- Skips loading timestamp fields (imageDate, videoDate, cTime, birthTime) into memory
+- Automatically disables `--preserve-mtime` (file modification times won't be preserved)
+- Combined with reduced thread count, can prevent out-of-memory crashes
+
+**When to use it:**
+- Your system has less than 16GB RAM
+- The script previously crashed with high memory usage
+- Monitor shows memory usage > 90%
+
+**Example:**
+```bash
+python restsdk_public.py \
+    --db=/mnt/backupdrive/restsdk/data/db/index.db \
+    --filedir=/mnt/backupdrive/restsdk/data/files \
+    --dumpdir=/mnt/nfs-media \
+    --log_file=copied_file.log \
+    --low-memory \
+    --thread-count=2 \
+    --resume
+```
+
+**Memory comparison (500K files):**
+
+| Mode | RAM Usage | Preserve mtime |
+|------|-----------|----------------|
+| Normal | ~11GB | ✅ Yes |
+| `--low-memory` | ~6-7GB | ❌ No |
+| `--low-memory --thread-count=2` | ~5-6GB | ❌ No |
+
+**Alternative:** If low-memory mode still causes issues, consider the [Symlink Farm Approach](README-SYMLINK-FARM.md) which uses minimal RAM by streaming from SQLite.
+
 ### When to use `--sanitize-pipes`
 - Needed for destinations that disallow `|` in filenames (Windows NTFS/FAT and many SMB shares backed by those filesystems).
 - Leave it off for Linux/macOS/EXT4/APFS targets to preserve exact names from the database.
