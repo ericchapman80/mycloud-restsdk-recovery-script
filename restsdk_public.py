@@ -699,7 +699,17 @@ if __name__ == "__main__":
         action="store_true",
         help="Replace '|' with '-' in destination paths; useful for Windows/NTFS/FAT/SMB targets that disallow pipe characters.",
     )
+    parser.add_argument(
+        "--low-memory",
+        action="store_true",
+        help="Reduce memory usage by skipping timestamp fields in file dictionary. Disables --preserve-mtime. Recommended for systems with <16GB RAM.",
+    )
     args = parser.parse_args()
+    
+    # Low-memory mode disables preserve-mtime
+    if args.low_memory:
+        args.preserve_mtime = False
+        args.refresh_mtime_existing = False
 
     logging.getLogger().setLevel(getattr(logging, args.log_level))
 
@@ -747,7 +757,8 @@ if __name__ == "__main__":
     dumpdir = args.dumpdir
     dry_run = args.dry_run
     log_file = args.log_file
-    thread_count = args.thread_count if args.thread_count else os.cpu_count() or 1
+    # Default to 4 threads to reduce memory pressure (was cpu_count)
+    thread_count = args.thread_count if args.thread_count else min(4, os.cpu_count() or 4)
 
     lock = Lock()
 
@@ -791,18 +802,30 @@ if __name__ == "__main__":
         logging.exception("Error opening database")
         sys.exit(1)
 
-    fileDIC = {
-        file[0]: {
-            "Name": file[1],
-            "Parent": file[2],
-            "contentID": file[3],
-            "imageDate": file[4],
-            "videoDate": file[5],
-            "cTime": file[6],
-            "birthTime": file[7],
+    # Build file dictionary - skip timestamp fields in low-memory mode to save ~40% RAM
+    if args.low_memory:
+        print("🔋 Low-memory mode: skipping timestamp fields to reduce RAM usage")
+        fileDIC = {
+            file[0]: {
+                "Name": file[1],
+                "Parent": file[2],
+                "contentID": file[3],
+            }
+            for file in files
         }
-        for file in files
-    }
+    else:
+        fileDIC = {
+            file[0]: {
+                "Name": file[1],
+                "Parent": file[2],
+                "contentID": file[3],
+                "imageDate": file[4],
+                "videoDate": file[5],
+                "cTime": file[6],
+                "birthTime": file[7],
+            }
+            for file in files
+        }
 
     # Build reverse lookup dictionaries for O(1) filename->ID mapping
     build_reverse_lookups()
