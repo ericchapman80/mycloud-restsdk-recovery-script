@@ -38,25 +38,13 @@ while true; do
     # Open file descriptors for our specific script processes
     python_fd=0
     
-    # Method 1: Direct /proc lookup for specific scripts (most accurate on Linux)
-    if [ -d "/proc" ]; then
-        # Look for our specific scripts
-        for script in "restsdk_public.py" "create_symlink_farm.py"; do
-            script_pid=$(pgrep -f "$script" 2>/dev/null | head -1)
-            if [ -n "$script_pid" ] && [ -d "/proc/$script_pid/fd" ]; then
-                count=$(ls -1 /proc/$script_pid/fd 2>/dev/null | wc -l)
-                python_fd=$((python_fd + count))
-            fi
-        done
-    fi
+    # Get PIDs for our scripts
+    script_pids=$(pgrep -f "restsdk_public.py|create_symlink_farm.py" 2>/dev/null)
     
-    # Method 2: Fallback to lsof if /proc didn't find anything
-    if [ "$python_fd" = "0" ] && command -v lsof &>/dev/null; then
-        # Try to find FDs for our specific scripts
-        for script in "restsdk_public.py" "create_symlink_farm.py"; do
-            script_pid=$(pgrep -f "$script" 2>/dev/null | head -1)
-            if [ -n "$script_pid" ]; then
-                count=$(lsof -p "$script_pid" 2>/dev/null | wc -l | xargs)
+    if [ -n "$script_pids" ]; then
+        for pid in $script_pids; do
+            if [ -d "/proc/$pid/fd" ]; then
+                count=$(ls /proc/$pid/fd 2>/dev/null | wc -l)
                 python_fd=$((python_fd + count))
             fi
         done
