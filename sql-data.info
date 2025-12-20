@@ -122,3 +122,10 @@ sudo nano /etc/fstab
 192.168.172.10:/volume1/shared-media /mnt/nfs-media nfs soft,timeo=30,retrans=3,rsize=131072,wsize=131072,noatime,rw 0 0
 sudo umount /mnt/nfs-media
 sudo mount /mnt/nfs-media
+
+
+# Option 1: Run in background
+nohup ./monitor.sh /home/chapman/projects/mycloud-restsdk-recovery-script/monitor.log 30 > /dev/null 2>&1 &
+
+# Option 2: Watch live
+./monitor.sh /home/chapman/projects/mycloud-restsdk-recovery-script/monitor.log 30
