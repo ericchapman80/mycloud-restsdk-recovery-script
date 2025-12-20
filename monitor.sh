@@ -35,27 +35,35 @@ while true; do
         load=$(sysctl -n vm.loadavg 2>/dev/null | tr -d '{}' || uptime | awk -F'load average:' '{print $2}' | xargs)
     fi
     
-    # Open file descriptors for python processes (try multiple methods)
-    python_fd="N/A"
-    # Try lsof first (works on both Linux and macOS)
-    if command -v lsof &>/dev/null; then
-        # Match python, python3, Python, etc.
-        python_fd=$(lsof -c python -c Python 2>/dev/null | wc -l | xargs)
-        [ "$python_fd" = "0" ] && python_fd=$(lsof 2>/dev/null | grep -i python | wc -l | xargs)
+    # Open file descriptors for our specific script processes
+    python_fd=0
+    
+    # Method 1: Direct /proc lookup for specific scripts (most accurate on Linux)
+    if [ -d "/proc" ]; then
+        # Look for our specific scripts
+        for script in "restsdk_public.py" "create_symlink_farm.py"; do
+            script_pid=$(pgrep -f "$script" 2>/dev/null | head -1)
+            if [ -n "$script_pid" ] && [ -d "/proc/$script_pid/fd" ]; then
+                count=$(ls -1 /proc/$script_pid/fd 2>/dev/null | wc -l)
+                python_fd=$((python_fd + count))
+            fi
+        done
     fi
-    # Fallback: count from /proc on Linux
-    if [ "$python_fd" = "0" ] || [ "$python_fd" = "N/A" ]; then
-        python_pids=$(pgrep -f "python" 2>/dev/null)
-        if [ -n "$python_pids" ]; then
-            python_fd=0
-            for pid in $python_pids; do
-                if [ -d "/proc/$pid/fd" ]; then
-                    count=$(ls -1 /proc/$pid/fd 2>/dev/null | wc -l)
-                    python_fd=$((python_fd + count))
-                fi
-            done
-        fi
+    
+    # Method 2: Fallback to lsof if /proc didn't find anything
+    if [ "$python_fd" = "0" ] && command -v lsof &>/dev/null; then
+        # Try to find FDs for our specific scripts
+        for script in "restsdk_public.py" "create_symlink_farm.py"; do
+            script_pid=$(pgrep -f "$script" 2>/dev/null | head -1)
+            if [ -n "$script_pid" ]; then
+                count=$(lsof -p "$script_pid" 2>/dev/null | wc -l | xargs)
+                python_fd=$((python_fd + count))
+            fi
+        done
     fi
+    
+    # Show N/A if nothing found
+    [ "$python_fd" = "0" ] && python_fd="N/A"
     
     # NFS mount status
     nfs_status="OK"
