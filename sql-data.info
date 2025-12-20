@@ -93,6 +93,7 @@ swn72cwykc4amd4etewesheg|sulgyfqp262xw4uuh3evx5kg|dc3iotiyce7hybhchzg4igcc|3|IMG
 
 
 nohup sudo /home/chapman/projects/mycloud-restsdk-recovery-script/venv/bin/python /home/chapman/projects/mycloud-restsdk-recovery-script/restsdk_public.py --resume --db=/mnt/backupdrive/restsdk/data/db/index.db --filedir=/mnt/backupdrive/restsdk/data/files --dumpdir=/mnt/nfs-media --log_file=/home/chapman/projects/mycloud-restsdk-recovery-script/copied_file.log --thread-count 6 --refresh-mtime-existing > /home/chapman/projects/mycloud-restsdk-recovery-script/run.out 2>&1 < /dev/null &
+
 total 6486276
 drwxrwxrwx 1 root root        1084 Dec 18 01:28 .
 drwxr-xr-x 4 root root        4096 May  9  2025 ..
@@ -129,3 +130,5 @@ nohup ./monitor.sh /home/chapman/projects/mycloud-restsdk-recovery-script/monito
 
 # Option 2: Watch live
 ./monitor.sh /home/chapman/projects/mycloud-restsdk-recovery-script/monitor.log 30
+
+nohup sudo /home/chapman/projects/mycloud-restsdk-recovery-script/venv/bin/python /home/chapman/projects/mycloud-restsdk-recovery-script/restsdk_public.py --resume --db=/mnt/backupdrive/restsdk/data/db/index.db --filedir=/mnt/backupdrive/restsdk/data/files --dumpdir=/mnt/nfs-media --log_file=/home/chapman/projects/mycloud-restsdk-recovery-script/copied_file.log --thread-count 2 --low-memory > /home/chapman/projects/mycloud-restsdk-recovery-script/run.out 2>&1 < /dev/null &
