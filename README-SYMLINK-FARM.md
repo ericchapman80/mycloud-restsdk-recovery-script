@@ -43,20 +43,34 @@ This single command will:
 5. ✅ Verify with checksums
 6. 📝 Log everything to `rsync_restore.log`
 
-### Option 2: Interactive Wizard
+### Option 2: Interactive Wizard (New Users)
 
 ```bash
-python create_symlink_farm.py --wizard
+python rsync_restore.py --wizard
 ```
 
 The wizard will guide you through:
 
-1. Locating your database file
-2. Locating your source files
-3. Choosing an output directory
-4. Running a dry-run first
-5. Creating the symlink farm
-6. Showing you the rsync commands to run
+1. 📁 Locating your database file (index.db)
+2. 📂 Locating your source files directory
+3. 💾 Choosing your destination directory
+4. 🔗 Setting up the symlink farm directory
+5. 🔧 Configuring options (sanitize pipes, checksums, dry-run)
+6. ✅ Confirmation and execution
+
+The wizard includes:
+
+- **Path validation** - ensures directories exist before proceeding
+- **Dry-run option** - preview what will be copied before committing
+- **Automatic retry** - offers to run for real after successful dry-run
+
+### Option 3: Symlink Farm Only (Advanced)
+
+If you only need to create the symlink farm without rsync:
+
+```bash
+python create_symlink_farm.py --wizard
+```
 
 ### Command Line
 
