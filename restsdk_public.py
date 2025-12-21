@@ -31,8 +31,31 @@ from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Lock, Value
 from shutil import copyfile
 import datetime
+import gc
 from queue import Queue
 from threading import Thread
+
+# Thread-safe database connection pool to prevent FD leaks
+_db_lock = threading.Lock()
+_db_connections = {}  # thread_id -> connection
+
+def get_thread_db_connection(db_path):
+    """Get or create a thread-local database connection."""
+    thread_id = threading.get_ident()
+    if thread_id not in _db_connections:
+        conn = sqlite3.connect(db_path, check_same_thread=False)
+        conn.execute("PRAGMA busy_timeout=5000")
+        _db_connections[thread_id] = conn
+    return _db_connections[thread_id]
+
+def close_all_db_connections():
+    """Close all thread-local database connections."""
+    for conn in _db_connections.values():
+        try:
+            conn.close()
+        except:
+            pass
+    _db_connections.clear()
 
 # Increase file descriptor limit at startup (prevents "Too many open files" errors)
 def _increase_fd_limit():
@@ -181,9 +204,10 @@ def init_copy_tracking_tables(db_path):
         conn.commit()
 
 def insert_copied_file(db_path, file_id, filename):
+    """Insert a copied file record using thread-local connection."""
     def _op():
-        with sqlite3.connect(db_path) as conn:
-            conn.execute("PRAGMA busy_timeout=5000")
+        with _db_lock:
+            conn = get_thread_db_connection(db_path)
             c = conn.cursor()
             c.execute(
                 '''INSERT OR IGNORE INTO copied_files (file_id, filename, mtime_refreshed) VALUES (?, ?, 0)''',
@@ -193,11 +217,11 @@ def insert_copied_file(db_path, file_id, filename):
     with_retry_db(_op)
 
 def insert_skipped_file(db_path, filename, reason):
+    """Insert a skipped file record using thread-local connection."""
     def _op():
-        with sqlite3.connect(db_path) as conn:
-            conn.execute("PRAGMA busy_timeout=5000")
+        with _db_lock:
+            conn = get_thread_db_connection(db_path)
             c = conn.cursor()
-            # Always use TEXT for filename and reason
             c.execute(
                 '''INSERT OR IGNORE INTO skipped_files (filename, reason) VALUES (?, ?)''',
                 (str(filename), str(reason)),
@@ -1059,8 +1083,8 @@ if __name__ == "__main__":
                         if ts:
                             os.utime(dest_path, (ts / 1000, ts / 1000))
                             try:
-                                with sqlite3.connect(db) as conn:
-                                    conn.execute("PRAGMA busy_timeout=5000")
+                                with _db_lock:
+                                    conn = get_thread_db_connection(db)
                                     cur = conn.cursor()
                                     cur.execute("UPDATE copied_files SET mtime_refreshed=1 WHERE file_id=?", (file_id,))
                                     conn.commit()
@@ -1145,6 +1169,10 @@ if __name__ == "__main__":
         run_resume_copy()
     else:
         run_standard_copy()
+
+    # Cleanup: close all thread-local database connections
+    close_all_db_connections()
+    gc.collect()
 
     log_queue.put("STOP")
     log_thread.join()
