@@ -225,8 +225,15 @@ def reconstruct_path(file_id: str, file_dic: Dict[str, dict], root_dir_to_strip:
     # Build path by traversing parents
     path_parts = [name]
     current_id = parent_id
+    visited = {file_id}  # Track visited nodes to prevent infinite loops
     
     while current_id is not None and current_id in file_dic:
+        # Check for circular reference
+        if current_id in visited:
+            # Circular reference detected, stop traversal
+            break
+        
+        visited.add(current_id)
         parent_meta = file_dic[current_id]
         parent_name = parent_meta.get('Name', '')
         path_parts.insert(0, parent_name)

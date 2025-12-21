@@ -5,6 +5,17 @@ from pathlib import Path
 
 import pytest
 
+@pytest.fixture(autouse=True)
+def cleanup_db_connections():
+    """Clean up thread-local database connections after each test."""
+    yield
+    # Import here to avoid circular dependency
+    try:
+        from restsdk_public import close_all_db_connections
+        close_all_db_connections()
+    except ImportError:
+        pass
+
 # Default perf size; can be overridden via PERF_TEST_ROWS env var
 def pytest_addoption(parser):
     parser.addoption(
