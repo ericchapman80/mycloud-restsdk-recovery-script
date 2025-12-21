@@ -324,10 +324,9 @@ def regenerate_copied_files_from_dest(db_path, dumpdir, log_file):
                         file_id = path_to_file_id.get(rel_path_with_pipes)
                     
                     if file_id:
-                        # Store content_id in filename column for consistency with resume mode
-                        content_id = temp_fileDIC[file_id].get("contentID", file)
+                        # Store the relative path in filename column (matches what the copy function logs)
                         c.execute('INSERT OR IGNORE INTO copied_files (file_id, filename) VALUES (?, ?)', 
-                                  (str(file_id), str(content_id)))
+                                  (str(file_id), str(rel_path)))
                         if c.rowcount == 1:
                             matched_files += 1
                             if matched_files <= 10 or matched_files % 1000 == 0:
