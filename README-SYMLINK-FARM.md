@@ -236,6 +236,104 @@ rsync -avL --progress --exclude='*.tmp' --exclude='.DS_Store' \
 
 Some filenames contain `|` which can cause issues on Windows/NTFS:
 
+## Cleanup: Finding and Removing Orphaned Files
+
+### What is an Orphan File?
+
+An **orphan file** is a file that exists in your destination directory but does NOT have a corresponding entry in the MyCloud database. Orphans can occur from:
+
+- **Buggy previous runs** - Earlier versions of restore scripts may have created duplicate files with incorrect paths
+- **Interrupted copies** - Partial files from failed transfers
+- **Manual additions** - Files you added directly to the destination (these should be protected, not deleted)
+
+**Example:**
+
+```text
+Destination: /mnt/nfs-media/Photos/2024/
+├── vacation.jpg          ← ✅ Matches DB entry, KEEP
+├── vacation (1).jpg      ← ⚠️  ORPHAN - duplicate from bad run
+├── IMG_001.jpg           ← ✅ Matches DB entry, KEEP
+└── my-notes.txt          ← ⚠️  ORPHAN - but user-added, PROTECT
+```
+
+### Cleanup Workflow
+
+```mermaid
+flowchart TD
+    A[Wizard Mode<br/>--cleanup --wizard] --> D[cleanup_rules.yaml]
+    B[CLI Mode<br/>--cleanup --protect X] --> D
+    C[Edit Config<br/>manually] --> D
+    D --> E[Execute Cleanup<br/>scan, compare, delete]
+    E --> F[Summary Report]
+```
+
+### Usage Modes
+
+**Mode 1: Interactive Wizard** (recommended for first-time cleanup)
+
+```bash
+python rsync_restore.py --cleanup --wizard
+```
+
+The wizard will:
+
+1. Scan your destination directory
+2. Show orphan counts per folder
+3. Ask you to classify each folder (protect vs cleanup)
+4. Save your choices to `cleanup_rules.yaml`
+5. Delete orphans (with confirmation)
+
+**Mode 2: CLI with Flags**
+
+```bash
+# Protect user folders, cleanup MyCloud folders
+python rsync_restore.py --cleanup \
+    --protect "my-personal-stuff/*" \
+    --protect "Downloads/*" \
+    --cleanup-folder "Photos/*" \
+    --dry-run
+
+# Run with saved config
+python rsync_restore.py --cleanup --config ./cleanup_rules.yaml
+```
+
+**Mode 3: Edit Config Directly**
+
+Create or edit `cleanup_rules.yaml`:
+
+```yaml
+version: 1
+destination: /mnt/nfs-media
+
+# Folders to NEVER delete from (user-added content)
+protect:
+  - "my-personal-stuff/*"
+  - "Downloads/*"
+
+# Folders to clean orphans from (MyCloud restored content)
+cleanup:
+  - "Photos/*"
+  - "Videos/*"
+  - "Music/*"
+```
+
+Then run:
+
+```bash
+python rsync_restore.py --cleanup --config ./cleanup_rules.yaml
+```
+
+### Cleanup Safety Features
+
+- **Dry-run by default** - Always shows what would be deleted first
+- **Protected folders** - User-added folders are never touched
+- **Config file** - Your choices are saved and reusable
+- **Confirmation required** - Must explicitly confirm before deletion
+
+## Troubleshooting
+
+### Handle Pipe Characters in Filenames (continued)
+
 ```bash
 python create_symlink_farm.py --sanitize-pipes ...
 ```
