@@ -43,20 +43,34 @@ This single command will:
 5. ✅ Verify with checksums
 6. 📝 Log everything to `rsync_restore.log`
 
-### Option 2: Interactive Wizard
+### Option 2: Interactive Wizard (New Users)
 
 ```bash
-python create_symlink_farm.py --wizard
+python rsync_restore.py --wizard
 ```
 
 The wizard will guide you through:
 
-1. Locating your database file
-2. Locating your source files
-3. Choosing an output directory
-4. Running a dry-run first
-5. Creating the symlink farm
-6. Showing you the rsync commands to run
+1. 📁 Locating your database file (index.db)
+2. 📂 Locating your source files directory
+3. 💾 Choosing your destination directory
+4. 🔗 Setting up the symlink farm directory
+5. 🔧 Configuring options (sanitize pipes, checksums, dry-run)
+6. ✅ Confirmation and execution
+
+The wizard includes:
+
+- **Path validation** - ensures directories exist before proceeding
+- **Dry-run option** - preview what will be copied before committing
+- **Automatic retry** - offers to run for real after successful dry-run
+
+### Option 3: Symlink Farm Only (Advanced)
+
+If you only need to create the symlink farm without rsync:
+
+```bash
+python create_symlink_farm.py --wizard
+```
 
 ### Command Line
 
@@ -221,6 +235,104 @@ rsync -avL --progress --exclude='*.tmp' --exclude='.DS_Store' \
 ### Handle Pipe Characters in Filenames
 
 Some filenames contain `|` which can cause issues on Windows/NTFS:
+
+## Cleanup: Finding and Removing Orphaned Files
+
+### What is an Orphan File?
+
+An **orphan file** is a file that exists in your destination directory but does NOT have a corresponding entry in the MyCloud database. Orphans can occur from:
+
+- **Buggy previous runs** - Earlier versions of restore scripts may have created duplicate files with incorrect paths
+- **Interrupted copies** - Partial files from failed transfers
+- **Manual additions** - Files you added directly to the destination (these should be protected, not deleted)
+
+**Example:**
+
+```text
+Destination: /mnt/nfs-media/Photos/2024/
+├── vacation.jpg          ← ✅ Matches DB entry, KEEP
+├── vacation (1).jpg      ← ⚠️  ORPHAN - duplicate from bad run
+├── IMG_001.jpg           ← ✅ Matches DB entry, KEEP
+└── my-notes.txt          ← ⚠️  ORPHAN - but user-added, PROTECT
+```
+
+### Cleanup Workflow
+
+```mermaid
+flowchart TD
+    A[Wizard Mode<br/>--cleanup --wizard] --> D[cleanup_rules.yaml]
+    B[CLI Mode<br/>--cleanup --protect X] --> D
+    C[Edit Config<br/>manually] --> D
+    D --> E[Execute Cleanup<br/>scan, compare, delete]
+    E --> F[Summary Report]
+```
+
+### Usage Modes
+
+**Mode 1: Interactive Wizard** (recommended for first-time cleanup)
+
+```bash
+python rsync_restore.py --cleanup --wizard
+```
+
+The wizard will:
+
+1. Scan your destination directory
+2. Show orphan counts per folder
+3. Ask you to classify each folder (protect vs cleanup)
+4. Save your choices to `cleanup_rules.yaml`
+5. Delete orphans (with confirmation)
+
+**Mode 2: CLI with Flags**
+
+```bash
+# Protect user folders, cleanup MyCloud folders
+python rsync_restore.py --cleanup \
+    --protect "my-personal-stuff/*" \
+    --protect "Downloads/*" \
+    --cleanup-folder "Photos/*" \
+    --dry-run
+
+# Run with saved config
+python rsync_restore.py --cleanup --config ./cleanup_rules.yaml
+```
+
+**Mode 3: Edit Config Directly**
+
+Create or edit `cleanup_rules.yaml`:
+
+```yaml
+version: 1
+destination: /mnt/nfs-media
+
+# Folders to NEVER delete from (user-added content)
+protect:
+  - "my-personal-stuff/*"
+  - "Downloads/*"
+
+# Folders to clean orphans from (MyCloud restored content)
+cleanup:
+  - "Photos/*"
+  - "Videos/*"
+  - "Music/*"
+```
+
+Then run:
+
+```bash
+python rsync_restore.py --cleanup --config ./cleanup_rules.yaml
+```
+
+### Cleanup Safety Features
+
+- **Dry-run by default** - Always shows what would be deleted first
+- **Protected folders** - User-added folders are never touched
+- **Config file** - Your choices are saved and reusable
+- **Confirmation required** - Must explicitly confirm before deletion
+
+## Troubleshooting
+
+### Handle Pipe Characters in Filenames (continued)
 
 ```bash
 python create_symlink_farm.py --sanitize-pipes ...
