@@ -9,6 +9,8 @@ import sqlite3
 import sys
 import threading
 import time
+import os
+from collections import defaultdict
 try:
     import psutil
 except ImportError:
@@ -668,10 +670,157 @@ def count_files(start_path='.'):
         total += len(filenames)
     return total
 
-if __name__ == "__main__":
+def get_directory_summary(path):
+    """Return (file_count, total_size) for all files under path."""
+    total_size = 0
+    file_count = 0
+    
+    for root, _, files in os.walk(path):
+        for f in files:
+            try:
+                fp = os.path.join(root, f)
+                if os.path.islink(fp):
+                    continue
+                total_size += os.path.getsize(fp)
+                file_count += 1
+            except (OSError, FileNotFoundError):
+                continue
+                
+    return file_count, total_size
 
+def format_size(size_bytes):
+    """Convert bytes to human-readable format."""
+    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        if size_bytes < 1024.0:
+            return f"{size_bytes:.2f} {unit}"
+        size_bytes /= 1024.0
+    return f"{size_bytes:.2f} PB"
+
+def log_summary(message, to_console=True, to_file=True):
+    """Log a message to both console and log file with timestamp."""
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    log_message = f"[{timestamp}] {message}"
+    
+    if to_console:
+        print(log_message)
+    if to_file:
+        with open(log_filename, 'a') as f:
+            f.write(log_message + '\n')
+
+def show_summary(db_path, source_dir, dest_dir, phase="INITIAL"):
+    """
+    Show and log summary of source and destination directories.
+    
+    Args:
+        db_path: Path to the SQLite database
+        source_dir: Source directory path
+        dest_dir: Destination directory path
+        phase: Phase of operation (INITIAL, FINAL, etc.)
+    """
+    # Create a buffer to collect all output
+    output = []
+    
+    def add_line(text=""):
+        output.append(text)
+    
+    # Header
+    add_line("\n" + "="*70)
+    add_line(f"{' ' * 25}COPY OPERATION SUMMARY - {phase}")
+    add_line("="*70)
+    
+    # Timestamp
+    add_line(f"Timestamp: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    # Source stats
+    add_line("\nSOURCE DIRECTORY:")
+    add_line(f"  Path: {source_dir}")
+    
+    try:
+        # Get total files from database
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM Files")
+        db_file_count = cursor.fetchone()[0]
+        add_line(f"  Files in database: {db_file_count:,}")
+        
+        # Get actual source files count and size
+        add_line("  Scanning source directory (this may take a while)...")
+        src_count, src_size = get_directory_summary(source_dir)
+        add_line(f"  Files found: {src_count:,}")
+        add_line(f"  Total size: {format_size(src_size)}")
+        
+        # Get destination stats
+        add_line("\nDESTINATION DIRECTORY:")
+        add_line(f"  Path: {dest_dir}")
+        
+        if os.path.exists(dest_dir):
+            add_line("  Scanning destination directory (this may take a while)...")
+            dest_count, dest_size = get_directory_summary(dest_dir)
+            add_line(f"  Existing files: {dest_count:,}")
+            add_line(f"  Existing size: {format_size(dest_size)}")
+            
+            # Calculate remaining
+            remaining_count = max(0, db_file_count - dest_count)
+            remaining_pct = (remaining_count / db_file_count * 100) if db_file_count > 0 else 0
+            add_line(f"\nREMAINING:")
+            add_line(f"  Files to copy: {remaining_count:,} ({remaining_pct:.1f}% of total)")
+            
+            # Calculate estimated time remaining if this is a final summary
+            if phase.upper() == "FINAL" and 'start_time' in globals():
+                elapsed = time.time() - start_time
+                if elapsed > 0 and dest_count > 0:
+                    files_per_sec = dest_count / elapsed
+                    if files_per_sec > 0:
+                        est_remaining = remaining_count / files_per_sec
+                        add_line(f"  Estimated time remaining: {format_duration(est_remaining)}")
+        else:
+            add_line("  Destination does not exist or is not accessible")
+            
+    except Exception as e:
+        add_line(f"  Error generating summary: {str(e)}")
+        
+    finally:
+        if 'conn' in locals():
+            conn.close()
+    
+    # Add footer
+    add_line("="*70 + "\n")
+    
+    # Write all output to log file and console
+    for line in output:
+        log_summary(line, to_console=True, to_file=True)
+    
+    # Return the collected output in case it's needed programmatically
+    return output
+
+def setup_logging():
+    """Set up logging configuration."""
+    # Create log directory if it doesn't exist
+    log_dir = os.path.dirname(os.path.abspath(log_filename))
+    os.makedirs(log_dir, exist_ok=True)
+    
+    # Clear existing log file
+    open(log_filename, 'w').close()
+    
+    # Log startup information
+    log_summary(f"Starting MyCloud Recovery Tool")
+    log_summary(f"Command: {' '.join(sys.argv)}")
+    log_summary(f"Python: {sys.version}")
+    log_summary(f"Platform: {sys.platform}")
+    log_summary(f"Working directory: {os.getcwd()}")
+    log_summary("-" * 70)
+
+if __name__ == "__main__":
+    # Initialize start time and logging
     start_time = time.time()
-    logging.info(f"Start time: {time.ctime(start_time)}")
+    setup_logging()
+    log_summary(f"Start time: {time.ctime(start_time)}")
+    
+    # Ensure required arguments are provided
+    if not args.db or not args.filedir or not args.dumpdir:
+        error_msg = "Error: Missing required arguments. Use --help for usage."
+        log_summary(error_msg, to_console=True)
+        sys.exit(1)
     run_start = start_time
     regen_elapsed = 0.0
     copy_phase_start = run_start
@@ -1159,20 +1308,65 @@ if __name__ == "__main__":
         print(f"Elapsed time: {elapsed_str} ({files_per_sec:.2f} files/sec)")
         print(f"Regen duration: {format_duration(regen_elapsed)}")
         print(f"Copy phase duration: {copy_elapsed_str}")
-        logging.info(f"Elapsed time: {elapsed_str} ({files_per_sec:.2f} files/sec)")
-        logging.info(f"Regen duration: {format_duration(regen_elapsed)}")
-        logging.info(f"Copy phase duration: {copy_elapsed_str}")
-        logging.info(f"Started at: {time.ctime(run_start)}")
-        logging.info(f"Finished at: {time.ctime(run_start + elapsed)}")
 
+exit_code = 0
+try:
+    # Show initial summary
+    show_summary(args.db, args.filedir, args.dumpdir, "INITIAL")
+    
+    # Run the appropriate copy operation
     if args.resume:
+        log_summary("Starting RESUME operation")
         run_resume_copy()
     else:
+        log_summary("Starting STANDARD copy operation")
         run_standard_copy()
-
-    # Cleanup: close all thread-local database connections
-    close_all_db_connections()
-    gc.collect()
-
-    log_queue.put("STOP")
-    log_thread.join()
+        
+except KeyboardInterrupt:
+    log_summary("\nOperation interrupted by user", to_console=True)
+    exit_code = 130  # Standard exit code for Ctrl+C
+except Exception as e:
+    error_msg = f"\nFATAL ERROR: {str(e)}\n{traceback.format_exc()}"
+    log_summary(error_msg, to_console=True)
+    exit_code = 1
+finally:
+    # Always show final summary, even if there was an error
+    try:
+        log_summary("\nGenerating final summary...")
+        show_summary(args.db, args.filedir, args.dumpdir, "FINAL")
+        
+        # Calculate total runtime
+        end_time = time.time()
+        total_seconds = end_time - start_time
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+        
+        # Log completion status
+        status_msg = "COMPLETED SUCCESSFULLY" if exit_code == 0 else f"FAILED WITH CODE {exit_code}"
+        log_summary("\n" + "=" * 70)
+        log_summary(f"OPERATION {status_msg}")
+        log_summary("=" * 70)
+        log_summary(f"Start time:    {time.ctime(start_time)}")
+        log_summary(f"End time:      {time.ctime(end_time)}")
+        log_summary(f"Total runtime: {int(hours)}h {int(minutes)}m {int(seconds)}s")
+        log_summary(f"Log file:      {os.path.abspath(log_filename)}")
+        log_summary("=" * 70)
+        
+        # Cleanup resources
+        log_summary("Cleaning up resources...")
+        close_all_db_connections()
+        gc.collect()
+        
+        # Signal log thread to stop
+        log_queue.put("STOP")
+        log_thread.join(timeout=5.0)
+        
+        if log_thread.is_alive():
+            log_summary("Warning: Log thread did not shut down cleanly")
+        
+    except Exception as e:
+        log_summary(f"Error during cleanup: {str(e)}", to_console=True)
+        exit_code = exit_code or 1
+    
+log_summary(f"Exiting with code {exit_code}")
+sys.exit(exit_code)
