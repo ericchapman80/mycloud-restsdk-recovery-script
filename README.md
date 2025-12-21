@@ -1,8 +1,49 @@
-# MyCloud REST SDK Recovery Script
+# MyCloud Recovery Tools
 
-This script helps you recover and transfer files from a Western Digital (WD) MyCloud device or similar storage to another location (like a Synology NAS), with features for performance, safety, and resumability.
+Recover and transfer files from a Western Digital (WD) MyCloud device to another location (like a Synology NAS).
 
-## ✨ Recent Improvements (v2.0)
+> **📢 This project is a fork of [springfielddatarecovery/mycloud-restsdk-recovery-script](https://github.com/springfielddatarecovery/mycloud-restsdk-recovery-script)** with significant enhancements including multi-threading, memory optimization, resume capability, and a new rsync-based approach.
+
+---
+
+## ☕ Support This Project
+
+If this tool saved your data, consider supporting continued development:
+
+<!-- TODO: Add your links when accounts are set up -->
+- **GitHub Sponsors:** [Sponsor @ericchapman80](https://github.com/sponsors/ericchapman80)
+- **Buy Me a Coffee:** Coming soon
+
+---
+
+## 🚀 Recommended: rsync Restore (New!)
+
+**For large libraries (100K+ files), use the new rsync-based approach:**
+
+```bash
+python rsync_restore.py --wizard
+```
+
+**Why rsync?**
+| Feature | rsync_restore.py | restsdk_public.py |
+|---------|------------------|-------------------|
+| Memory usage | ~50 MB | 2-10 GB |
+| Resume capability | Built-in | Manual |
+| Progress tracking | Real-time | Periodic |
+| Cleanup orphans | ✅ Yes | ❌ No |
+| Wizard mode | ✅ Yes | ❌ No |
+
+📖 **See [README-SYMLINK-FARM.md](README-SYMLINK-FARM.md) for full documentation.**
+
+---
+
+## 📦 Legacy: restsdk_public.py
+
+> ⚠️ **Maintenance Mode:** This script works but is no longer actively developed. For new users, we recommend `rsync_restore.py` above.
+
+The original Python-based file copier with multi-threading support. Useful if you can't use rsync or prefer a pure-Python solution.
+
+## ✨ restsdk_public.py Improvements (v2.0)
 
 - **O(1) Filename Lookups**: Replaced O(n) loops with dictionary lookups - copying 3.5M files now takes hours instead of days
 - **Accurate Resume**: Resume now matches files by **full path**, not just filename - handles duplicate filenames correctly
@@ -372,19 +413,25 @@ WHERE c.file_id IS NULL AND s.filename IS NULL;
 
 ---
 
-**More:**
-Need more help than this script can offer? We offer affordable flat-rate data recovery at [our website](https://springfielddatarecovery.com)
+## 🙏 Credits & Attribution
 
-## If this script has helped you recover your data, please consider saying thanks with a crypto/Bitcoin donation
+This project is a fork of [springfielddatarecovery/mycloud-restsdk-recovery-script](https://github.com/springfielddatarecovery/mycloud-restsdk-recovery-script). The original authors at [Springfield Data Recovery](https://springfielddatarecovery.com) created the initial single-threaded script.
 
-* Bitcoin: 1DqSLNR8kTgwq5rvveUFDSbYQnJp9D5gfR
-* ETH: 0x9e765052283Ce6521E40069Ac52ffA5B277bD8AB
-* Zcash: t1RetUQktuUBL2kbX72taERb6QcuAiDsvC4
+**This fork adds:**
+- Multi-threaded copying with smart thread recommendations
+- Memory leak fixes and low-memory mode
+- Accurate path-based resume (not just filename)
+- rsync-based approach with wizard and cleanup features
+- Comprehensive monitoring tools
 
-Don't have any crypto? Buy some at [Coinbase](https://www.coinbase.com/join/calltheninja)
+## ☕ Support This Project
 
-**FUTURE DEVELOPMENT:**
-This fork is actively maintained. Contributions welcome!
+If this tool saved your data, consider supporting continued development:
+
+- **GitHub Sponsors:** [Sponsor @ericchapman80](https://github.com/sponsors/ericchapman80)
+- **Buy Me a Coffee:** Coming soon
+
+**Contributions welcome!** Open issues or PRs on GitHub.
 
 **Notes:**
 SQLite database is stored in /restsdk/data/db/index.db. Inside the DB two main tables appear to be of interest, FILES and ImageTrans. FILES lists each file with a unique ID (primary key) and a ContentID (the name of the file when stored on the filesystem) along with the file name "My important picture.jpg" and some other metadata. I believe ImageTrans is only for thumbnailing purposes but I could be wrong about that. Importantly, the entries in FILES have a "parent" attribute which places each file in a directory structure. This script totally ignores ImageTrans.
