@@ -26,6 +26,7 @@ Usage:
 
 import argparse
 import datetime
+import fnmatch
 import os
 import re
 import shutil
@@ -36,7 +37,14 @@ import sys
 import threading
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Set
+
+# Try to import yaml for config files
+try:
+    import yaml
+    HAS_YAML = True
+except ImportError:
+    HAS_YAML = False
 
 # Try to import preflight for stats
 try:
@@ -168,6 +176,481 @@ def format_duration(seconds: float) -> str:
         hours, remainder = divmod(int(seconds), 3600)
         mins, secs = divmod(remainder, 60)
         return f"{hours}h {mins}m {secs}s"
+
+
+# ============================================================================
+# CLEANUP FEATURE: Config file and orphan detection
+# ============================================================================
+
+DEFAULT_CLEANUP_CONFIG = {
+    'version': 1,
+    'destination': '',
+    'protect': [],
+    'cleanup': [],
+    'keep_files': [],
+    'last_scan': None,
+    'orphans_found': 0,
+    'orphans_deleted': 0,
+}
+
+
+def load_cleanup_config(config_path: str) -> Dict:
+    """Load cleanup configuration from YAML file."""
+    if not os.path.exists(config_path):
+        return DEFAULT_CLEANUP_CONFIG.copy()
+    
+    if not HAS_YAML:
+        print_warning("PyYAML not installed. Using simple config parser.")
+        return _load_simple_config(config_path)
+    
+    with open(config_path, 'r') as f:
+        config = yaml.safe_load(f)
+    
+    # Merge with defaults
+    result = DEFAULT_CLEANUP_CONFIG.copy()
+    if config:
+        result.update(config)
+    return result
+
+
+def save_cleanup_config(config: Dict, config_path: str):
+    """Save cleanup configuration to YAML file."""
+    config['last_scan'] = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    if HAS_YAML:
+        with open(config_path, 'w') as f:
+            yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+    else:
+        _save_simple_config(config, config_path)
+    
+    print_success(f"Config saved to: {config_path}")
+
+
+def _load_simple_config(config_path: str) -> Dict:
+    """Simple config loader when PyYAML is not available."""
+    config = DEFAULT_CLEANUP_CONFIG.copy()
+    with open(config_path, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if ':' in line and not line.startswith('#'):
+                key, value = line.split(':', 1)
+                key = key.strip()
+                value = value.strip().strip('"').strip("'")
+                if key in config:
+                    if isinstance(config[key], list):
+                        if value:
+                            config[key].append(value)
+                    else:
+                        config[key] = value
+    return config
+
+
+def _save_simple_config(config: Dict, config_path: str):
+    """Simple config saver when PyYAML is not available."""
+    with open(config_path, 'w') as f:
+        f.write("# Cleanup configuration\n")
+        f.write(f"version: {config.get('version', 1)}\n")
+        f.write(f"destination: {config.get('destination', '')}\n")
+        f.write(f"last_scan: {config.get('last_scan', '')}\n")
+        f.write(f"orphans_found: {config.get('orphans_found', 0)}\n")
+        f.write(f"orphans_deleted: {config.get('orphans_deleted', 0)}\n")
+        f.write("\n# Folders to protect (never delete from)\n")
+        for p in config.get('protect', []):
+            f.write(f"protect: {p}\n")
+        f.write("\n# Folders to cleanup (remove orphans from)\n")
+        for c in config.get('cleanup', []):
+            f.write(f"cleanup: {c}\n")
+
+
+def matches_pattern(path: str, patterns: List[str]) -> bool:
+    """Check if path matches any of the glob patterns."""
+    for pattern in patterns:
+        if fnmatch.fnmatch(path, pattern):
+            return True
+        # Also check if any parent directory matches
+        parts = path.split(os.sep)
+        for i in range(len(parts)):
+            partial = os.sep.join(parts[:i+1])
+            if fnmatch.fnmatch(partial, pattern.rstrip('/*')):
+                return True
+    return False
+
+
+def get_canonical_paths_from_db(db_path: str) -> Set[str]:
+    """
+    Get all canonical file paths from the database.
+    Returns a set of relative paths that should exist in destination.
+    """
+    print_info("Loading canonical paths from database...")
+    canonical_paths = set()
+    
+    with sqlite3.connect(db_path) as conn:
+        conn.execute("PRAGMA busy_timeout=5000")
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        
+        # Build parent lookup
+        cur.execute("SELECT id, name, parentID FROM files")
+        parent_lookup = {}
+        for row in cur:
+            parent_lookup[row['id']] = (row['name'], row['parentID'])
+        
+        # Find root dir to strip
+        cur.execute("SELECT name FROM files WHERE name LIKE '%auth%|%' LIMIT 1")
+        row = cur.fetchone()
+        root_dir = row['name'] if row else None
+        
+        # Get all files with contentID
+        cur.execute("SELECT id, name, parentID FROM files WHERE contentID IS NOT NULL")
+        
+        for row in cur:
+            # Reconstruct path
+            path_parts = [row['name']]
+            current_id = row['parentID']
+            while current_id and current_id in parent_lookup:
+                name, parent_id = parent_lookup[current_id]
+                path_parts.insert(0, name)
+                current_id = parent_id
+            
+            rel_path = '/'.join(path_parts)
+            
+            # Strip root dir
+            if root_dir:
+                rel_path = rel_path.replace(root_dir + '/', '').replace(root_dir, '')
+            rel_path = rel_path.lstrip('/')
+            
+            if rel_path:
+                canonical_paths.add(rel_path)
+    
+    print_success(f"Loaded {format_number(len(canonical_paths))} canonical paths")
+    return canonical_paths
+
+
+def scan_destination_for_orphans(
+    dest_dir: str,
+    canonical_paths: Set[str],
+    protect_patterns: List[str],
+    cleanup_patterns: List[str]
+) -> Dict[str, List[str]]:
+    """
+    Scan destination directory and identify orphan files.
+    
+    Returns dict with keys:
+        - 'orphans': list of orphan file paths
+        - 'protected': list of files in protected folders
+        - 'matched': list of files matching canonical paths
+        - 'by_folder': dict of folder -> orphan list
+    """
+    print_info(f"Scanning destination: {dest_dir}")
+    
+    results = {
+        'orphans': [],
+        'protected': [],
+        'matched': [],
+        'by_folder': {},
+        'folder_stats': {},  # folder -> {'total': N, 'orphans': N, 'in_db': bool}
+    }
+    
+    # Track top-level folders
+    top_level_folders = set()
+    
+    file_count = 0
+    for root, dirs, files in os.walk(dest_dir):
+        for filename in files:
+            file_count += 1
+            if file_count % 10000 == 0:
+                print(f"  Scanned {format_number(file_count)} files...")
+            
+            full_path = os.path.join(root, filename)
+            rel_path = os.path.relpath(full_path, dest_dir)
+            
+            # Get top-level folder
+            top_folder = rel_path.split(os.sep)[0] if os.sep in rel_path else ''
+            if top_folder:
+                top_level_folders.add(top_folder)
+            
+            # Initialize folder stats
+            if top_folder and top_folder not in results['folder_stats']:
+                results['folder_stats'][top_folder] = {
+                    'total': 0,
+                    'orphans': 0,
+                    'matched': 0,
+                    'in_db': False
+                }
+            
+            if top_folder:
+                results['folder_stats'][top_folder]['total'] += 1
+            
+            # Check if protected
+            if matches_pattern(rel_path, protect_patterns):
+                results['protected'].append(rel_path)
+                continue
+            
+            # Check if in canonical paths
+            # Normalize path separators for comparison
+            normalized_path = rel_path.replace(os.sep, '/')
+            if normalized_path in canonical_paths:
+                results['matched'].append(rel_path)
+                if top_folder:
+                    results['folder_stats'][top_folder]['matched'] += 1
+                    results['folder_stats'][top_folder]['in_db'] = True
+                continue
+            
+            # It's an orphan
+            results['orphans'].append(rel_path)
+            if top_folder:
+                results['folder_stats'][top_folder]['orphans'] += 1
+                if top_folder not in results['by_folder']:
+                    results['by_folder'][top_folder] = []
+                results['by_folder'][top_folder].append(rel_path)
+    
+    print_success(f"Scanned {format_number(file_count)} files")
+    print_info(f"  Matched: {format_number(len(results['matched']))}")
+    print_info(f"  Orphans: {format_number(len(results['orphans']))}")
+    print_info(f"  Protected: {format_number(len(results['protected']))}")
+    
+    return results
+
+
+def delete_orphans(
+    dest_dir: str,
+    orphan_paths: List[str],
+    dry_run: bool = True
+) -> Tuple[int, int]:
+    """
+    Delete orphan files from destination.
+    
+    Returns (deleted_count, error_count)
+    """
+    deleted = 0
+    errors = 0
+    
+    for rel_path in orphan_paths:
+        full_path = os.path.join(dest_dir, rel_path)
+        
+        if dry_run:
+            print(f"  [DRY-RUN] Would delete: {rel_path}")
+            deleted += 1
+        else:
+            try:
+                os.remove(full_path)
+                deleted += 1
+            except OSError as e:
+                print_warning(f"  Failed to delete {rel_path}: {e}")
+                errors += 1
+    
+    return deleted, errors
+
+
+def run_cleanup_wizard(
+    dest_dir: str,
+    db_path: str,
+    config_path: str = 'cleanup_rules.yaml'
+) -> int:
+    """Run interactive cleanup wizard."""
+    print_header("Cleanup Wizard")
+    
+    # Load existing config
+    config = load_cleanup_config(config_path)
+    config['destination'] = dest_dir
+    
+    # Get canonical paths from DB
+    canonical_paths = get_canonical_paths_from_db(db_path)
+    
+    # Scan destination
+    scan_results = scan_destination_for_orphans(
+        dest_dir,
+        canonical_paths,
+        config.get('protect', []),
+        config.get('cleanup', [])
+    )
+    
+    # Show summary by folder
+    print_header("Folder Summary")
+    
+    folders_to_review = []
+    for folder, stats in sorted(scan_results['folder_stats'].items()):
+        in_db = "FROM: MyCloud" if stats['in_db'] else "NOT in DB"
+        orphan_count = stats['orphans']
+        
+        status = "✅" if orphan_count == 0 else "⚠️ "
+        print(f"  {status} {folder}/")
+        print(f"      {format_number(stats['total'])} files | {format_number(orphan_count)} orphans | {in_db}")
+        
+        if orphan_count > 0 or not stats['in_db']:
+            folders_to_review.append(folder)
+    
+    if not folders_to_review:
+        print_success("No orphans found! Destination is clean.")
+        return 0
+    
+    # Interactive folder classification
+    print_header("Classify Folders")
+    
+    for folder in folders_to_review:
+        stats = scan_results['folder_stats'][folder]
+        in_db = stats['in_db']
+        orphan_count = stats['orphans']
+        
+        print()
+        if not in_db:
+            print(f"📁 '{folder}/' is NOT in MyCloud database.")
+            print("   This may be a folder you added manually.")
+        else:
+            print(f"📁 '{folder}/' has {format_number(orphan_count)} orphan files.")
+            if folder in scan_results['by_folder']:
+                examples = scan_results['by_folder'][folder][:3]
+                print("   Examples:")
+                for ex in examples:
+                    print(f"     - {ex}")
+        
+        print()
+        print("  [P]rotect (never delete)  [C]leanup (delete orphans)  [S]kip for now")
+        
+        while True:
+            response = input(colorize("  Your choice: ", Colors.BOLD)).strip().upper()
+            if response == 'P':
+                pattern = f"{folder}/*"
+                if pattern not in config['protect']:
+                    config['protect'].append(pattern)
+                print_success(f"  Added '{pattern}' to protected list")
+                break
+            elif response == 'C':
+                pattern = f"{folder}/*"
+                if pattern not in config['cleanup']:
+                    config['cleanup'].append(pattern)
+                print_success(f"  Added '{pattern}' to cleanup list")
+                break
+            elif response == 'S':
+                print_info("  Skipped")
+                break
+            else:
+                print_error("  Please enter P, C, or S")
+    
+    # Save config
+    save_cleanup_config(config, config_path)
+    
+    # Calculate orphans to delete (only from cleanup folders)
+    orphans_to_delete = []
+    for orphan in scan_results['orphans']:
+        if matches_pattern(orphan, config['cleanup']) and not matches_pattern(orphan, config['protect']):
+            orphans_to_delete.append(orphan)
+    
+    if not orphans_to_delete:
+        print_success("No orphans to delete after applying rules.")
+        return 0
+    
+    # Confirm deletion
+    print_header("Confirm Deletion")
+    print(f"Ready to delete {format_number(len(orphans_to_delete))} orphan files.")
+    print()
+    
+    # Show some examples
+    print("Examples:")
+    for orphan in orphans_to_delete[:5]:
+        print(f"  - {orphan}")
+    if len(orphans_to_delete) > 5:
+        print(f"  ... and {len(orphans_to_delete) - 5} more")
+    
+    print()
+    if not prompt_yes_no("Delete these files?", default=False):
+        print_info("Deletion cancelled. Config saved for future use.")
+        return 0
+    
+    # Delete orphans
+    print_header("Deleting Orphans")
+    deleted, errors = delete_orphans(dest_dir, orphans_to_delete, dry_run=False)
+    
+    config['orphans_found'] = len(scan_results['orphans'])
+    config['orphans_deleted'] = deleted
+    save_cleanup_config(config, config_path)
+    
+    print_header("Cleanup Summary")
+    print(f"  Deleted: {format_number(deleted)}")
+    print(f"  Errors:  {format_number(errors)}")
+    
+    return 0 if errors == 0 else 1
+
+
+def run_cleanup_cli(
+    dest_dir: str,
+    db_path: str,
+    config_path: str,
+    protect_patterns: List[str],
+    cleanup_patterns: List[str],
+    dry_run: bool = True,
+    auto_yes: bool = False
+) -> int:
+    """Run cleanup from command-line arguments."""
+    print_header("Cleanup Mode")
+    
+    # Load and merge config
+    config = load_cleanup_config(config_path)
+    config['destination'] = dest_dir
+    
+    # Add CLI patterns to config
+    for p in protect_patterns:
+        if p not in config['protect']:
+            config['protect'].append(p)
+    for c in cleanup_patterns:
+        if c not in config['cleanup']:
+            config['cleanup'].append(c)
+    
+    # Get canonical paths from DB
+    canonical_paths = get_canonical_paths_from_db(db_path)
+    
+    # Scan destination
+    scan_results = scan_destination_for_orphans(
+        dest_dir,
+        canonical_paths,
+        config['protect'],
+        config['cleanup']
+    )
+    
+    # Calculate orphans to delete
+    orphans_to_delete = []
+    for orphan in scan_results['orphans']:
+        # Only delete if in cleanup folders and not protected
+        if config['cleanup']:
+            if matches_pattern(orphan, config['cleanup']) and not matches_pattern(orphan, config['protect']):
+                orphans_to_delete.append(orphan)
+        else:
+            # If no cleanup patterns, delete all non-protected orphans
+            if not matches_pattern(orphan, config['protect']):
+                orphans_to_delete.append(orphan)
+    
+    if not orphans_to_delete:
+        print_success("No orphans to delete.")
+        return 0
+    
+    print_info(f"Found {format_number(len(orphans_to_delete))} orphans to delete")
+    
+    if dry_run:
+        print_header("Dry Run - Would Delete")
+        deleted, _ = delete_orphans(dest_dir, orphans_to_delete, dry_run=True)
+        print()
+        print_info(f"Dry run complete. Would delete {format_number(deleted)} files.")
+        print_info("Run without --dry-run to actually delete.")
+        return 0
+    
+    # Confirm
+    if not auto_yes:
+        if not prompt_yes_no(f"Delete {format_number(len(orphans_to_delete))} orphan files?", default=False):
+            print_info("Cancelled.")
+            return 0
+    
+    # Delete
+    deleted, errors = delete_orphans(dest_dir, orphans_to_delete, dry_run=False)
+    
+    config['orphans_found'] = len(scan_results['orphans'])
+    config['orphans_deleted'] = deleted
+    save_cleanup_config(config, config_path)
+    
+    print_header("Cleanup Complete")
+    print(f"  Deleted: {format_number(deleted)}")
+    print(f"  Errors:  {format_number(errors)}")
+    
+    return 0 if errors == 0 else 1
 
 
 def get_db_stats(db_path: str) -> Dict:
@@ -942,6 +1425,17 @@ Examples:
   
   # Skip checksum for faster transfer (less safe)
   python rsync_restore.py --db index.db --source /files --dest /nfs --farm /tmp/farm --no-checksum
+
+Cleanup Examples:
+  # Interactive cleanup wizard
+  python rsync_restore.py --cleanup --db index.db --dest /nfs
+  
+  # Cleanup with protected folders (dry-run)
+  python rsync_restore.py --cleanup --db index.db --dest /nfs \\
+      --protect "my-stuff/*" --cleanup-folder "Photos/*" --dry-run
+  
+  # Cleanup using saved config
+  python rsync_restore.py --cleanup --db index.db --dest /nfs --config cleanup_rules.yaml
 """
     )
     
@@ -959,7 +1453,7 @@ Examples:
     parser.add_argument('--preflight-only', action='store_true',
                        help='Run preflight checks only, do not copy')
     parser.add_argument('--dry-run', '-n', action='store_true',
-                       help='Dry run - show what would be copied')
+                       help='Dry run - show what would be copied/deleted')
     parser.add_argument('--no-checksum', action='store_true',
                        help='Skip checksum verification (faster but less safe)')
     parser.add_argument('--retry-count', type=int, default=3,
@@ -973,11 +1467,45 @@ Examples:
     parser.add_argument('--skip-farm', action='store_true',
                        help='Skip symlink farm creation (use existing)')
     
+    # Cleanup options
+    parser.add_argument('--cleanup', action='store_true',
+                       help='Run cleanup mode to find and remove orphan files')
+    parser.add_argument('--protect', action='append', default=[],
+                       help='Folder pattern to protect from cleanup (can be used multiple times)')
+    parser.add_argument('--cleanup-folder', action='append', default=[],
+                       help='Folder pattern to cleanup orphans from (can be used multiple times)')
+    parser.add_argument('--config', default='cleanup_rules.yaml',
+                       help='Path to cleanup config file (default: cleanup_rules.yaml)')
+    parser.add_argument('--yes', '-y', action='store_true',
+                       help='Auto-confirm deletion (use with caution)')
+    
     args = parser.parse_args()
     
     # Wizard mode
     if args.wizard:
         return run_wizard()
+    
+    # Cleanup mode
+    if args.cleanup:
+        if not args.db or not args.dest:
+            print_error("--cleanup requires --db and --dest")
+            return 1
+        
+        # If wizard flag is also set, run cleanup wizard
+        if not args.protect and not args.cleanup_folder and not os.path.exists(args.config):
+            # No patterns specified and no config - run wizard
+            return run_cleanup_wizard(args.dest, args.db, args.config)
+        else:
+            # Run CLI cleanup
+            return run_cleanup_cli(
+                dest_dir=args.dest,
+                db_path=args.db,
+                config_path=args.config,
+                protect_patterns=args.protect,
+                cleanup_patterns=args.cleanup_folder,
+                dry_run=args.dry_run,
+                auto_yes=args.yes
+            )
     
     # Preflight only mode
     if args.preflight_only:
