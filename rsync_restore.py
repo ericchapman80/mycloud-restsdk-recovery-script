@@ -99,6 +99,50 @@ def print_info(text: str):
     print(colorize(f"ℹ️  {text}", Colors.BLUE))
 
 
+def print_step(step_num: int, text: str):
+    """Print a numbered step."""
+    print(colorize(f"\n📌 Step {step_num}: ", Colors.BOLD + Colors.YELLOW) + text)
+
+
+def prompt_path(prompt: str, must_exist: bool = True, is_dir: bool = True) -> str:
+    """Prompt user for a path with validation."""
+    while True:
+        print()
+        path = input(colorize(f"{prompt}: ", Colors.BOLD)).strip()
+        
+        if not path:
+            print_error("Path cannot be empty. Please try again.")
+            continue
+        
+        path = os.path.expanduser(path)
+        
+        if must_exist:
+            if is_dir and not os.path.isdir(path):
+                print_error(f"Directory not found: {path}")
+                print_info("Please check the path and try again.")
+                continue
+            elif not is_dir and not os.path.isfile(path):
+                print_error(f"File not found: {path}")
+                print_info("Please check the path and try again.")
+                continue
+        
+        return path
+
+
+def prompt_yes_no(prompt: str, default: bool = True) -> bool:
+    """Prompt user for yes/no with default."""
+    default_str = "[Y/n]" if default else "[y/N]"
+    while True:
+        response = input(colorize(f"{prompt} {default_str}: ", Colors.BOLD)).strip().lower()
+        if not response:
+            return default
+        if response in ('y', 'yes'):
+            return True
+        if response in ('n', 'no'):
+            return False
+        print_error("Please enter 'y' or 'n'")
+
+
 def format_bytes(n: int) -> str:
     """Format bytes in human-readable format."""
     for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
@@ -735,12 +779,158 @@ def run_restore(
     return 0 if return_code == 0 and not monitor.errors else 1
 
 
+def run_wizard() -> int:
+    """Run interactive wizard mode."""
+    print_header("rsync Restore Wizard")
+    
+    # Check rsync
+    rsync_path = shutil.which('rsync')
+    if not rsync_path:
+        print_error("rsync is not installed!")
+        print("""
+rsync is required to copy files. Please install it:
+  macOS:    brew install rsync
+  Ubuntu:   sudo apt install rsync
+  Fedora:   sudo dnf install rsync
+""")
+        return 1
+    print_success(f"rsync found: {rsync_path}")
+    
+    print("""
+This wizard will guide you through restoring files from a WD MyCloud
+backup using the symlink farm + rsync approach.
+
+This method uses minimal memory and is very reliable.
+""")
+    
+    # Step 1: Database
+    print_step(1, "Locate your MyCloud database")
+    print("""
+The database file is usually named 'index.db' and located at:
+  /mnt/backupdrive/restsdk/data/db/index.db
+""")
+    db_path = prompt_path("Enter the path to index.db", must_exist=True, is_dir=False)
+    print_success(f"Found database: {db_path}")
+    
+    # Step 2: Source files
+    print_step(2, "Locate your source files directory")
+    print("""
+This is the directory containing the actual file data, usually:
+  /mnt/backupdrive/restsdk/data/files
+""")
+    source_dir = prompt_path("Enter the path to the source files directory", must_exist=True, is_dir=True)
+    print_success(f"Found source directory: {source_dir}")
+    
+    # Step 3: Destination
+    print_step(3, "Choose destination directory")
+    print("""
+Where do you want to copy your files to? For example:
+  /mnt/nfs-media (NFS mount)
+  /home/user/recovered (local directory)
+""")
+    dest_dir = prompt_path("Enter the destination directory path", must_exist=False)
+    if not os.path.exists(dest_dir):
+        if prompt_yes_no(f"Directory doesn't exist. Create it?", default=True):
+            os.makedirs(dest_dir, exist_ok=True)
+            print_success(f"Created directory: {dest_dir}")
+        else:
+            print_error("Cannot continue without destination directory.")
+            return 1
+    print_success(f"Destination: {dest_dir}")
+    
+    # Step 4: Farm directory
+    print_step(4, "Choose symlink farm directory")
+    print("""
+The symlink farm is a temporary directory that mirrors your file structure
+using symbolic links. It should be on the SAME filesystem as the source.
+
+Recommended: /tmp/restore-farm
+""")
+    farm_dir = prompt_path("Enter the symlink farm directory path", must_exist=False)
+    print_success(f"Farm directory: {farm_dir}")
+    
+    # Step 5: Options
+    print_step(5, "Configure options")
+    
+    sanitize_pipes = False
+    print("""
+Some filenames may contain '|' which can cause issues on Windows/NTFS/SMB.
+""")
+    if prompt_yes_no("Replace '|' with '-' in filenames?", default=False):
+        sanitize_pipes = True
+        print_success("Will sanitize pipe characters")
+    
+    use_checksum = prompt_yes_no("Verify files with checksums? (slower but safer)", default=True)
+    if use_checksum:
+        print_success("Checksum verification enabled")
+    else:
+        print_warning("Checksum verification disabled - faster but less safe")
+    
+    dry_run = prompt_yes_no("Do a dry run first (preview only)?", default=True)
+    if dry_run:
+        print_info("Dry run mode - no files will be copied")
+    
+    # Step 6: Confirmation
+    print_step(6, "Confirm and run")
+    print_header("Configuration Summary")
+    print(f"  📁 Database:      {db_path}")
+    print(f"  📂 Source:        {source_dir}")
+    print(f"  💾 Destination:   {dest_dir}")
+    print(f"  🔗 Symlink farm:  {farm_dir}")
+    print(f"  🔧 Sanitize |:    {'Yes' if sanitize_pipes else 'No'}")
+    print(f"  ✅ Checksum:      {'Yes' if use_checksum else 'No'}")
+    print(f"  🧪 Dry run:       {'Yes' if dry_run else 'No'}")
+    print()
+    
+    if not prompt_yes_no("Proceed with these settings?", default=True):
+        print_info("Wizard cancelled.")
+        return 0
+    
+    # Run restore
+    result = run_restore(
+        db_path=db_path,
+        source=source_dir,
+        dest=dest_dir,
+        farm=farm_dir,
+        checksum=use_checksum,
+        dry_run=dry_run,
+        retry_count=3,
+        log_interval=60,
+        log_file='rsync_restore.log',
+        sanitize_pipes=sanitize_pipes,
+        skip_farm=False
+    )
+    
+    # Offer to run for real if dry run was successful
+    if dry_run and result == 0:
+        print()
+        if prompt_yes_no("Dry run complete. Would you like to run for real now?", default=True):
+            result = run_restore(
+                db_path=db_path,
+                source=source_dir,
+                dest=dest_dir,
+                farm=farm_dir,
+                checksum=use_checksum,
+                dry_run=False,
+                retry_count=3,
+                log_interval=60,
+                log_file='rsync_restore.log',
+                sanitize_pipes=sanitize_pipes,
+                skip_farm=True  # Farm already exists
+            )
+    
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(
         description='rsync-based restore with monitoring and progress tracking',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+  # Interactive wizard (recommended for new users)
+  python rsync_restore.py --wizard
+  
   # Full restore with defaults
   python rsync_restore.py --db index.db --source /files --dest /nfs --farm /tmp/farm
   
@@ -755,7 +945,11 @@ Examples:
 """
     )
     
-    # Required arguments
+    # Wizard mode
+    parser.add_argument('--wizard', '-w', action='store_true',
+                       help='Run interactive wizard (recommended for new users)')
+    
+    # Required arguments (for non-wizard mode)
     parser.add_argument('--db', help='Path to SQLite database (index.db)')
     parser.add_argument('--source', help='Source directory containing files')
     parser.add_argument('--dest', help='Destination directory')
@@ -780,6 +974,10 @@ Examples:
                        help='Skip symlink farm creation (use existing)')
     
     args = parser.parse_args()
+    
+    # Wizard mode
+    if args.wizard:
+        return run_wizard()
     
     # Preflight only mode
     if args.preflight_only:
