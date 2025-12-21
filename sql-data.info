@@ -132,3 +132,11 @@ nohup ./monitor.sh /home/chapman/projects/mycloud-restsdk-recovery-script/monito
 ./monitor.sh /home/chapman/projects/mycloud-restsdk-recovery-script/monitor.log 30
 
 nohup sudo /home/chapman/projects/mycloud-restsdk-recovery-script/venv/bin/python /home/chapman/projects/mycloud-restsdk-recovery-script/restsdk_public.py --resume --db=/mnt/backupdrive/restsdk/data/db/index.db --filedir=/mnt/backupdrive/restsdk/data/files --dumpdir=/mnt/nfs-media --log_file=/home/chapman/projects/mycloud-restsdk-recovery-script/copied_file.log --thread-count 2 --low-memory > /home/chapman/projects/mycloud-restsdk-recovery-script/run.out 2>&1 < /dev/null &
+
+
+chapman@chapman-htpc:~/projects/mycloud-restsdk-recovery-script$ jobs -l
+chapman@chapman-htpc:~/projects/mycloud-restsdk-recovery-script$ nohup sudo /home/chapman/projects/mycloud-restsdk-recovery-script/venv/bin/python /home/chapman/projects/mycloud-restsdk-recovery-script/restsdk_public.py --resume --db=/mnt/backupdrive/restsdk/data/db/index.db --filedir=/mnt/backupdrive/restsdk/data/files --dumpdir=/mnt/nfs-media --log_file=/home/chapman/projects/mycloud-restsdk-recovery-script/copied_file.log --thread-count 2 --low-memory > /home/chapman/projects/mycloud-restsdk-recovery-script/run.out 2>&1 < /dev/null &
+[1] 73658
+chapman@chapman-htpc:~/projects/mycloud-restsdk-recovery-script$ jobs -l
+[1]+ 73658 Exit 1                  nohup sudo /home/chapman/projects/mycloud-restsdk-recovery-script/venv/bin/python /home/chapman/projects/mycloud-restsdk-recovery-script/restsdk_public.py --resume --db=/mnt/backupdrive/restsdk/data/db/index.db --filedir=/mnt/backupdrive/restsdk/data/files --dumpdir=/mnt/nfs-media --log_file=/home/chapman/projects/mycloud-restsdk-recovery-script/copied_file.log --thread-count 2 --low-memory > /home/chapman/projects/mycloud-restsdk-recovery-script/run.out 2>&1 < /dev/nully
+
