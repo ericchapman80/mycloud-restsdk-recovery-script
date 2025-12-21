@@ -15,18 +15,38 @@ This tool creates a **symlink farm** - a directory tree that mirrors your origin
 
 | Feature | Symlink Farm + rsync | Direct Python Copy |
 |---------|---------------------|-------------------|
+| Memory usage | **~50MB** (streaming) | **6-11GB** (loads all metadata) |
 | Speed | Fast (rsync is optimized) | Slower (Python overhead) |
 | Resumability | Built into rsync | Custom logic needed |
 | Verification | rsync --checksum | Manual |
 | Network issues | rsync handles retries | Can hang/crash |
-| Memory usage | Low (streaming) | Higher (tracking state) |
+| Reliability | Very stable | Can OOM on large datasets |
 
 ## Quick Start
 
-### Interactive Wizard (Recommended)
+### Option 1: Full Restore with Monitoring (Recommended)
 
 ```bash
-python create_symlink_farm.py
+python rsync_restore.py \
+    --db /mnt/backupdrive/restsdk/data/db/index.db \
+    --source /mnt/backupdrive/restsdk/data/files \
+    --dest /mnt/nfs-media \
+    --farm /tmp/restore-farm
+```
+
+This single command will:
+
+1. ✅ Run pre-flight checks (sizes, free space, system health)
+2. 🔗 Create symlink farm (if not exists)
+3. 📊 Show rsync progress every 60 seconds
+4. 🔄 Retry failed files (3 attempts)
+5. ✅ Verify with checksums
+6. 📝 Log everything to `rsync_restore.log`
+
+### Option 2: Interactive Wizard
+
+```bash
+python create_symlink_farm.py --wizard
 ```
 
 The wizard will guide you through:
@@ -277,15 +297,61 @@ The monitor tracks:
 
 ```text
 mycloud-restsdk-recovery-script/
-├── create_symlink_farm.py   # Main tool - creates symlink farm
+├── rsync_restore.py         # Full restore with monitoring (RECOMMENDED)
+├── create_symlink_farm.py   # Symlink farm creator (standalone)
 ├── monitor.sh               # System health monitor
-├── restsdk_public.py        # Alternative: direct Python copy
+├── restsdk_public.py        # Alternative: direct Python copy (high memory)
+├── preflight.py             # Pre-flight system checks
 ├── tests/
 │   └── test_symlink_farm.py # Unit tests
 └── README-SYMLINK-FARM.md   # This file
 ```
 
 ## Command Reference
+
+### rsync_restore.py (Recommended)
+
+```text
+Usage: rsync_restore.py [OPTIONS]
+
+Required:
+  --db PATH             Path to SQLite database (index.db)
+  --source PATH         Source directory containing files
+  --dest PATH           Destination directory
+  --farm PATH           Symlink farm directory
+
+Options:
+  --preflight-only      Run checks only, don't copy
+  --dry-run, -n         Preview what would be copied
+  --no-checksum         Skip verification (faster, less safe)
+  --retry-count N       Retries for failed files (default: 3)
+  --log-interval N      Progress log interval in seconds (default: 60)
+  --log-file PATH       Log file path (default: rsync_restore.log)
+  --sanitize-pipes      Replace | with - in paths
+  --skip-farm           Use existing farm, don't recreate
+```
+
+**Examples:**
+
+```bash
+# Full restore with all defaults (checksum ON, 3 retries, 60s logging)
+python rsync_restore.py \
+    --db /mnt/backupdrive/restsdk/data/db/index.db \
+    --source /mnt/backupdrive/restsdk/data/files \
+    --dest /mnt/nfs-media \
+    --farm /tmp/restore-farm
+
+# Dry run to preview
+python rsync_restore.py --dry-run \
+    --db index.db --source /files --dest /nfs --farm /tmp/farm
+
+# Faster transfer (skip checksum verification)
+python rsync_restore.py --no-checksum \
+    --db index.db --source /files --dest /nfs --farm /tmp/farm
+
+# Pre-flight checks only
+python rsync_restore.py --preflight-only --source /files --dest /nfs
+```
 
 ### create_symlink_farm.py
 
