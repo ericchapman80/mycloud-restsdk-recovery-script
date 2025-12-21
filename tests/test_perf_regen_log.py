@@ -1,9 +1,13 @@
 import os
+import sys
 import sqlite3
 import time
 from pathlib import Path
 
 import pytest
+
+# Add parent directory to path to import restsdk_public
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from restsdk_public import init_copy_tracking_tables, regenerate_copied_files_from_dest
 
