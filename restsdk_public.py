@@ -10,6 +10,7 @@ import sys
 import threading
 import time
 import os
+import traceback
 from collections import defaultdict
 try:
     import psutil
@@ -811,34 +812,7 @@ def setup_logging():
     log_summary("-" * 70)
 
 if __name__ == "__main__":
-    # Initialize start time and logging
-    start_time = time.time()
-    setup_logging()
-    log_summary(f"Start time: {time.ctime(start_time)}")
-    
-    # Ensure required arguments are provided
-    if not args.db or not args.filedir or not args.dumpdir:
-        error_msg = "Error: Missing required arguments. Use --help for usage."
-        log_summary(error_msg, to_console=True)
-        sys.exit(1)
-    run_start = start_time
-    regen_elapsed = 0.0
-    copy_phase_start = run_start
-
-    def format_duration(seconds):
-        mins, secs = divmod(int(seconds), 60)
-        hrs, mins = divmod(mins, 60)
-        days, hrs = divmod(hrs, 24)
-        parts = []
-        if days:
-            parts.append(f"{days}d")
-        if hrs:
-            parts.append(f"{hrs}h")
-        if mins:
-            parts.append(f"{mins}m")
-        parts.append(f"{secs}s")
-        return " ".join(parts)
-
+    # Parse arguments first
     parser = argparse.ArgumentParser(description="WD MyCloud REST SDK Recovery Tool")
     parser.add_argument("--preflight", action="store_true", help="Run pre-flight hardware/file check and print recommendations")
     parser.add_argument("--dry_run", action="store_true", default=False, help="Perform a dry run")
@@ -886,6 +860,29 @@ if __name__ == "__main__":
         help="Reduce memory usage by skipping timestamp fields in file dictionary. Disables --preserve-mtime. Recommended for systems with <16GB RAM.",
     )
     args = parser.parse_args()
+    
+    # Initialize start time and logging
+    start_time = time.time()
+    setup_logging()
+    log_summary(f"Start time: {time.ctime(start_time)}")
+    
+    def format_duration(seconds):
+        mins, secs = divmod(int(seconds), 60)
+        hrs, mins = divmod(mins, 60)
+        days, hrs = divmod(hrs, 24)
+        parts = []
+        if days:
+            parts.append(f"{days}d")
+        if hrs:
+            parts.append(f"{hrs}h")
+        if mins:
+            parts.append(f"{mins}m")
+        parts.append(f"{secs}s")
+        return " ".join(parts)
+    
+    run_start = start_time
+    regen_elapsed = 0.0
+    copy_phase_start = run_start
     
     # Low-memory mode disables preserve-mtime
     if args.low_memory:
@@ -1309,64 +1306,64 @@ if __name__ == "__main__":
         print(f"Regen duration: {format_duration(regen_elapsed)}")
         print(f"Copy phase duration: {copy_elapsed_str}")
 
-exit_code = 0
-try:
-    # Show initial summary
-    show_summary(args.db, args.filedir, args.dumpdir, "INITIAL")
-    
-    # Run the appropriate copy operation
-    if args.resume:
-        log_summary("Starting RESUME operation")
-        run_resume_copy()
-    else:
-        log_summary("Starting STANDARD copy operation")
-        run_standard_copy()
-        
-except KeyboardInterrupt:
-    log_summary("\nOperation interrupted by user", to_console=True)
-    exit_code = 130  # Standard exit code for Ctrl+C
-except Exception as e:
-    error_msg = f"\nFATAL ERROR: {str(e)}\n{traceback.format_exc()}"
-    log_summary(error_msg, to_console=True)
-    exit_code = 1
-finally:
-    # Always show final summary, even if there was an error
+    exit_code = 0
     try:
-        log_summary("\nGenerating final summary...")
-        show_summary(args.db, args.filedir, args.dumpdir, "FINAL")
+        # Show initial summary
+        show_summary(args.db, args.filedir, args.dumpdir, "INITIAL")
         
-        # Calculate total runtime
-        end_time = time.time()
-        total_seconds = end_time - start_time
-        hours, remainder = divmod(total_seconds, 3600)
-        minutes, seconds = divmod(remainder, 60)
-        
-        # Log completion status
-        status_msg = "COMPLETED SUCCESSFULLY" if exit_code == 0 else f"FAILED WITH CODE {exit_code}"
-        log_summary("\n" + "=" * 70)
-        log_summary(f"OPERATION {status_msg}")
-        log_summary("=" * 70)
-        log_summary(f"Start time:    {time.ctime(start_time)}")
-        log_summary(f"End time:      {time.ctime(end_time)}")
-        log_summary(f"Total runtime: {int(hours)}h {int(minutes)}m {int(seconds)}s")
-        log_summary(f"Log file:      {os.path.abspath(log_filename)}")
-        log_summary("=" * 70)
-        
-        # Cleanup resources
-        log_summary("Cleaning up resources...")
-        close_all_db_connections()
-        gc.collect()
-        
-        # Signal log thread to stop
-        log_queue.put("STOP")
-        log_thread.join(timeout=5.0)
-        
-        if log_thread.is_alive():
-            log_summary("Warning: Log thread did not shut down cleanly")
-        
+        # Run the appropriate copy operation
+        if args.resume:
+            log_summary("Starting RESUME operation")
+            run_resume_copy()
+        else:
+            log_summary("Starting STANDARD copy operation")
+            run_standard_copy()
+            
+    except KeyboardInterrupt:
+        log_summary("\nOperation interrupted by user", to_console=True)
+        exit_code = 130  # Standard exit code for Ctrl+C
     except Exception as e:
-        log_summary(f"Error during cleanup: {str(e)}", to_console=True)
-        exit_code = exit_code or 1
-    
-log_summary(f"Exiting with code {exit_code}")
-sys.exit(exit_code)
+        error_msg = f"\nFATAL ERROR: {str(e)}\n{traceback.format_exc()}"
+        log_summary(error_msg, to_console=True)
+        exit_code = 1
+    finally:
+        # Always show final summary, even if there was an error
+        try:
+            log_summary("\nGenerating final summary...")
+            show_summary(args.db, args.filedir, args.dumpdir, "FINAL")
+            
+            # Calculate total runtime
+            end_time = time.time()
+            total_seconds = end_time - start_time
+            hours, remainder = divmod(total_seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            
+            # Log completion status
+            status_msg = "COMPLETED SUCCESSFULLY" if exit_code == 0 else f"FAILED WITH CODE {exit_code}"
+            log_summary("\n" + "=" * 70)
+            log_summary(f"OPERATION {status_msg}")
+            log_summary("=" * 70)
+            log_summary(f"Start time:    {time.ctime(start_time)}")
+            log_summary(f"End time:      {time.ctime(end_time)}")
+            log_summary(f"Total runtime: {int(hours)}h {int(minutes)}m {int(seconds)}s")
+            log_summary(f"Log file:      {os.path.abspath(log_filename)}")
+            log_summary("=" * 70)
+            
+            # Cleanup resources
+            log_summary("Cleaning up resources...")
+            close_all_db_connections()
+            gc.collect()
+            
+            # Signal log thread to stop
+            log_queue.put("STOP")
+            log_thread.join(timeout=5.0)
+            
+            if log_thread.is_alive():
+                log_summary("Warning: Log thread did not shut down cleanly")
+        
+        except Exception as e:
+            log_summary(f"Error during cleanup: {str(e)}", to_console=True)
+            exit_code = exit_code or 1
+        
+    log_summary(f"Exiting with code {exit_code}")
+    sys.exit(exit_code)
