@@ -310,7 +310,10 @@ def sync_mtimes(db_path, dest_dir, dry_run=False, verbose=False, resume_from=0, 
             if timestamp_ms is None:
                 stats['skipped_no_timestamp'] += 1
                 if verbose:
-                    print(f"  [SKIP] {relative_path} - No timestamp in database")
+                    try:
+                        print(f"  [SKIP] {relative_path} - No timestamp in database")
+                    except BrokenPipeError:
+                        pass
                 continue
             
             # Build full destination path
@@ -320,7 +323,10 @@ def sync_mtimes(db_path, dest_dir, dry_run=False, verbose=False, resume_from=0, 
             if not os.path.exists(dest_path):
                 stats['skipped_not_found'] += 1
                 if verbose:
-                    print(colorize(f"  [NOT FOUND] {relative_path}", Colors.YELLOW))
+                    try:
+                        print(colorize(f"  [NOT FOUND] {relative_path}", Colors.YELLOW))
+                    except BrokenPipeError:
+                        pass
                 continue
             
             # Update mtime
@@ -339,14 +345,20 @@ def sync_mtimes(db_path, dest_dir, dry_run=False, verbose=False, resume_from=0, 
                         action = colorize("WOULD UPDATE", Colors.YELLOW) if dry_run else colorize("UPDATED", Colors.GREEN)
                         msg = f"  [{action}] {relative_path}\n    Old: {old_date}  →  New: {new_date}  (Δ {time_diff/86400:.1f} days)"
                         if verbose:
-                            print(msg)
+                            try:
+                                print(msg)
+                            except BrokenPipeError:
+                                pass
                         if log_file:
                             log_fh.write(msg + '\n')
             else:
                 stats['errors'] += 1
                 if verbose:
                     msg = colorize(f"  [ERROR] {relative_path} - {error_msg}", Colors.RED)
-                    print(msg)
+                    try:
+                        print(msg)
+                    except BrokenPipeError:
+                        pass
                     if log_file:
                         log_fh.write(msg + '\n')
     
