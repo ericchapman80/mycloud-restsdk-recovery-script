@@ -103,7 +103,7 @@ def id_to_path(file_dict, file_id):
     
     return path
 
-def get_file_info_streaming(db_path):
+def get_file_info_streaming(db_path, file_dict):
     """
     Stream file information from database without loading everything into memory.
     
@@ -112,18 +112,13 @@ def get_file_info_streaming(db_path):
     
     Args:
         db_path: Path to SQLite database
+        file_dict: Pre-built file dictionary for path reconstruction
         
     Yields:
         Tuple of (file_id, relative_path, timestamp_ms)
     """
     conn = sqlite3.connect(db_path)
     conn.execute("PRAGMA busy_timeout=5000")
-    
-    # Build file dictionary for path reconstruction
-    print("Building file dictionary for path reconstruction...")
-    file_dict = build_file_dict(conn)
-    print(f"Loaded {len(file_dict):,} file entries")
-    
     cursor = conn.cursor()
     
     # Query to get copied files with their metadata
@@ -238,12 +233,13 @@ def sync_mtimes(db_path, dest_dir, dry_run=False, verbose=False, resume_from=0, 
     if sanitize_pipes:
         log(f"Sanitizing pipes: | → -")
     
-    # Count total files first for ETA
+    # Count total files and build file dictionary once
     log("\nCounting files in database...")
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM copied_files")
     total_files = cursor.fetchone()[0]
+    log(f"Total files to process: {total_files:,}")
     
     # Build file dictionary for path reconstruction and find root auth dir
     log("Building file dictionary for path reconstruction...")
@@ -256,7 +252,7 @@ def sync_mtimes(db_path, dest_dir, dry_run=False, verbose=False, resume_from=0, 
         log(f"Found root auth directory: {root_auth_dir}")
     
     conn.close()
-    log(f"Total files to process: {total_files:,}\n")
+    log("")
     
     # Statistics
     stats = {
@@ -272,7 +268,7 @@ def sync_mtimes(db_path, dest_dir, dry_run=False, verbose=False, resume_from=0, 
     last_report_time = start_time
     
     try:
-        for file_id, relative_path, timestamp_ms in get_file_info_streaming(db_path):
+        for file_id, relative_path, timestamp_ms in get_file_info_streaming(db_path, file_dict):
             stats['total'] += 1
             
             # Skip if before resume point
@@ -297,7 +293,11 @@ def sync_mtimes(db_path, dest_dir, dry_run=False, verbose=False, resume_from=0, 
                 eta = datetime.timedelta(seconds=int(remaining))
                 
                 progress_msg = f"Progress: {stats['total']:,}/{total_files:,} ({percent:.1f}%) | {rate:.0f} files/sec | ETA: {eta}"
-                print(f"\r{progress_msg}", end='', flush=True)
+                try:
+                    print(f"\r{progress_msg}", end='', flush=True)
+                except BrokenPipeError:
+                    # Handle pipe close gracefully (e.g., when piping to head)
+                    pass
                 
                 # Log to file every 10,000 files
                 if log_file and stats['total'] % 10000 == 0:
