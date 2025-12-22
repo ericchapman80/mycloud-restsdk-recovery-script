@@ -297,3 +297,120 @@ GPS Position                    : 36 deg 43' 47.17" N, 81 deg 56' 47.60" W
 Hyperfocal Distance             : 2.04 m
 Light Value                     : 8.9
 Lens ID                         : iPhone 11 Pro Max back triple camera 4.25mm f/1.8
+
+
+
+Defect 
+chapman@chapman-htpc:~/projects/mycloud-restsdk-recovery-script$ sudo python3 sync_mtime.py --db /mnt/backupdrive/restsdk/data/db/index.db --dest /mnt/nfs-media/ --dry-run --verbose | head -100
+
+======================================================================
+  MTIME SYNCHRONIZATION TOOL
+======================================================================
+
+Started: 2025-12-22 11:59:56
+Database: /mnt/backupdrive/restsdk/data/db/index.db
+Destination: /mnt/nfs-media/
+Mode: DRY RUN
+
+Counting files in database...
+Building file dictionary for path reconstruction...
+Loaded 1,655,974 file entries
+Found root auth directory: auth0|5e62c7d40ec9700d5c82bb89
+Total files to process: 1,311,536
+
+Building file dictionary for path reconstruction...
+Loaded 1,655,974 file entries
+Progress: 1/1,311,536 (0.0%) | 0 files/sec | ETA: 1401 days, 22:48:51  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary2/Database/Versions/2013/09/20/20130920-185847/9Y6t3BFfS12Y0n44mUHVaw/Version-0.apversion
+    Old: 2020-03-11 08:03:57  →  New: 2013-09-20 19:02:36  (Δ 2363.5 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary/Thumbnails/2016/07/25/20160725-144452/pnTGcVFrS9e62jBGSHUyoA/IMG_0958_2_face0.jpg
+    Old: 2020-03-13 09:17:30  →  New: 2016-07-26 01:30:28  (Δ 1326.3 days)
+  [WOULD UPDATE] iOSBackup/24a6451efc4c87aef1732130d05bd84086533164/de/._deea543005fb28092c0f7b95f301e94c727b29d1
+    Old: 2020-11-08 18:24:13  →  New: 2020-11-08 18:22:42  (Δ 0.0 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary/Thumbnails/2016/07/25/20160725-144452/xlN4ILW0S5Sfj0Tj2S%DZQ/IMG_5694_2_face0.jpg
+    Old: 2020-03-13 11:05:35  →  New: 2016-07-25 16:43:23  (Δ 1326.8 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary/Thumbnails/2015/10/19/20151019-215632/Oeet9SSERgqzit8iftxIUw/IMG_2728_1024.jpg
+    Old: 2020-03-11 01:08:10  →  New: 2015-10-19 21:56:32  (Δ 1604.1 days)
+  [WOULD UPDATE] iOSBackup/24a6451efc4c87aef1732130d05bd84086533164/a0/._a0788536c9da4c0ce50b962872f2b473aef29ef5
+    Old: 2020-11-08 17:06:39  →  New: 2020-11-08 17:05:09  (Δ 0.0 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary2/Database/Versions/2013/07/04/20130704-150721/5MqCOH7VSh29pShPZ16t8Q/Master.apmaster
+    Old: 2020-03-10 22:29:20  →  New: 2013-09-20 19:03:55  (Δ 2363.1 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary2/Thumbnails/2014/05/22/20140522-120417/9zfr4by1Rka34ArGkKiDDg/IMG_5425.jpg
+    Old: 2020-03-10 08:18:29  →  New: 2014-05-22 12:04:10  (Δ 2118.8 days)
+  [WOULD UPDATE] iOSBackup/Riley-iPad/fbd13e1470fa3b873a79f7549141f1bfc671e087/98/9832bd4f753874ff5e2d70c0ea01cf0f631fe888
+    Old: 2022-03-19 10:20:53  →  New: 2022-03-18 22:40:30  (Δ 0.5 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary/Thumbnails/2015/10/26/20151026-124440/4g5WN0gSSQWi0C6NDwA17g/IMG_3858_face0.jpg
+    Old: 2020-03-09 17:25:57  →  New: 2015-10-26 12:44:42  (Δ 1596.2 days)
+  [WOULD UPDATE] OSxData/iPhotos/Photos Library.photoslibrary/resources/proxies/derivatives/34/00/34b9/UNADJUSTEDNONRAW_mini_34b9.jpg
+    Old: 2020-03-11 15:54:17  →  New: 2018-01-17 09:57:24  (Δ 784.2 days)
+  [WOULD UPDATE] iPhone-Ash Camera Roll Backup/IMG_7218_1.JPG
+    Old: 2021-12-18 03:23:32  →  New: 2021-06-14 17:11:21  (Δ 186.5 days)
+  [WOULD UPDATE] iOSBackup/24a6451efc4c87aef1732130d05bd84086533164/b2/._b2a0b623b62e55114d8722cf11d2c9bfd38d7aa6
+    Old: 2020-11-08 17:22:10  →  New: 2020-11-08 17:20:40  (Δ 0.0 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary2/resources/modelresources/90/88/ZXuP9AvJQ5OtR%EogB8BOA/IMG_0104.jpg
+    Old: 2020-03-10 17:36:39  →  New: 2016-03-02 14:08:04  (Δ 1469.1 days)
+  [WOULD UPDATE] iPhone-Ash Camera Roll Backup/IMG_7748_13.HEIC
+    Old: 2022-03-07 22:54:46  →  New: 2021-07-02 19:23:43  (Δ 248.2 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary2/Thumbnails/2013/05/30/20130530-165243/HOt8vl6zTaq+iYtcuUa75Q/IMG_1557_1024.jpg
+    Old: 2020-03-11 00:34:52  →  New: 2013-05-30 16:51:07  (Δ 2476.3 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary/Database/Versions/2013/06/10/20130610-075224/or42VBsTTNenszQYRu5GNQ/Version-0.apversion
+    Old: 2020-03-12 11:14:50  →  New: 2013-06-10 08:02:35  (Δ 2467.1 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary/Database/Versions/2016/07/25/20160725-144452/lb7tzL8cShK00wi0C9lb5Q/Version-0.apversion
+    Old: 2020-03-13 08:19:42  →  New: 2016-07-25 15:07:07  (Δ 1326.7 days)
+  [WOULD UPDATE] iPhone-Ash Camera Roll Backup/IMG_9793_67.HEIC
+    Old: 2022-01-31 23:15:42  →  New: 2021-10-14 15:52:58  (Δ 109.3 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary/Database/Versions/2015/04/06/20150406-195453/6ma8rk3rR9ectjQ9BiPWJA/Version-0.apversion
+    Old: 2020-03-09 16:46:02  →  New: 2015-04-06 20:58:36  (Δ 1798.8 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary2/Database/Versions/2012/10/07/20121007-112828/ntAs%+97RBqKWc0TC4vpBg/Version-1.apversion
+    Old: 2020-03-09 22:22:04  →  New: 2014-01-20 16:46:34  (Δ 2240.2 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary2/Database/Versions/2012/08/27/20120827-023654/a3oKja6FSq6bYOYkynP4gg/Version-1.apversion
+    Old: 2020-03-11 03:13:18  →  New: 2014-01-20 16:45:03  (Δ 2241.4 days)
+  [WOULD UPDATE] iPhone-Ash Camera Roll Backup/IMG_9813_94.HEIC
+    Old: 2022-02-18 14:08:03  →  New: 2021-10-16 18:03:19  (Δ 124.9 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary/Database/Versions/2012/10/01/20121001-121059/ShCAA514TuuvuM%XJZD2TQ/Master.apmaster
+    Old: 2020-03-12 05:32:14  →  New: 2012-10-01 12:13:35  (Δ 2718.7 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary/Database/Versions/2014/12/24/20141224-140236/7Zf%+RB5Rdmob9f0lbx+xQ/Master.apmaster
+    Old: 2020-03-11 17:27:50  →  New: 2014-12-24 14:22:53  (Δ 1904.1 days)
+  [WOULD UPDATE] iOSBackup/24a6451efc4c87aef1732130d05bd84086533164/41/4144d2dc5a46ab4097dd1dccf719c394c3e52886
+    Old: 2020-11-08 15:54:46  →  New: 2018-05-11 06:24:33  (Δ 912.4 days)
+  [WOULD UPDATE] Eric-iPhone11-ProMax Camera Roll Backup/IMG_3881_5.HEIC
+    Old: 2022-02-04 03:26:20  →  New: 2021-10-09 17:25:24  (Δ 117.5 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary2/Database/Versions/2013/12/29/20131229-105938/3AsgYW4GSAiYJopAykZ5aA/Master.apmaster
+    Old: 2020-03-09 16:23:30  →  New: 2013-12-29 11:10:23  (Δ 2262.2 days)
+  [WOULD UPDATE] iOSBackup/24a6451efc4c87aef1732130d05bd84086533164/b8/b8ed4bebd6fde82e25dfe2ec6774e887c98e5dd2
+    Old: 2020-11-08 17:27:02  →  New: 2018-05-11 06:44:35  (Δ 912.5 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary/Database/Versions/2013/03/31/20130331-091822/KtAoWtJqSfCZWwxYIORmkA/Master.apmaster
+    Old: 2020-03-11 10:14:04  →  New: 2013-03-31 09:23:15  (Δ 2537.0 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary/Thumbnails/2016/07/25/20160725-144452/48UN0wXgSyellQCo3Xhy1g/IMG_8340_2_1024.jpg
+    Old: 2020-03-12 22:49:56  →  New: 2016-07-25 14:42:02  (Δ 1326.3 days)
+  [WOULD UPDATE] Chapman-Fall-2020/Chapman-32.jpg
+    Old: 2020-11-05 19:08:18  →  New: 2020-10-25 17:26:36  (Δ 11.1 days)
+  [WOULD UPDATE] iOSBackup/24a6451efc4c87aef1732130d05bd84086533164/fd/fdcfdb2234778e83a2d9c2bf84aa164bc8751d12
+    Old: 2020-11-08 18:53:40  →  New: 2018-05-11 06:48:55  (Δ 912.5 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary/Database/Versions/2014/02/14/20140214-092603/yNHPg8DXQqWt0zuSUIBrDQ/Master.apmaster
+    Old: 2020-03-13 02:12:38  →  New: 2014-02-14 10:10:11  (Δ 2218.6 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary2/Database/Versions/2015/10/19/20151019-220821/BfKEMIwiT8S3GGsv8CEiYw/Version-1.apversion
+    Old: 2020-03-11 23:08:14  →  New: 2015-10-19 23:16:07  (Δ 1605.0 days)
+  [WOULD UPDATE] iPhone-Ash Camera Roll Backup/IMG_7944_3.MOV
+    Old: 2022-01-03 02:58:16  →  New: 2021-07-18 18:54:15  (Δ 168.4 days)
+  [WOULD UPDATE] iPhone-Ash Camera Roll Backup/Vnju1-pq7haqlgr3ntalj4wev6422d_73.JPG
+    Old: 2022-02-14 03:15:19  →  New: 2021-09-24 09:37:32  (Δ 142.8 days)
+  [WOULD UPDATE] Eric-iPhone11-ProMax Camera Roll Backup/IMG_8672.HEIC
+    Old: 2020-08-02 13:16:24  →  New: 2020-08-02 11:25:53  (Δ 0.1 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary/Thumbnails/2013/12/26/20131226-181010/TkT4DxNsTki2al34%wDo4Q/IMG_2550_face0.jpg
+    Old: 2020-03-11 08:50:55  →  New: 2013-12-26 18:10:11  (Δ 2266.6 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary2/Database/Versions/2015/09/07/20150907-215149/M2i9n8+MRZO+9Dbhp47WSA/Master.apmaster
+    Old: 2020-03-13 02:35:53  →  New: 2015-10-19 22:40:35  (Δ 1606.2 days)
+  [WOULD UPDATE] OSxData/iPhotos/iPhotoLibrary2/Thumbnails/2016/10/23/20161023-233624/PcSLsJyGR+qkS2xh+38%HQ/thumb_IMG_4112_1024.jpg
+    Old: 2020-03-10 20:23:19  →  New: 2016-10-23 16:13:06  (Δ 1234.2 days)
+Traceback (most recent call last):
+  File "/home/chapman/projects/mycloud-restsdk-recovery-script/sync_mtime.py", line 464, in <module>
+    main()
+  File "/home/chapman/projects/mycloud-restsdk-recovery-script/sync_mtime.py", line 460, in main
+    sync_mtimes(args.db, args.dest, args.dry_run, args.verbose, args.resume_from, args.log_file, args.sanitize_pipes)
+  File "/home/chapman/projects/mycloud-restsdk-recovery-script/sync_mtime.py", line 300, in sync_mtimes
+    print(f"\r{progress_msg}", end='', flush=True)
+BrokenPipeError: [Errno 32] Broken pipe
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='utf-8'>
+BrokenPipeError: [Errno 32] Broken pipe
+chapman@chapman-htpc:~/projects/mycloud-restsdk-recovery-script$ 
+
