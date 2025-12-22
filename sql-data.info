@@ -140,3 +140,160 @@ chapman@chapman-htpc:~/projects/mycloud-restsdk-recovery-script$ nohup sudo /hom
 chapman@chapman-htpc:~/projects/mycloud-restsdk-recovery-script$ jobs -l
 [1]+ 73658 Exit 1                  nohup sudo /home/chapman/projects/mycloud-restsdk-recovery-script/venv/bin/python /home/chapman/projects/mycloud-restsdk-recovery-script/restsdk_public.py --resume --db=/mnt/backupdrive/restsdk/data/db/index.db --filedir=/mnt/backupdrive/restsdk/data/files --dumpdir=/mnt/nfs-media --log_file=/home/chapman/projects/mycloud-restsdk-recovery-script/copied_file.log --thread-count 2 --low-memory > /home/chapman/projects/mycloud-restsdk-recovery-script/run.out 2>&1 < /dev/nully
 
+ExifTool Version Number         : 12.76
+File Name                       : IMG_9948_8.HEIC
+Directory                       : /mnt/nfs-media/Eric-iPhone11-ProMax Camera Roll Backup
+File Size                       : 5.1 MB
+File Modification Date/Time     : 2022:02:15 16:36:44-05:00
+File Access Date/Time           : 2025:12:22 11:53:57-05:00
+File Inode Change Date/Time     : 2025:12:21 06:28:32-05:00
+File Permissions                : -rw-r--r--
+File Type                       : HEIC
+File Type Extension             : heic
+MIME Type                       : image/heic
+Major Brand                     : High Efficiency Image Format HEVC still image (.HEIC)
+Minor Version                   : 0.0.0
+Compatible Brands               : mif1, miaf, MiHB, heic
+Handler Type                    : Picture
+Primary Item Reference          : 49
+Meta Image Size                 : 4032x3024
+Exif Byte Order                 : Big-endian (Motorola, MM)
+Make                            : Apple
+Camera Model Name               : iPhone 11 Pro Max
+Orientation                     : Rotate 90 CW
+X Resolution                    : 72
+Y Resolution                    : 72
+Resolution Unit                 : inches
+Software                        : 13.6.1
+Modify Date                     : 2020:10:22 09:47:07
+Y Cb Cr Positioning             : Centered
+Exposure Time                   : 1/120
+F Number                        : 1.8
+Exposure Program                : Program AE
+ISO                             : 80
+Exif Version                    : 0231
+Date/Time Original              : 2020:10:22 09:47:07
+Create Date                     : 2020:10:22 09:47:07
+Offset Time                     : -04:00
+Offset Time Original            : -04:00
+Offset Time Digitized           : -04:00
+Components Configuration        : Y, Cb, Cr, -
+Shutter Speed Value             : 1/120
+Aperture Value                  : 1.8
+Brightness Value                : 4.983183442
+Exposure Compensation           : 0
+Metering Mode                   : Multi-segment
+Flash                           : Off, Did not fire
+Focal Length                    : 4.2 mm
+Subject Area                    : 2002 1505 2213 1324
+Maker Note Version              : 11
+Run Time Flags                  : Valid
+Run Time Value                  : 325057393434500
+Run Time Scale                  : 1000000000
+Run Time Epoch                  : 0
+AE Stable                       : Yes
+AE Target                       : 227
+AE Average                      : 228
+AF Stable                       : Yes
+Acceleration Vector             : -0.01739317365 -0.9849610326 -0.1559706926
+Focus Distance Range            : 17.25 - 26.61 m
+Image Capture Type              : Photo
+Live Photo Video Index          : 38805504
+HDR Headroom                    : 0.9760292165
+Signal To Noise Ratio           : 43.47491837
+Photo Identifier                : DD6A14F6-080B-41F0-A60A-C8738C659CA4
+Sub Sec Time Original           : 782
+Sub Sec Time Digitized          : 782
+Flashpix Version                : 0100
+Color Space                     : Uncalibrated
+Exif Image Width                : 4032
+Exif Image Height               : 3024
+Sensing Method                  : One-chip color area
+Scene Type                      : Directly photographed
+Exposure Mode                   : Auto
+White Balance                   : Auto
+Focal Length In 35mm Format     : 26 mm
+Scene Capture Type              : Standard
+Lens Info                       : 1.539999962-6mm f/1.8-2.4
+Lens Make                       : Apple
+Lens Model                      : iPhone 11 Pro Max back triple camera 4.25mm f/1.8
+Composite Image                 : General Composite Image
+GPS Latitude Ref                : North
+GPS Longitude Ref               : West
+GPS Altitude Ref                : Above Sea Level
+GPS Speed Ref                   : km/h
+GPS Speed                       : 0
+GPS Img Direction Ref           : True North
+GPS Img Direction               : 250.9781341
+GPS Dest Bearing Ref            : True North
+GPS Dest Bearing                : 250.9781341
+GPS Date Stamp                  : 2020:10:22
+GPS Horizontal Positioning Error: 1561.211779 m
+Profile CMM Type                : Apple Computer Inc.
+Profile Version                 : 4.0.0
+Profile Class                   : Display Device Profile
+Color Space Data                : RGB
+Profile Connection Space        : XYZ
+Profile Date Time               : 2017:07:07 13:22:32
+Profile File Signature          : acsp
+Primary Platform                : Apple Computer Inc.
+CMM Flags                       : Not Embedded, Independent
+Device Manufacturer             : Apple Computer Inc.
+Device Model                    : 
+Device Attributes               : Reflective, Glossy, Positive, Color
+Rendering Intent                : Perceptual
+Connection Space Illuminant     : 0.9642 1 0.82491
+Profile Creator                 : Apple Computer Inc.
+Profile ID                      : ca1a9582257f104d389913d5d1ea1582
+Profile Description             : Display P3
+Profile Copyright               : Copyright Apple Inc., 2017
+Media White Point               : 0.95045 1 1.08905
+Red Matrix Column               : 0.51512 0.2412 -0.00105
+Green Matrix Column             : 0.29198 0.69225 0.04189
+Blue Matrix Column              : 0.1571 0.06657 0.78407
+Red Tone Reproduction Curve     : (Binary data 32 bytes, use -b option to extract)
+Chromatic Adaptation            : 1.04788 0.02292 -0.0502 0.02959 0.99048 -0.01706 -0.00923 0.01508 0.75168
+Blue Tone Reproduction Curve    : (Binary data 32 bytes, use -b option to extract)
+Green Tone Reproduction Curve   : (Binary data 32 bytes, use -b option to extract)
+HEVC Configuration Version      : 1
+General Profile Space           : Conforming
+General Tier Flag               : Main Tier
+General Profile IDC             : Main Still Picture
+Gen Profile Compatibility Flags : Main Still Picture, Main 10, Main
+Constraint Indicator Flags      : 176 0 0 0 0 0
+General Level IDC               : 90 (level 3.0)
+Min Spatial Segmentation IDC    : 0
+Parallelism Type                : 0
+Chroma Format                   : 4:2:0
+Bit Depth Luma                  : 8
+Bit Depth Chroma                : 8
+Average Frame Rate              : 0
+Constant Frame Rate             : Unknown
+Num Temporal Layers             : 1
+Temporal ID Nested              : No
+Image Width                     : 4032
+Image Height                    : 3024
+Image Spatial Extent            : 4032x3024
+Rotation                        : 270
+Image Pixel Depth               : 8 8 8
+Media Data Size                 : 5085739
+Media Data Offset               : 3428
+Run Time Since Power Up         : 3 days 18:17:37
+Aperture                        : 1.8
+Image Size                      : 4032x3024
+Megapixels                      : 12.2
+Scale Factor To 35 mm Equivalent: 6.1
+Shutter Speed                   : 1/120
+Create Date                     : 2020:10:22 09:47:07.782-04:00
+Date/Time Original              : 2020:10:22 09:47:07.782-04:00
+Modify Date                     : 2020:10:22 09:47:07-04:00
+GPS Altitude                    : 670.3 m Above Sea Level
+GPS Latitude                    : 36 deg 43' 47.17" N
+GPS Longitude                   : 81 deg 56' 47.60" W
+Circle Of Confusion             : 0.005 mm
+Field Of View                   : 69.4 deg
+Focal Length                    : 4.2 mm (35 mm equivalent: 26.0 mm)
+GPS Position                    : 36 deg 43' 47.17" N, 81 deg 56' 47.60" W
+Hyperfocal Distance             : 2.04 m
+Light Value                     : 8.9
+Lens ID                         : iPhone 11 Pro Max back triple camera 4.25mm f/1.8
