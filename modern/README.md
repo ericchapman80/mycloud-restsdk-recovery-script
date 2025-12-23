@@ -1,0 +1,71 @@
+# MyCloud Rsync Restore (Modern - Recommended)
+
+✨ **This is the actively maintained, recommended approach for MyCloud recovery.**
+
+## Overview
+
+Modern rsync-based file recovery tool for MyCloud NAS devices. Uses battle-tested rsync for file operations with intelligent path reconstruction from SQLite database.
+
+## Why Rsync?
+
+- **Automatic timestamp preservation** - No separate mtime sync needed
+- **Resume capability** - Interrupted recoveries can continue
+- **Proven reliability** - rsync is battle-tested for decades
+- **Better performance** - Optimized I/O patterns
+- **Simpler operation** - Fewer manual steps
+
+## Quick Start
+
+```bash
+# Setup environment
+./setup.sh
+
+# Run preflight analysis
+python preflight.py /path/to/source /path/to/dest
+
+# Run recovery
+python rsync_restore.py --db index.db --source-root /source --dest-root /dest
+
+# Monitor progress (in another terminal)
+./monitor.sh
+```
+
+## Features
+
+- Rsync-based file transfer (reliable, resumable)
+- Automatic timestamp preservation (no mtime sync needed)
+- Multi-threaded operations
+- Progress monitoring
+- Cleanup mode (remove orphaned files)
+
+## Tools
+
+- **rsync_restore.py** - Main recovery script (rsync wrapper)
+- **preflight.py** - System analysis and thread recommendations
+- **monitor.sh** - Real-time progress monitoring
+
+## Testing
+
+```bash
+# Run all modern tests
+./run_tests.sh
+
+# Run performance tests
+pytest tests/test_perf_regen_log.py -v
+```
+
+## Comparison to Legacy
+
+| Feature | Legacy (Python) | Modern (Rsync) |
+|---------|----------------|----------------|
+| Timestamp Preservation | Requires sync_mtime.py | Automatic |
+| Resume | Limited | Native support |
+| Performance | Good | Better |
+| Complexity | Higher | Lower |
+| Maintenance | Frozen | Active |
+
+## Development
+
+This is the actively maintained codebase. New features and improvements welcome!
+
+See the [legacy approach](../legacy/) for the Python-based alternative (maintenance mode).
