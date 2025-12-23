@@ -1,8 +1,7 @@
 #!/bin/bash
-# Run tests for the project
+# Run tests for the modern rsync-based recovery tool
 # Usage:
-#   ./run_tests.sh           - Run all tests for all modules with coverage
-#   ./run_tests.sh restsdk   - Run only restsdk_public.py tests
+#   ./run_tests.sh           - Run all tests with coverage
 #   ./run_tests.sh html      - Generate HTML coverage report
 
 set -e  # Exit on error
@@ -16,22 +15,10 @@ NC='\033[0m' # No Color
 MODE="${1:-all}"
 
 case "$MODE" in
-  restsdk)
-    echo -e "${BLUE}Running tests for restsdk_public.py only...${NC}"
-    pytest \
-      tests/test_restsdk_high_value.py \
-      tests/test_restsdk_core_functions.py \
-      tests/test_restsdk_public.py \
-      tests/test_db_flows.py \
-      --cov=restsdk_public \
-      --cov-report=term-missing \
-      -v
-    ;;
-  
   html)
     echo -e "${BLUE}Running all tests and generating HTML coverage report...${NC}"
     pytest tests/ \
-      --cov=. \
+      --cov=rsync_restore \
       --cov-report=html \
       --cov-report=term \
       -v
@@ -41,10 +28,10 @@ case "$MODE" in
     ;;
   
   all|*)
-    echo -e "${BLUE}Running all unit tests for all modules...${NC}"
+    echo -e "${BLUE}Running all tests for modern rsync-based recovery...${NC}"
     echo ""
     pytest tests/ \
-      --cov=. \
+      --cov=rsync_restore \
       --cov-report=term-missing \
       -v
     ;;
@@ -55,5 +42,4 @@ echo -e "${GREEN}✓ Tests completed${NC}"
 echo ""
 echo -e "${YELLOW}Usage:${NC}"
 echo "  ./run_tests.sh           - Run all tests (default)"
-echo "  ./run_tests.sh restsdk   - Run only restsdk_public.py tests"
 echo "  ./run_tests.sh html      - Generate HTML coverage report"
