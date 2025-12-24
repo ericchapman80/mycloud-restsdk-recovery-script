@@ -40,10 +40,19 @@ Common resources:
 
 ## 🚀 Quick Start
 
+**macOS users (recommended):**
+```bash
+# Install system dependencies
+brew bundle
+
+# Choose your approach below
+```
+
 **For new users (recommended):**
 ```bash
 cd modern
-./setup.sh
+./setup.sh          # Installs Poetry and dependencies
+poetry shell        # Activate environment
 python preflight.py /path/to/source /path/to/dest
 python rsync_restore.py --db index.db --source-root /source --dest-root /dest
 ```

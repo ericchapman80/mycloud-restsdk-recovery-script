@@ -17,7 +17,7 @@ MODE="${1:-all}"
 case "$MODE" in
   html)
     echo -e "${BLUE}Running all tests and generating HTML coverage report...${NC}"
-    pytest tests/ \
+    poetry run pytest tests/ \
       --cov=rsync_restore \
       --cov-report=html \
       --cov-report=term \
@@ -30,7 +30,7 @@ case "$MODE" in
   all|*)
     echo -e "${BLUE}Running all tests for modern rsync-based recovery...${NC}"
     echo ""
-    pytest tests/ \
+    poetry run pytest tests/ \
       --cov=rsync_restore \
       --cov-report=term-missing \
       -v

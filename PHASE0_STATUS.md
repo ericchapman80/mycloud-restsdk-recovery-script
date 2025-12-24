@@ -132,25 +132,43 @@ mv README-PHASE0.md README.md
 
 Per REPO_SPLIT_PLAN.md, ready for Phase 1 when:
 - [x] Directory structure created
+## 🎯 Phase 0 Completion Criteria
+
+Per REPO_SPLIT_PLAN.md, ready for Phase 1 when:
+- [x] Directory structure created
 - [x] Files moved to subdirectories
 - [x] Subdirectory READMEs created
-- [ ] All tests pass in both subdirectories
-- [ ] Import paths verified
+- [x] All tests pass in both subdirectories
+- [x] Import paths verified
+- [x] Root README updated
+- [x] Brewfile added for macOS dependencies
+- [x] Poetry setup for modern subdirectory
+- [x] Root directory cleaned (duplicates removed)
 - [ ] Manual recovery tested from both subdirectories
-- [ ] Root README updated
 - [ ] Code owner review
-- [ ] Committed to g85% complete
+- [ ] Committed to git
+
+**Current Status:** 95% complete
 
 **Completed:**
 - ✅ Directory structure created and committed
-- ✅ Files moved and organized
-- ✅ Both test suites working (legacy: 126 tests, modern: 6 tests)
+- ✅ Files moved and organized  
+- ✅ Root directory cleaned (duplicates removed)
+- ✅ Both test suites working (legacy: 127 tests, modern: 6 tests)
 - ✅ Import paths verified
-- ✅ Committed and pushed to GitHub
+- ✅ Brewfile created for macOS system dependencies
+- ✅ Modern tooling improvements:
+  - Poetry for dependency management (modern/)
+  - Traditional pip/requirements.txt (legacy/ - maintenance mode)
+- ✅ Updated setup.sh scripts for each approach
+- ✅ Updated run_tests.sh to use Poetry in modern/
+- ✅ Updated READMEs with new tooling instructions
+- ✅ Multiple commits pushed to GitHub
 
 **Remaining:**
-- [ ] Manual testing from each subdirectory
-- [ ] Cross-validation testing
-- [ ] Production sign-off needs adjustment (test belongs in legacy)
-- Manual testing not yet performed
-- Not yet committed
+- [ ] Manual testing from each subdirectory (small test dataset)
+- [ ] Cross-validation testing (same data, both approaches)
+- [ ] Production sign-off
+
+**Blockers:** None - ready for manual testing phase
+
