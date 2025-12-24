@@ -529,3 +529,43 @@ chapman@chapman-htpc:~/projects/mycloud-restsdk-recovery-script$
 
 
 sudo python3 shared/create_test_dataset.py --prod-db /mnt/backupdrive/restsdk/data/db/index.db --prod-files /mnt/backupdrive/restsdk/data/files --test-db /tmp/phase0-test.db --test-files /tmp/phase0-files --strategy diverse --max-per-category 5  
+ℹ️  Connecting to production database: /mnt/backupdrive/restsdk/data/db/index.db
+ℹ️  Copying database schema...
+✅ Created 34 tables
+ℹ️  Using strategy: diverse - Balanced mix of file types, sizes, and edge cases
+ℹ️    small_files: sampled 5/5 files
+ℹ️    long_names: sampled 3/3 files
+ℹ️    special_chars: sampled 5/5 files
+ℹ️    images: sampled 5/5 files
+ℹ️    videos: sampled 5/5 files
+ℹ️    recent: sampled 5/5 files
+ℹ️    old: sampled 3/3 files
+ℹ️    random: sampled 5/5 files
+✅ Sampled 36 files
+ℹ️  Collecting parent directories...
+✅ Found 96 parent directories
+ℹ️  Inserting parent directories...
+ℹ️  Inserting sampled files...
+  Copied 10/36 files...  Copied 20/36 files...  Copied 30/36 files...
+✅ Copied 36 files
+
+============================================================
+TEST DATASET CREATED
+============================================================
+📊 Database: /tmp/phase0-test.db
+   Size: 0.18 MB
+   Files in DB: 36
+   Parent dirs: 96
+
+📁 Files: /tmp/phase0-files
+   Size: 202.21 MB
+   Files copied: 36
+
+📋 Strategy: diverse
+   Description: Balanced mix of file types, sizes, and edge cases
+
+✅ Test dataset ready for use!
+
+Next steps:
+  cd legacy && python restsdk_public.py --db ..//tmp/phase0-test.db --filedir ..//tmp/phase0-files --dumpdir /tmp/legacy-test
+  cd modern && poetry run python rsync_restore.py --db ..//tmp/phase0-test.db --source ..//tmp/phase0-files --dest /tmp/modern-test --farm /tmp/farm
