@@ -16,9 +16,21 @@ Modern rsync-based file recovery tool for MyCloud NAS devices. Uses battle-teste
 
 ## Quick Start
 
+**macOS users (install system dependencies first):**
 ```bash
-# Setup environment
+# From repository root
+brew bundle
+
+# Then continue with setup below
+```
+
+**Setup with Poetry (recommended):**
+```bash
+# Setup environment (installs Poetry if needed)
 ./setup.sh
+
+# Activate Poetry shell
+poetry shell
 
 # Run preflight analysis
 python preflight.py /path/to/source /path/to/dest
@@ -30,10 +42,19 @@ python rsync_restore.py --db index.db --source-root /source --dest-root /dest
 ./monitor.sh
 ```
 
+**Alternative: Direct commands with Poetry:**
+```bash
+poetry run python preflight.py /path/to/source /path/to/dest
+poetry run python rsync_restore.py --db index.db --source-root /source --dest-root /dest
+```
+
 ## Features
 
-- Rsync-based file transfer (reliable, resumable)
-- Automatic timestamp preservation (no mtime sync needed)
+- Generate HTML coverage report
+./run_tests.sh html
+
+# Or use Poetry directly
+poetry run pytest tests/(no mtime sync needed)
 - Multi-threaded operations
 - Progress monitoring
 - Cleanup mode (remove orphaned files)

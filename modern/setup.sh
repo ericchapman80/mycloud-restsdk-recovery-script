@@ -1,25 +1,30 @@
 #!/bin/bash
-# setup.sh - Automate venv creation and dependency installation
+# setup.sh - Setup environment using Poetry (modern approach)
 set -e
 
-echo "🚀 Setting up Python virtual environment..."
+echo "🚀 Setting up Python environment with Poetry..."
 
-# Create venv if it doesn't exist
-if [ ! -d "venv" ]; then
-    python3 -m venv venv
-    echo "✅ Created virtual environment in ./venv"
-else
-    echo "ℹ️  Virtual environment already exists."
+# Check if Poetry is installed
+if ! command -v poetry &> /dev/null; then
+    echo "❌ Poetry not found. Installing via Homebrew..."
+    if command -v brew &> /dev/null; then
+        brew install poetry
+    else
+        echo "⚠️  Homebrew not found. Install Poetry manually:"
+        echo "   curl -sSL https://install.python-poetry.org | python3 -"
+        exit 1
+    fi
 fi
 
-# Activate venv
-source venv/bin/activate
+# Install dependencies
+poetry install
 
-# Upgrade pip
-pip install --upgrade pip
-
-# Install requirements
-pip install -r requirements.txt
-
-echo "🎉 Setup complete! To activate your environment later, run:"
-echo "source venv/bin/activate"
+echo ""
+echo "🎉 Setup complete!"
+echo ""
+echo "To activate the environment, run:"
+echo "  poetry shell"
+echo ""
+echo "Or run commands directly with:"
+echo "  poetry run python rsync_restore.py --help"
+echo "  poetry run pytest tests/"
