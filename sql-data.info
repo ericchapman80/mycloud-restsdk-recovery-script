@@ -527,3 +527,5 @@ Traceback (most recent call last):
 BrokenPipeError: [Errno 32] Broken pipe
 chapman@chapman-htpc:~/projects/mycloud-restsdk-recovery-script$ 
 
+
+sudo python3 shared/create_test_dataset.py --prod-db /mnt/backupdrive/restsdk/data/db/index.db --prod-files /mnt/backupdrive/restsdk/data/files --test-db /tmp/phase0-test.db --test-files /tmp/phase0-files --strategy diverse --max-per-category 5  
