@@ -118,6 +118,77 @@ Before splitting the repository:
 3. Validate outputs are identical
 4. Sign off on Phase 0 completion
 
+### Remote→Local Testing Workflow
+When production data is on a remote server but you want to test locally:
+
+**On Remote Server (has production data):**
+```bash
+# Create test dataset
+python shared/create_test_dataset.py \
+    --prod-db /path/to/index.db \
+    --prod-files /mnt/nfs/files \
+    --test-db /tmp/phase0-test.db \
+    --test-files /tmp/phase0-files \
+    --strategy diverse \
+    --max-per-category 5
+
+# Compress for transfer
+cd /tmp
+tar czf phase0-dataset.tar.gz phase0-test.db phase0-files/
+```
+
+**On Local Machine:**
+```bash
+# Transfer dataset
+scp user@remote:/tmp/phase0-dataset.tar.gz ~/Downloads/
+
+# Extract to test-fixtures
+cd shared/test-fixtures/
+tar xzf ~/Downloads/phase0-dataset.tar.gz
+mv phase0-test.db test.db
+mv phase0-files files
+
+# Run legacy recovery
+cd ../../legacy
+python restsdk_public.py \
+    --db ../shared/test-fixtures/test.db \
+    --filedir ../shared/test-fixtures/files \
+    --dumpdir /tmp/legacy-test
+
+# Run modern recovery
+cd ../modern
+poetry run python rsync_restore.py \
+    --db ../shared/test-fixtures/test.db \
+    --source ../shared/test-fixtures/files \
+    --dest /tmp/modern-test \
+    --farm /tmp/farm
+
+# Validate results
+cd ..
+python shared/validate_results.py /tmp/legacy-test /tmp/modern-test
+```
+
+**Alternative - Git LFS (for permanent test datasets):**
+If you want versioned test datasets that multiple team members can access:
+```bash
+# One-time setup
+git lfs install
+git lfs track "shared/test-datasets/*.db"
+git lfs track "shared/test-datasets/files/**"
+
+# Create in test-datasets/ (not test-fixtures/)
+python shared/create_test_dataset.py \
+    --test-db shared/test-datasets/validation-v1.db \
+    --test-files shared/test-datasets/files \
+    ...
+
+git add .gitattributes shared/test-datasets/
+git commit -m "Add versioned test dataset"
+git push
+```
+
+Note: `test-fixtures/` is gitignored (temporary), `test-datasets/` can be committed with Git LFS
+
 ### CI/CD Regression Testing
 Automated testing in GitHub Actions:
 ```bash
