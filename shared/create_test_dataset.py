@@ -260,9 +260,11 @@ def create_test_dataset(
             ).fetchone()
             
             if row:
-                test_conn.execute(
-                    "INSERT OR IGNORE INTO Files (id, parentID, name, contentID, version) VALUES (?, ?, ?, ?, ?)",
-                    (row[0], row[1], row[2], row[3], row[4])
+                test_conn.execute("""
+                    INSERT OR IGNORE INTO Files 
+                    (id, parentID, name, contentID, version, birthTime, cTime, size, mimeType, storageID, hidden)
+                    VALUES (?, ?, ?, ?, ?, 0, 0, 0, 'application/x.wd.dir', 'local', 1)
+                """, (row[0], row[1], row[2], row[3] or '', row[4])
                 )
         
         test_conn.commit()
@@ -276,17 +278,20 @@ def create_test_dataset(
             # Insert into test database
             test_conn.execute("""
                 INSERT OR IGNORE INTO Files 
-                (id, name, parentID, contentID, imageDate, videoDate, cTime, birthTime, version)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
+                (id, name, parentID, contentID, version, 
+                 birthTime, cTime, mTime, size, mimeType, storageID, hidden,
+                 imageDate, videoDate, imageWidth, imageHeight)
+                VALUES (?, ?, ?, ?, 0, 
+                        ?, ?, NULL, 0, '', 'local', 1,
+                        ?, NULL, 0, 0)
             """, (
                 file_info['id'],
                 file_info['name'],
                 file_info['parentID'],
                 file_info['contentID'],
-                file_info['imageDate'],
-                file_info['videoDate'],
-                file_info['cTime'],
-                file_info['birthTime']
+                file_info['birthTime'] or file_info['cTime'] or 0,
+                file_info['cTime'] or 0,
+                file_info['imageDate']
             ))
             
             # Copy actual file
