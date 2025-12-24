@@ -203,13 +203,18 @@ def create_test_dataset(
     test_conn = sqlite3.connect(test_db)
     
     try:
-        # Copy schema
+        # Copy schema (skip SQLite internal tables and FTS shadow tables)
         print_info("Copying database schema...")
         schema_queries = prod_conn.execute(
             """SELECT sql FROM sqlite_master 
                WHERE type='table' 
                AND sql IS NOT NULL 
-               AND name NOT LIKE 'sqlite_%'"""
+               AND name NOT LIKE 'sqlite_%'
+               AND name NOT LIKE '%_data'
+               AND name NOT LIKE '%_idx'
+               AND name NOT LIKE '%_docsize'
+               AND name NOT LIKE '%_config'
+               AND name NOT LIKE '%_content'"""
         ).fetchall()
         
         for row in schema_queries:
