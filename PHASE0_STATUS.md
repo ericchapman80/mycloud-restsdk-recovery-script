@@ -148,7 +148,7 @@ Per REPO_SPLIT_PLAN.md, ready for Phase 1 when:
 - [ ] Code owner review
 - [ ] Committed to git
 
-**Current Status:** 95% complete
+**Current Status:** 98% complete
 
 **Completed:**
 - ✅ Directory structure created and committed
@@ -164,11 +164,151 @@ Per REPO_SPLIT_PLAN.md, ready for Phase 1 when:
 - ✅ Updated run_tests.sh to use Poetry in modern/
 - ✅ Updated READMEs with new tooling instructions
 - ✅ Multiple commits pushed to GitHub
+- ✅ Testing infrastructure implemented:
+  - --limit flag for quick dev testing
+  - create_test_dataset.py for building test fixtures
+  - validate_results.py for comparing outputs
 
 **Remaining:**
-- [ ] Manual testing from each subdirectory (small test dataset)
+- [ ] Manual testing from each subdirectory (use test dataset)
 - [ ] Cross-validation testing (same data, both approaches)
 - [ ] Production sign-off
 
 **Blockers:** None - ready for manual testing phase
+
+---
+
+## 🧪 Testing Infrastructure (NEW)
+
+### Quick Testing with --limit Flag
+Both tools now support `--limit` flag for rapid development testing:
+
+**Legacy:**
+```bash
+cd legacy
+python restsdk_public.py \
+    --db /path/to/index.db \
+    --filedir /path/to/files \
+    --dumpdir /tmp/legacy-test \
+    --limit 10  # Process only first 10 files
+```
+
+**Modern:**
+```bash
+cd modern
+poetry run python rsync_restore.py \
+    --db /path/to/index.db \
+    --source /path/to/files \
+    --dest /tmp/modern-test \
+    --farm /tmp/farm \
+    --limit 10  # Process only first 10 files
+```
+
+### Test Dataset Creation
+Create small, representative test datasets from production data:
+
+```bash
+# Create diverse test set (50 files across different categories)
+python shared/create_test_dataset.py \
+    --prod-db /prod/index.db \
+    --prod-files /prod/files \
+    --test-db shared/test-fixtures/test.db \
+    --test-files shared/test-fixtures/files \
+    --strategy diverse \
+    --max-per-category 5
+
+# Quick test set (20 random files)
+python shared/create_test_dataset.py \
+    --prod-db index.db \
+    --prod-files /source \
+    --test-db test.db \
+    --test-files test-files \
+    --strategy quick
+
+# Edge cases (problematic filenames)
+python shared/create_test_dataset.py \
+    --prod-db index.db \
+    --prod-files /source \
+    --test-db test.db \
+    --test-files test-files \
+    --strategy edge_cases
+```
+
+**Sampling Strategies:**
+- `diverse` - Balanced mix of file types, sizes, edge cases (default)
+- `edge_cases` - Focus on problematic filenames (pipes, unicode, spaces)
+- `quick` - Random sample for fast testing
+
+### Result Validation
+Compare legacy vs modern outputs:
+
+```bash
+# Full validation with content hashes
+python shared/validate_results.py /tmp/legacy-test /tmp/modern-test
+
+# Quick validation (skip content hashes)
+python shared/validate_results.py /tmp/legacy-test /tmp/modern-test --no-hashes
+
+# Verbose output with structure analysis
+python shared/validate_results.py /tmp/legacy-test /tmp/modern-test -v
+```
+
+**Validation Checks:**
+- File counts and directory structure
+- File sizes and timestamps
+- Content integrity (SHA256 checksums)
+- Symlink consistency
+
+### Complete Testing Workflow
+
+**1. Create test dataset:**
+```bash
+python shared/create_test_dataset.py \
+    --prod-db ~/MyCloudEX2Ultra/index.db \
+    --prod-files ~/MyCloudEX2Ultra/files \
+    --test-db shared/test-fixtures/test.db \
+    --test-files shared/test-fixtures/files \
+    --strategy diverse \
+    --max-per-category 5
+```
+
+**2. Run legacy recovery:**
+```bash
+cd legacy
+python restsdk_public.py \
+    --db ../shared/test-fixtures/test.db \
+    --filedir ../shared/test-fixtures/files \
+    --dumpdir /tmp/legacy-test
+cd ..
+```
+
+**3. Run modern recovery:**
+```bash
+cd modern
+poetry run python rsync_restore.py \
+    --db ../shared/test-fixtures/test.db \
+    --source ../shared/test-fixtures/files \
+    --dest /tmp/modern-test \
+    --farm /tmp/farm
+cd ..
+```
+
+**4. Validate results:**
+```bash
+python shared/validate_results.py /tmp/legacy-test /tmp/modern-test
+```
+
+**5. Quick iteration (--limit flag):**
+```bash
+# Test with just 10 files for rapid development
+cd legacy && python restsdk_public.py --db ../test.db --filedir ../files --dumpdir /tmp/test --limit 10
+cd modern && poetry run python rsync_restore.py --db ../test.db --source ../files --dest /tmp/test --farm /tmp/farm --limit 10
+```
+
+### Testing Scripts Added
+- ✅ `shared/create_test_dataset.py` - Smart sampling from production data
+- ✅ `shared/validate_results.py` - Compare legacy vs modern outputs
+- ✅ `--limit` flag in both tools for quick testing
+
+**Status:** Testing infrastructure complete and ready for use
 
