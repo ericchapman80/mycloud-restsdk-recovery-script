@@ -1018,15 +1018,21 @@ def create_symlink_farm_streaming(
     db_path: str,
     source_dir: str,
     farm_dir: str,
-    sanitize_pipes: bool = False
+    sanitize_pipes: bool = False,
+    limit: int = 0
 ) -> Tuple[int, int, int]:
     """
     Create symlink farm by streaming from database (minimal memory).
+    
+    Args:
+        limit: Process only first N files (0 = no limit)
     
     Returns:
         Tuple of (created, skipped, errors)
     """
     print_info("Creating symlink farm (streaming from database)...")
+    if limit > 0:
+        print_warning(f"⚠️  Testing mode: Processing only {limit} files (--limit={limit})")
     
     created = 0
     skipped = 0
@@ -1066,6 +1072,11 @@ def create_symlink_farm_streaming(
         last_progress = 0
         
         for row in cur:
+            # Check limit
+            if limit > 0 and created >= limit:
+                print_warning(f"\n⚠️  Reached --limit of {limit} files. Stopping...")
+                break
+            
             processed += 1
             
             # Progress every 5%
@@ -1154,10 +1165,14 @@ def run_restore(
     log_interval: int = 60,
     log_file: str = "rsync_restore.log",
     sanitize_pipes: bool = False,
-    skip_farm: bool = False
+    skip_farm: bool = False,
+    limit: int = 0
 ) -> int:
     """
     Run the full restore process.
+    
+    Args:
+        limit: Process only first N files (0 = no limit)
     
     Returns:
         Exit code (0 = success)
@@ -1188,11 +1203,11 @@ def run_restore(
                         print_info("Removing old farm...")
                         shutil.rmtree(farm)
                         created, skipped, errors = create_symlink_farm_streaming(
-                            db_path, source, farm, sanitize_pipes
+                            db_path, source, farm, sanitize_pipes, limit
                         )
         else:
             created, skipped, errors = create_symlink_farm_streaming(
-                db_path, source, farm, sanitize_pipes
+                db_path, source, farm, sanitize_pipes, limit
             )
     else:
         print_info("Skipping symlink farm (--skip-farm)")
@@ -1381,7 +1396,8 @@ Some filenames may contain '|' which can cause issues on Windows/NTFS/SMB.
         log_interval=60,
         log_file='rsync_restore.log',
         sanitize_pipes=sanitize_pipes,
-        skip_farm=False
+        skip_farm=False,
+        limit=0
     )
     
     # Offer to run for real if dry run was successful
@@ -1466,6 +1482,8 @@ Cleanup Examples:
                        help='Replace | with - in paths')
     parser.add_argument('--skip-farm', action='store_true',
                        help='Skip symlink farm creation (use existing)')
+    parser.add_argument('--limit', type=int, default=0,
+                       help='Process only first N files (for testing). 0 = no limit (default)')
     
     # Cleanup options
     parser.add_argument('--cleanup', action='store_true',
@@ -1533,7 +1551,8 @@ Cleanup Examples:
         log_interval=args.log_interval,
         log_file=args.log_file,
         sanitize_pipes=args.sanitize_pipes,
-        skip_farm=args.skip_farm
+        skip_farm=args.skip_farm,
+        limit=args.limit
     )
 
 
