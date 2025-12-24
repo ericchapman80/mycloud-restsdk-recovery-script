@@ -858,6 +858,12 @@ if __name__ == "__main__":
         action="store_true",
         help="Reduce memory usage by skipping timestamp fields in file dictionary. Disables --preserve-mtime. Recommended for systems with <16GB RAM.",
     )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=0,
+        help="Process only the first N files (for testing). 0 = no limit (default).",
+    )
     args = parser.parse_args()
     
     # Initialize start time and logging
@@ -1068,6 +1074,12 @@ if __name__ == "__main__":
         with ThreadPoolExecutor(max_workers=thread_count) as executor:
             for root, dirs, files in os.walk(filedir):
                 for file in files:
+                    # Check limit if set
+                    if args.limit > 0 and processed_files_counter.value >= args.limit:
+                        print(f"\n⚠️  Reached --limit of {args.limit} files. Stopping...")
+                        logging.info(f"Reached --limit of {args.limit} files. Stopping...")
+                        return  # Exit early
+                    
                     executor.submit(copy_file, root, file, skipnames, dumpdir, dry_run, log_file)
                     processed = processed_files_counter.value
                     percent = int((processed / total_files) * 100) if total_files else 100
