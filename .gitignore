@@ -136,3 +136,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Test fixtures (created by create_test_dataset.py)
+shared/test-fixtures/
+test-fixtures/
+*.test.db
+test-files/
