@@ -94,7 +94,7 @@ def get_file_parents(conn: sqlite3.Connection, file_id: str) -> List[Tuple[str, 
     
     while current_id:
         row = conn.execute(
-            "SELECT id, parentID, name FROM files WHERE id = ?",
+            "SELECT id, parentID, name FROM Files WHERE id = ?",
             (current_id,)
         ).fetchone()
         
@@ -104,7 +104,7 @@ def get_file_parents(conn: sqlite3.Connection, file_id: str) -> List[Tuple[str, 
         parent_id = row[1]
         if parent_id:
             parent_row = conn.execute(
-                "SELECT id, name FROM files WHERE id = ?",
+                "SELECT id, name FROM Files WHERE id = ?",
                 (parent_id,)
             ).fetchone()
             if parent_row:
@@ -138,7 +138,7 @@ def sample_files_by_criteria(
         query = f"""
             SELECT id, name, parentID, contentID, 
                    imageDate, videoDate, cTime, birthTime
-            FROM files 
+            FROM Files 
             WHERE {where_clause}
             ORDER BY RANDOM() 
             LIMIT ?
@@ -255,13 +255,13 @@ def create_test_dataset(
         print_info("Inserting parent directories...")
         for parent_id in all_parent_ids:
             row = prod_conn.execute(
-                "SELECT id, parentID, name, contentID, version FROM files WHERE id = ?",
+                "SELECT id, parentID, name, contentID, version FROM Files WHERE id = ?",
                 (parent_id,)
             ).fetchone()
             
             if row:
                 test_conn.execute(
-                    "INSERT OR IGNORE INTO files (id, parentID, name, contentID, version) VALUES (?, ?, ?, ?, ?)",
+                    "INSERT OR IGNORE INTO Files (id, parentID, name, contentID, version) VALUES (?, ?, ?, ?, ?)",
                     (row[0], row[1], row[2], row[3], row[4])
                 )
         
@@ -275,7 +275,7 @@ def create_test_dataset(
         for file_info in sampled_files:
             # Insert into test database
             test_conn.execute("""
-                INSERT OR IGNORE INTO files 
+                INSERT OR IGNORE INTO Files 
                 (id, name, parentID, contentID, imageDate, videoDate, cTime, birthTime, version)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
             """, (
