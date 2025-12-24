@@ -38,7 +38,8 @@ cd legacy
 python restsdk_public.py \
     --db ../shared/test-fixtures/test.db \
     --filedir ../shared/test-fixtures/files \
-    --dumpdir /tmp/legacy-test
+    --dumpdir /tmp/legacy-test \
+    --log_file /tmp/legacy-test.log
 cd ..
 ```
 
@@ -82,6 +83,7 @@ cd legacy && python restsdk_public.py \
     --db /path/to/index.db \
     --filedir /path/to/files \
     --dumpdir /tmp/test \
+    --log_file /tmp/test.log \
     --limit 10
 
 # Modern - test with just 10 files
@@ -153,7 +155,8 @@ cd ../../legacy
 python restsdk_public.py \
     --db ../shared/test-fixtures/test.db \
     --filedir ../shared/test-fixtures/files \
-    --dumpdir /tmp/legacy-test
+    --dumpdir /tmp/legacy-test \
+    --log_file /tmp/legacy-test.log
 
 # Run modern recovery
 cd ../modern
