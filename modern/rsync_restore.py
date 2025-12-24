@@ -956,7 +956,9 @@ def run_rsync(
         Tuple of (return_code, list_of_errors)
     """
     # Build rsync command
-    cmd = ['rsync', '-avL', '--info=progress2']
+    # Note: --info=progress2 requires rsync >= 3.1.0 (not available on macOS by default)
+    # Use basic -v instead for compatibility
+    cmd = ['rsync', '-avL']
     
     if checksum:
         cmd.append('--checksum')
