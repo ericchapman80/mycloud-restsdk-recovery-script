@@ -68,11 +68,16 @@ def print_warning(msg):
 
 
 def resolve_content_path(filedir: str, content_id: str) -> Path:
-    """Find file by contentID (supports flat or sharded layout)"""
-    # Try sharded first (most common)
-    sharded = Path(filedir) / content_id[:2] / content_id
-    if sharded.exists():
-        return sharded
+    """Find file by contentID (supports flat, single-char, or two-char sharded layout)"""
+    # Try single-char sharding first (0-9, a-f subdirectories)
+    single_char = Path(filedir) / content_id[0] / content_id
+    if single_char.exists():
+        return single_char
+    
+    # Try two-char sharding
+    two_char = Path(filedir) / content_id[:2] / content_id
+    if two_char.exists():
+        return two_char
     
     # Try flat layout
     flat = Path(filedir) / content_id
