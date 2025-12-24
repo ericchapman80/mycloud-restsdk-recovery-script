@@ -26,8 +26,14 @@ brew bundle
 
 **Setup with Poetry (recommended):**
 ```bash
-# Setup environment (installs Poetry if needed)
+# Standard setup (asks permission to modify shell config)
 ./setup.sh
+
+# Minimal setup (no shell config modification)
+./setup.sh --no-shell-config
+
+# Reload your shell to apply UTF-8 settings (if you chose to modify)
+source ~/.zshrc  # or ~/.bashrc
 
 # Activate Poetry shell
 poetry shell
@@ -47,6 +53,16 @@ python rsync_restore.py --db index.db --source-root /source --dest-root /dest
 poetry run python preflight.py /path/to/source /path/to/dest
 poetry run python rsync_restore.py --db index.db --source-root /source --dest-root /dest
 ```
+
+**Note on Emoji Support:**  
+The tool uses emoji characters (✅ 📋 🎉) for better visual output. The setup script will ask if you want to configure `PYTHONIOENCODING=utf-8` for emoji support.
+
+**Options:**
+- Standard: `./setup.sh` - Asks permission before modifying shell config
+- Minimal: `./setup.sh --no-shell-config` - Skips shell modifications, uses plain text fallbacks
+- Manual: Export `PYTHONIOENCODING=utf-8` yourself
+
+The tool gracefully falls back to plain text (✅ → [OK], 📋 → [TRANSFER]) if emoji support is unavailable. See [UTF8-EMOJI-SUPPORT.md](./UTF8-EMOJI-SUPPORT.md) for details.
 
 ## Features
 

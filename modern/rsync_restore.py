@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 rsync-based restore tool with monitoring and progress tracking.
 
@@ -27,6 +28,7 @@ Usage:
 import argparse
 import datetime
 import fnmatch
+import io
 import os
 import re
 import shutil
@@ -38,6 +40,23 @@ import threading
 import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Set
+
+# Detect if we can safely use emoji characters
+USE_EMOJI = False
+try:
+    # Ensure UTF-8 encoding for stdout/stderr (fixes emoji printing under sudo)
+    if sys.stdout.encoding != 'utf-8':
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    if sys.stderr.encoding != 'utf-8':
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+    
+    # Test if emoji can be safely encoded
+    test_emoji = "✅ 📋"
+    test_emoji.encode(sys.stdout.encoding)
+    USE_EMOJI = True
+except (UnicodeEncodeError, AttributeError, LookupError):
+    # Fallback to plain text if emoji support unavailable
+    USE_EMOJI = False
 
 # Try to import yaml for config files
 try:
@@ -83,6 +102,11 @@ def colorize(text: str, color: str) -> str:
     return text
 
 
+def emoji(char: str, fallback: str = "") -> str:
+    """Return emoji if supported, otherwise fallback text."""
+    return char if USE_EMOJI else fallback
+
+
 def print_header(text: str):
     print()
     print(colorize("=" * 60, Colors.CYAN))
@@ -92,24 +116,24 @@ def print_header(text: str):
 
 
 def print_success(text: str):
-    print(colorize(f"✅ {text}", Colors.GREEN))
+    print(colorize(f"{emoji('✅', '[OK]')} {text}", Colors.GREEN))
 
 
 def print_warning(text: str):
-    print(colorize(f"⚠️  {text}", Colors.YELLOW))
+    print(colorize(f"{emoji('⚠️', '[WARN]')}  {text}", Colors.YELLOW))
 
 
 def print_error(text: str):
-    print(colorize(f"❌ {text}", Colors.RED))
+    print(colorize(f"{emoji('❌', '[ERROR]')} {text}", Colors.RED))
 
 
 def print_info(text: str):
-    print(colorize(f"ℹ️  {text}", Colors.BLUE))
+    print(colorize(f"{emoji('ℹ️', '[INFO]')}  {text}", Colors.BLUE))
 
 
 def print_step(step_num: int, text: str):
     """Print a numbered step."""
-    print(colorize(f"\n📌 Step {step_num}: ", Colors.BOLD + Colors.YELLOW) + text)
+    print(colorize(f"\n{emoji('📌', '[*]')} Step {step_num}: ", Colors.BOLD + Colors.YELLOW) + text)
 
 
 def prompt_path(prompt: str, must_exist: bool = True, is_dir: bool = True) -> str:
@@ -667,26 +691,20 @@ def get_db_stats(db_path: str) -> Dict:
         cur = conn.cursor()
         
         # Total files (entries with contentID)
-        cur.execute("SELECT COUNT(*) FROM files WHERE contentID IS NOT NULL")
+        # Use Files (capital F) to match production schema
+        cur.execute("SELECT COUNT(*) FROM Files WHERE contentID IS NOT NULL AND contentID != ''")
         stats['total_files'] = cur.fetchone()[0]
         
-        # Total directories
-        cur.execute("SELECT COUNT(*) FROM files WHERE contentID IS NULL")
+        # Total directories (entries without contentID or empty contentID)
+        cur.execute("SELECT COUNT(*) FROM Files WHERE contentID IS NULL OR contentID = ''")
         stats['total_dirs'] = cur.fetchone()[0]
         
-        # Check if tracking tables exist
-        cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='copied_files'")
-        if cur.fetchone():
-            cur.execute("SELECT COUNT(*) FROM copied_files")
-            stats['copied_files'] = cur.fetchone()[0]
-        
-        cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='skipped_files'")
-        if cur.fetchone():
-            cur.execute("SELECT COUNT(*) FROM skipped_files")
-            stats['skipped_files'] = cur.fetchone()[0]
+        # Note: copied_files and skipped_files tables are for legacy Python tool tracking
+        # The rsync approach doesn't use these tables, so don't report misleading "already copied" stats
+        # Just show what needs to be recovered
     
-    stats['remaining'] = stats['total_files'] - stats['copied_files'] - stats['skipped_files']
-    stats['percent_complete'] = (stats['copied_files'] / stats['total_files'] * 100) if stats['total_files'] > 0 else 0
+    stats['remaining'] = stats['total_files']  # All files need recovery for fresh run
+    stats['percent_complete'] = 0  # Start from 0% for rsync recovery
     
     return stats
 
@@ -761,8 +779,7 @@ def run_preflight(source: str, dest: str, db_path: Optional[str] = None, farm: O
             db_stats = get_db_stats(db_path)
             results['db_stats'] = db_stats
             print_info(f"  Total files in DB: {format_number(db_stats['total_files'])}")
-            print_info(f"  Already copied: {format_number(db_stats['copied_files'])} ({db_stats['percent_complete']:.1f}%)")
-            print_info(f"  Remaining: {format_number(db_stats['remaining'])}")
+            print_info(f"  Files to recover: {format_number(db_stats['remaining'])}")
         else:
             print_error(f"Database not found: {db_path}")
             results['checks_passed'] = False
@@ -903,12 +920,18 @@ class RsyncMonitor:
 
 
 def parse_rsync_progress(line: str, monitor: RsyncMonitor):
-    """Parse rsync --info=progress2 output and update monitor."""
-    # Format: "1,234,567,890  45%   12.34MB/s    1:23:45"
-    # Or: "          1,234  100%   12.34MB/s    0:00:00 (xfr#123, to-chk=456/789)"
+    """Parse rsync -v --progress output and update monitor."""
+    # Standard --progress format:
+    #   "       1,234,567  45%   12.34MB/s    0:01:23"
+    # File transfer lines:
+    #   "path/to/file.txt"
+    # Verbose summary:
+    #   "sent 1,234 bytes  received 5,678 bytes  1,234.56 bytes/sec"
+    #   "total size is 123,456,789  speedup is 1.23"
     
+    # Match progress line: "     123,456  45%  1.23MB/s    0:01:23"
     progress_match = re.search(
-        r'([\d,]+)\s+(\d+)%\s+([\d.]+)([KMG]?)B/s\s+(\d+:\d+:\d+|\d+:\d+)',
+        r'^\s*([\d,]+)\s+(\d+)%\s+([\d.]+)([KMG]?)B/s\s+(\d+:\d+:\d+)',
         line
     )
     
@@ -930,10 +953,26 @@ def parse_rsync_progress(line: str, monitor: RsyncMonitor):
             eta=eta
         )
     
-    # Count transferred files
+    # Parse rsync final summary for accurate totals
+    # "total size is 451,234,567  speedup is 1.00"
+    total_match = re.search(r'total size is ([\d,]+)', line)
+    if total_match:
+        total_bytes = int(total_match.group(1).replace(',', ''))
+        with monitor.lock:
+            monitor.bytes_transferred = total_bytes
+    
+    # Count only actual file transfers (lines with "xfr#N" in progress output)
+    # This appears when rsync transfers a file
     xfr_match = re.search(r'xfr#(\d+)', line)
     if xfr_match:
-        monitor.update_progress(files_transferred=int(xfr_match.group(1)))
+        file_num = int(xfr_match.group(1))
+        with monitor.lock:
+            monitor.files_transferred = file_num
+            # Extract filename from line if present
+            if '(' in line:
+                filename = line.split('(')[0].strip()
+                if filename:
+                    monitor.current_file = filename
     
     # Check for errors
     if 'error' in line.lower() or 'failed' in line.lower():
@@ -956,9 +995,8 @@ def run_rsync(
         Tuple of (return_code, list_of_errors)
     """
     # Build rsync command
-    # Note: --info=progress2 requires rsync >= 3.1.0 (not available on macOS by default)
-    # Use basic -v instead for compatibility
-    cmd = ['rsync', '-avL']
+    # Use --progress for real-time feedback (works on all rsync versions)
+    cmd = ['rsync', '-avL', '--progress']
     
     if checksum:
         cmd.append('--checksum')
@@ -983,6 +1021,7 @@ def run_rsync(
     print()
     
     errors = []
+    last_file_print = 0
     
     try:
         process = subprocess.Popen(
@@ -990,13 +1029,22 @@ def run_rsync(
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             universal_newlines=True,
-            bufsize=1
+            bufsize=1,
+            errors='replace'  # Replace invalid UTF-8 chars instead of failing
         )
         
         for line in process.stdout:
             line = line.strip()
             if line:
                 parse_rsync_progress(line, monitor)
+                
+                # Print file transfer updates periodically (every 5 actual file transfers)
+                if monitor.files_transferred > 0 and monitor.files_transferred % 5 == 0 and \
+                   monitor.files_transferred != last_file_print:
+                    filename = monitor.current_file if monitor.current_file else "..."
+                    prefix = emoji('📋', '[TRANSFER]')
+                    print(f"  {prefix} [{monitor.files_transferred} files] {filename}")
+                    last_file_print = monitor.files_transferred
                 
                 # Check for errors
                 if 'error' in line.lower() or 'failed' in line.lower():
@@ -1126,8 +1174,9 @@ def create_symlink_farm_streaming(
                 skipped += 1
                 continue
             
-            # Create symlink
+            # Create symlink (use absolute path to avoid broken symlinks)
             farm_path = os.path.join(farm_dir, rel_path)
+            abs_source_path = os.path.abspath(source_path)
             
             try:
                 os.makedirs(os.path.dirname(farm_path), exist_ok=True)
@@ -1138,7 +1187,7 @@ def create_symlink_farm_streaming(
                     skipped += 1
                     continue
                 
-                os.symlink(source_path, farm_path)
+                os.symlink(abs_source_path, farm_path)
                 created += 1
                 
             except OSError as e:
@@ -1251,27 +1300,37 @@ def run_restore(
     # Summary
     elapsed = time.time() - start_time
     
+    # Get final counts
+    source_files, source_size = count_files_in_dir(source)
+    dest_files, dest_size = count_files_in_dir(dest)
+    
     print_header("Summary")
-    print(f"  Started:          {datetime.datetime.fromtimestamp(start_time)}")
-    print(f"  Finished:         {datetime.datetime.now()}")
-    print(f"  Duration:         {format_duration(elapsed)}")
+    print()
+    print(f"  Source:        {source_files} files | {format_bytes(source_size)}")
+    print(f"  Destination:   {dest_files} files | {format_bytes(dest_size)}")
+    print()
+    print(f"  Started:       {datetime.datetime.fromtimestamp(start_time).strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"  Finished:      {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"  Duration:      {format_duration(elapsed)}")
+    print()
     print(f"  Files transferred: {format_number(monitor.files_transferred)}")
-    print(f"  Data transferred: {format_bytes(monitor.bytes_transferred)}")
+    print(f"  Data transferred:  {format_bytes(monitor.bytes_transferred)}")
     
-    if elapsed > 0:
+    if elapsed > 0 and monitor.bytes_transferred > 0:
         avg_speed = monitor.bytes_transferred / elapsed
-        print(f"  Average speed:    {format_bytes(int(avg_speed))}/s")
+        print(f"  Average speed:     {format_bytes(int(avg_speed))}/s")
     
+    print()
     if monitor.errors:
-        print_warning(f"  Errors:           {len(monitor.errors)}")
+        print_warning(f"  Errors:            {len(monitor.errors)}")
         print()
-        print("Error details:")
+        print("  Error details:")
         for err in monitor.errors[:10]:
-            print(f"  - {err}")
+            print(f"    - {err}")
         if len(monitor.errors) > 10:
-            print(f"  ... and {len(monitor.errors) - 10} more (see {log_file})")
+            print(f"    ... and {len(monitor.errors) - 10} more (see {log_file})")
     else:
-        print_success("  Errors:           0")
+        print_success("  Errors:            0")
     
     print()
     print_info(f"Full log written to: {log_file}")
