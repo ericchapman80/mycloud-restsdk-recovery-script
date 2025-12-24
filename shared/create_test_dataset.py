@@ -294,8 +294,8 @@ def create_test_dataset(
             src_path = resolve_content_path(prod_files, content_id)
             
             if src_path and src_path.exists():
-                # Preserve sharded structure
-                dest_dir = Path(test_files) / content_id[:2]
+                # Preserve sharded structure (single-char to match MyCloud production)
+                dest_dir = Path(test_files) / content_id[0]
                 dest_dir.mkdir(parents=True, exist_ok=True)
                 dest_path = dest_dir / content_id
                 
