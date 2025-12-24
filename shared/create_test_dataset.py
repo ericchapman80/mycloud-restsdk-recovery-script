@@ -206,7 +206,10 @@ def create_test_dataset(
         # Copy schema
         print_info("Copying database schema...")
         schema_queries = prod_conn.execute(
-            "SELECT sql FROM sqlite_master WHERE type='table' AND sql IS NOT NULL"
+            """SELECT sql FROM sqlite_master 
+               WHERE type='table' 
+               AND sql IS NOT NULL 
+               AND name NOT LIKE 'sqlite_%'"""
         ).fetchall()
         
         for row in schema_queries:
