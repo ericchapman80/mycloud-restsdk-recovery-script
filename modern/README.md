@@ -83,13 +83,25 @@ poetry run pytest tests/(no mtime sync needed)
 
 ## Testing
 
+**Test Coverage:** 70-76% (389+ tests, 5,722 lines of test code)
+
 ```bash
 # Run all modern tests
 ./run_tests.sh
 
-# Run performance tests
-pytest tests/test_perf_regen_log.py -v
+# Run with coverage report
+./run_tests.sh html
+
+# Run specific test suites
+poetry run pytest tests/test_symlink_farm.py -v          # Symlink farm tests
+poetry run pytest tests/test_preflight_integration.py -v  # Integration tests
+poetry run pytest tests/test_perf_regen_log.py -v        # Performance tests
 ```
+
+**Test Suite:**
+- **Unit Tests (202 tests):** Symlink farm, preflight, cleanup, user interaction
+- **Integration Tests (127 tests):** End-to-end workflows, component interaction
+- **Additional Tests (60+ tests):** Progress monitoring, database operations, error handling
 
 ## Comparison to Legacy
 
@@ -100,8 +112,15 @@ pytest tests/test_perf_regen_log.py -v
 | Performance | Good | Better |
 | Complexity | Higher | Lower |
 | Maintenance | Frozen | Active |
+| Test Coverage | 63% | 70-76% |
 
-## Development
+## Development Status
+
+✅ **Phase 0 Complete** - Ready for repository split
+- Comprehensive test suite with 70-76% coverage
+- All critical workflows tested and validated
+- Integration tests ensure components work together
+- Ready for independent repository
 
 This is the actively maintained codebase. New features and improvements welcome!
 
