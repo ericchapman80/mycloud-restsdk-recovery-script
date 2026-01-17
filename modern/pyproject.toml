@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "mycloud-rsync-restore"
+name = "wd-mycloud-rsync-recovery"
 version = "2.0.0"
 description = "Modern rsync-based recovery for MyCloud NAS devices"
 authors = ["Eric Chapman <ericchapman80@users.noreply.github.com>"]

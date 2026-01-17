@@ -14,7 +14,7 @@ Split the current monorepo into two focused repositories to improve maintainabil
 
 ## Proposed State (Two Repos)
 
-### Repo 1: mycloud-python-recovery (Legacy)
+### Repo 1: wd-mycloud-python-recovery (Legacy)
 **Purpose:** Archived/maintenance-only Python-based recovery tool
 
 **What stays:**
@@ -32,7 +32,7 @@ Split the current monorepo into two focused repositories to improve maintainabil
 - Legacy documentation sections from README.md
 
 **README focus:**
-- "⚠️ This tool is in maintenance mode - use mycloud-rsync-restore for new projects"
+- "⚠️ This tool is in maintenance mode - use wd-mycloud-rsync-recovery for new projects"
 - Python-based approach documentation
 - Troubleshooting for existing users
 - Migration guide to rsync tool
@@ -43,7 +43,7 @@ Split the current monorepo into two focused repositories to improve maintainabil
 
 ---
 
-### Repo 2: mycloud-rsync-restore (Modern - Recommended)
+### Repo 2: wd-mycloud-rsync-recovery (Modern - Recommended)
 **Purpose:** Active development, rsync-based recovery with cleanup features
 
 **What moves here:**
@@ -161,11 +161,11 @@ Split the current monorepo into two focused repositories to improve maintainabil
 - ✅ Tagged as `v2.0.0-monorepo-phase0`
 
 **Tasks:**
-- [ ] Tag current monorepo: `v2.0.0-monorepo-final`
-- [ ] Create `MIGRATION.md` guide for users
+- ✅ Tag current monorepo: `v2.0.0-monorepo-final`
+- ~~Create `MIGRATION.md` guide for users~~ (Skipped - no active users)
 - [ ] Create two new repositories on GitHub:
 
-**Repository 1: `mycloud-python-recovery` (Legacy)**
+**Repository 1: `wd-mycloud-python-recovery` (Legacy)**
 - [ ] Extract from `legacy/` subdirectory
 - [ ] Move files to repo root
 - [ ] Update README with maintenance mode notice
@@ -174,7 +174,7 @@ Split the current monorepo into two focused repositories to improve maintainabil
 - [ ] Add cross-reference to modern repo
 - [ ] Tag initial release: `v2.0.0`
 
-**Repository 2: `mycloud-rsync-restore` (Modern)**
+**Repository 2: `wd-mycloud-rsync-recovery` (Modern)**
 - [ ] Extract from `modern/` subdirectory
 - [ ] Move files to repo root
 - [ ] Promote modern README to root
@@ -222,10 +222,10 @@ Split the current monorepo into two focused repositories to improve maintainabil
 ⚠️ IMPORTANT NOTICE
 
 The Python-based recovery tool has moved to:
-https://github.com/ericchapman80/mycloud-python-recovery
+https://github.com/ericchapman80/wd-mycloud-python-recovery
 
 This tool is now in MAINTENANCE MODE.
-For new recoveries, we recommend: mycloud-rsync-restore
+For new recoveries, we recommend: wd-mycloud-rsync-recovery
 ```
 
 **Currently using rsync_restore.py:**
@@ -233,7 +233,7 @@ For new recoveries, we recommend: mycloud-rsync-restore
 ✨ GOOD NEWS
 
 The rsync-based tool now has its own repo:
-https://github.com/ericchapman80/mycloud-rsync-restore
+https://github.com/ericchapman80/wd-mycloud-rsync-recovery
 
 This is the actively maintained, recommended solution.
 ```
@@ -366,14 +366,14 @@ Before proceeding to Phase 1 (actual repo split), verify:
 
 ### Repo Settings
 
-**mycloud-python-recovery:**
+**wd-mycloud-python-recovery:**
 - Topics: `mycloud`, `data-recovery`, `python`, `legacy`, `maintenance`
 - Archive: No (allow critical bug reports)
 - Issues: Enabled (redirect to modern repo)
 - Wiki: Disabled
 - Discussions: Disabled
 
-**mycloud-rsync-restore:**
+**wd-mycloud-rsync-recovery:**
 - Topics: `mycloud`, `data-recovery`, `rsync`, `python`, `backup`, `restore`
 - Archive: No
 - Issues: Enabled with templates
@@ -386,8 +386,8 @@ Both repos should have prominent links:
 ```markdown
 ## Related Projects
 
-- **mycloud-python-recovery** - Legacy Python-based recovery tool (maintenance mode)
-- **mycloud-rsync-restore** - Modern rsync-based tool (recommended)
+- **wd-mycloud-python-recovery** - Legacy Python-based recovery tool (maintenance mode)
+- **wd-mycloud-rsync-recovery** - Modern rsync-based tool (recommended)
 ```
 
 ---
