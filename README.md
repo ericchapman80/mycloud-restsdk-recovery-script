@@ -13,6 +13,7 @@ This repository is being reorganized into two distinct approaches:
 ### 📂 [`modern/`](modern/) - **Recommended** ✨
 
 **Modern rsync-based recovery** (actively maintained)
+
 - Lower memory usage (~50 MB vs 2-10 GB)
 - Automatic timestamp preservation
 - Built-in resume capability
@@ -24,6 +25,7 @@ This repository is being reorganized into two distinct approaches:
 ### 📂 [`legacy/`](legacy/) - Maintenance Mode ⚠️
 
 **Python-based recovery** (critical fixes only)
+
 - Original restsdk_public.py approach
 - Requires manual timestamp sync (sync_mtime.py)
 - Works in constrained environments
@@ -34,6 +36,7 @@ This repository is being reorganized into two distinct approaches:
 ### 📂 [`shared/`](shared/)
 
 Common resources:
+
 - Database schema documentation
 
 ---
@@ -41,6 +44,7 @@ Common resources:
 ## 🚀 Quick Start
 
 **macOS users (recommended):**
+
 ```bash
 # Install system dependencies
 brew bundle
@@ -49,6 +53,7 @@ brew bundle
 ```
 
 **For new users (recommended):**
+
 ```bash
 cd modern
 ./setup.sh          # Installs Poetry and dependencies
@@ -58,6 +63,7 @@ python rsync_restore.py --db index.db --source-root /source --dest-root /dest
 ```
 
 **For legacy approach:**
+
 ```bash
 cd legacy
 ./setup.sh
@@ -70,6 +76,7 @@ python restsdk_public.py --db index.db --filedir /source --dumpdir /dest
 ## 📋 Repository Roadmap
 
 **✅ Phase 0 Complete** - Internal Reorganization & Testing Infrastructure
+
 - ✅ Created `legacy/` and `modern/` subdirectories
 - ✅ Duplicated shared tools (preflight, setup, tests)
 - ✅ Both approaches tested independently and validated
@@ -85,9 +92,10 @@ python restsdk_public.py --db index.db --filedir /source --dumpdir /dest
   - ✅ Modern tool now has comprehensive test coverage matching legacy quality
 
 **🚀 Ready for Phase 1:** Repository Split
+
 - Split into two separate repos:
-  - `mycloud-python-recovery` (legacy, maintenance mode - 63% coverage)
-  - `mycloud-rsync-restore` (modern, active development - 70-76% coverage)
+  - `wd-mycloud-python-recovery` (legacy, maintenance mode - 63% coverage)
+  - `wd-mycloud-rsync-recovery` (modern, active development - 70-76% coverage)
 
 See [PHASE0_STATUS.md](PHASE0_STATUS.md) and [CHANGELOG.md](CHANGELOG.md) for complete details.
 

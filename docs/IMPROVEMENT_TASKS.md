@@ -55,9 +55,10 @@
         - The regenerated file and database state always match the current state of the destination, ensuring robust resumability.
         - Edge cases (missing/moved files) are handled by direct scanning and reconciliation.
 
-## 7. Review Performance PR ⏳ **To Do**
+## 7. Review Performance PR ✅ **Complete (Closed)**
 - **User Story:** As a developer, I want to keep an eye on external perf ideas, but the old `devin/1747514727-optimize-file-copy` branch is not being merged (it regresses current features). If new perf work appears, review it selectively and only pull in the good pieces (e.g., optional I/O knobs already covered).
     - **Implementation Approach:** Periodically re-evaluate external proposals; we already added optional `--io-buffer-size` and `--io-max-concurrency`, and preserved fidelity by default.
+    - **Resolution:** External branch was not merged due to regressions. The useful I/O tuning options were independently implemented. No further action needed.
 
 ## 8. Task List Maintenance ✅ **Complete**
 - **User Story:** As a developer, I want this list of improvement and optimization tasks to be tracked in the repo, so that progress can be monitored and tasks can be assigned or prioritized.
@@ -65,7 +66,7 @@
         - The improvement task list has been kept up to date throughout development, with new user stories and implementation notes added as issues were discovered and addressed.
         - The list has been used for prioritization, progress tracking, and documentation of completed work.
 
-## 9. Automated Testing and Test Harness ⏳ **To Do**
+## 9. Automated Testing and Test Harness ✅ **Complete**
 - **User Story:** As a developer, I want a robust, easy-to-use automated test harness (using pytest and/or unittest) to protect against functional drift and regressions as the codebase evolves.
     - **Implementation Approach:**
         1. Switch to pytest for simplicity and modern Python testing features.
@@ -73,3 +74,9 @@
         3. Refactor functions to accept injected dependencies (e.g., dictionaries, paths) for easier and more isolated unit testing.
         4. Add CLI and output tests using pytest's capsys/capfd for terminal output (especially for pre-flight summary and recommendations).
         5. Set up a test runner script and/or GitHub Actions CI workflow for continuous automated testing and protection against regressions.
+    - **Final Status:**
+        - ✅ pytest configured in both `legacy/` and `modern/` subdirectories
+        - ✅ **Legacy:** 127 tests, 63% coverage
+        - ✅ **Modern:** 389+ tests, 70-76% coverage (202 unit + 127 integration + 60+ utility)
+        - ✅ `run_tests.sh` scripts in both subdirectories
+        - ✅ GitHub Actions CI: Deferred to post-split repos
