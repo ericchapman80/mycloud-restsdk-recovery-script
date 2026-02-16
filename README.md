@@ -49,7 +49,9 @@ This was the original monorepo containing both recovery approaches. It has been 
 - ✅ Modern rsync-based alternative to Python approach
 - ✅ Repository split into focused, standalone tools
 
-See [PHASE0_STATUS.md](PHASE0_STATUS.md) and [REPO_SPLIT_PLAN.md](REPO_SPLIT_PLAN.md) for the complete development history.
+See [docs/archive/](docs/archive/) for the complete development history:
+- [PHASE0_STATUS.md](docs/archive/PHASE0_STATUS.md) - Phase 0 implementation details
+- [REPO_SPLIT_PLAN.md](docs/archive/REPO_SPLIT_PLAN.md) - Repository split planning
 
 ---
 
