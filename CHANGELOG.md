@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-02-15
+
+### Phase 1: Repository Split Complete 🎉
+
+This monorepo has been split into two focused, standalone repositories:
+
+- **[wd-mycloud-rsync-recovery](https://github.com/ericchapman80/wd-mycloud-rsync-recovery)** - Modern rsync-based tool (recommended)
+- **[wd-mycloud-python-recovery](https://github.com/ericchapman80/wd-mycloud-python-recovery)** - Legacy Python-based tool (maintenance mode)
+
+### Changed
+
+- This repository is now **archived** and serves as historical reference
+- README updated to redirect users to new repositories
+- All future development will occur in the new standalone repos
+
+### Migration
+
+- **New users:** Go directly to [wd-mycloud-rsync-recovery](https://github.com/ericchapman80/wd-mycloud-rsync-recovery)
+- **Existing users:** Update bookmarks and scripts to point to new repos
+- **Legacy users:** [wd-mycloud-python-recovery](https://github.com/ericchapman80/wd-mycloud-python-recovery) for critical fixes only
+
+---
+
 ## [2.0.0-monorepo-phase0] - 2024-12-24
 
 ### Phase 0: Monorepo Organization & Testing Infrastructure

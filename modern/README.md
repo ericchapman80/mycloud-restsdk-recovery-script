@@ -1,5 +1,8 @@
 # MyCloud Rsync Restore (Modern - Recommended)
 
+> **⚠️ ARCHIVED:** This code has moved to a standalone repository:
+> **[wd-mycloud-rsync-recovery](https://github.com/ericchapman80/wd-mycloud-rsync-recovery)**
+
 ✨ **This is the actively maintained, recommended approach for MyCloud recovery.**
 
 ## Overview

@@ -1,5 +1,9 @@
 # File Transfer Script Improvement & Optimization Tasks
 
+> **✅ ALL TASKS COMPLETE:** This monorepo has been split into standalone repositories:
+> - [wd-mycloud-rsync-recovery](https://github.com/ericchapman80/wd-mycloud-rsync-recovery) (recommended)
+> - [wd-mycloud-python-recovery](https://github.com/ericchapman80/wd-mycloud-python-recovery) (legacy)
+
 ## 1. Performance Review ✅ **Complete**
 - **User Story:** As a developer, I want a thorough review of the file transfer script to identify and address performance bottlenecks, especially around multi-threading and I/O, so that large transfers complete in a reasonable time.
     - **Implementation Approach:**

@@ -1,6 +1,10 @@
 Manual testing checklist
 ========================
 
+> **⚠️ ARCHIVED:** This monorepo has been split. See the new repositories:
+> - [wd-mycloud-rsync-recovery](https://github.com/ericchapman80/wd-mycloud-rsync-recovery) (recommended)
+> - [wd-mycloud-python-recovery](https://github.com/ericchapman80/wd-mycloud-python-recovery) (legacy)
+
 Use these commands as a lightweight script to verify the recovery workflow manually. Run from the repository root.
 
 1) Environment setup

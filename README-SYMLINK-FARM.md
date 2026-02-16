@@ -1,5 +1,8 @@
 # MyCloud Data Recovery - Symlink Farm Approach
 
+> **⚠️ ARCHIVED:** This documentation is now maintained in the new repository:
+> **[wd-mycloud-rsync-recovery](https://github.com/ericchapman80/wd-mycloud-rsync-recovery)**
+
 Recover your files from a failed WD MyCloud device using a symlink farm and rsync.
 
 ## Overview

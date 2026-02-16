@@ -1,5 +1,9 @@
 # Shared Testing Infrastructure
 
+> **⚠️ ARCHIVED:** This monorepo has been split. See the new repositories:
+> - [wd-mycloud-rsync-recovery](https://github.com/ericchapman80/wd-mycloud-rsync-recovery) (recommended)
+> - [wd-mycloud-python-recovery](https://github.com/ericchapman80/wd-mycloud-python-recovery) (legacy)
+
 This directory contains testing utilities shared between legacy and modern subdirectories.
 
 ## 📋 Contents

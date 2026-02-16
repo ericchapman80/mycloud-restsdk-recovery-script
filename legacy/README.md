@@ -1,6 +1,9 @@
 # MyCloud Python Recovery (Legacy)
 
-⚠️ **This is the legacy Python-based recovery approach. For new projects, consider the [modern rsync-based approach](../modern/).**
+> **⚠️ ARCHIVED:** This code has moved to a standalone repository:
+> **[wd-mycloud-python-recovery](https://github.com/ericchapman80/wd-mycloud-python-recovery)**
+
+⚠️ **This is the legacy Python-based recovery approach. For new projects, use [wd-mycloud-rsync-recovery](https://github.com/ericchapman80/wd-mycloud-rsync-recovery).**
 
 ## Overview
 
