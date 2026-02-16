@@ -53,6 +53,12 @@ See [docs/archive/](docs/archive/) for the complete development history:
 
 - [PHASE0_STATUS.md](docs/archive/PHASE0_STATUS.md) - Phase 0 implementation details
 - [REPO_SPLIT_PLAN.md](docs/archive/REPO_SPLIT_PLAN.md) - Repository split planning
+- [IMPROVEMENT_TASKS.md](docs/archive/IMPROVEMENT_TASKS.md) - All completed improvement tasks
+
+See [docs/guides/](docs/guides/) for reference documentation:
+
+- [MANUAL_TESTING.md](docs/guides/MANUAL_TESTING.md) - Manual testing checklist
+- [PERFORMANCE_ANALYSIS.md](docs/guides/PERFORMANCE_ANALYSIS.md) - Performance analysis notes
 
 ---
 
