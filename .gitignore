@@ -148,3 +148,6 @@ summary_*.log
 run.out
 monitor.out
 copied_file.log
+
+# Database schema info (contains personal data samples)
+sql-data.info
