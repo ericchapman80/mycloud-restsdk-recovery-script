@@ -23,7 +23,7 @@ Modern rsync-based recovery toolkit for WD MyCloud NAS devices.
 
 ---
 
-### � [wd-mycloud-python-recovery](https://github.com/ericchapman80/wd-mycloud-python-recovery) — Maintenance Mode
+### 🔧 [wd-mycloud-python-recovery](https://github.com/ericchapman80/wd-mycloud-python-recovery) — Maintenance Mode
 
 Legacy Python-based recovery tool for WD MyCloud NAS devices.
 
@@ -32,7 +32,7 @@ Legacy Python-based recovery tool for WD MyCloud NAS devices.
 - Established, well-tested codebase
 - **127 tests, 63% coverage**
 
-� **[Legacy tool (critical fixes only) →](https://github.com/ericchapman80/wd-mycloud-python-recovery)**
+👉 **[Legacy tool (critical fixes only) →](https://github.com/ericchapman80/wd-mycloud-python-recovery)**
 
 ---
 
@@ -50,6 +50,7 @@ This was the original monorepo containing both recovery approaches. It has been 
 - ✅ Repository split into focused, standalone tools
 
 See [docs/archive/](docs/archive/) for the complete development history:
+
 - [PHASE0_STATUS.md](docs/archive/PHASE0_STATUS.md) - Phase 0 implementation details
 - [REPO_SPLIT_PLAN.md](docs/archive/REPO_SPLIT_PLAN.md) - Repository split planning
 
