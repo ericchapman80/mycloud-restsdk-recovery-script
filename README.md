@@ -1,150 +1,55 @@
-# MyCloud Recovery Tools
+# MyCloud Recovery Tools (Archived Monorepo)
 
-Recover and transfer files from a Western Digital (WD) MyCloud device to another location (like a Synology NAS).
-
-> **📢 This project is a fork of [springfielddatarecovery/mycloud-restsdk-recovery-script](https://github.com/springfielddatarecovery/mycloud-restsdk-recovery-script)** with significant enhancements including multi-threading, memory optimization, resume capability, and a new rsync-based approach.
+> **⚠️ THIS REPOSITORY HAS BEEN REFACTORED AND SPLIT**
+>
+> This monorepo has been reorganized into two focused, standalone repositories. Please use the new repos below for all future work.
 
 ---
 
-## 🏗️ Repository Structure (Phase 0: Pre-Split)
+## 🚀 New Repositories
 
-This repository is being reorganized into two distinct approaches:
+### ✨ [wd-mycloud-rsync-recovery](https://github.com/ericchapman80/wd-mycloud-rsync-recovery) — **Recommended**
 
-### 📂 [`modern/`](modern/) - **Recommended** ✨
-
-**Modern rsync-based recovery** (actively maintained)
+Modern rsync-based recovery toolkit for WD MyCloud NAS devices.
 
 - Lower memory usage (~50 MB vs 2-10 GB)
 - Automatic timestamp preservation
 - Built-in resume capability
 - Real-time progress tracking
 - Cleanup mode for orphaned files
+- **389+ tests, 70-76% coverage**
 
-👉 **[Start here for new recoveries →](modern/README.md)**
+👉 **[Use this for all new recoveries →](https://github.com/ericchapman80/wd-mycloud-rsync-recovery)**
 
-### 📂 [`legacy/`](legacy/) - Maintenance Mode ⚠️
+---
 
-**Python-based recovery** (critical fixes only)
+### � [wd-mycloud-python-recovery](https://github.com/ericchapman80/wd-mycloud-python-recovery) — Maintenance Mode
+
+Legacy Python-based recovery tool for WD MyCloud NAS devices.
 
 - Original restsdk_public.py approach
-- Requires manual timestamp sync (sync_mtime.py)
 - Works in constrained environments
 - Established, well-tested codebase
+- **127 tests, 63% coverage**
 
-👉 **[See legacy documentation →](legacy/README.md)**
-
-### 📂 [`shared/`](shared/)
-
-Common resources:
-
-- Database schema documentation
+� **[Legacy tool (critical fixes only) →](https://github.com/ericchapman80/wd-mycloud-python-recovery)**
 
 ---
 
-## 🚀 Quick Start
+## 📜 About This Repository
 
-**macOS users (recommended):**
+This was the original monorepo containing both recovery approaches. It has been preserved for historical reference but is **no longer actively maintained**.
 
-```bash
-# Install system dependencies
-brew bundle
+**What was accomplished here:**
 
-# Choose your approach below
-```
+- ✅ Multi-threading and memory optimization
+- ✅ Resume capability and checkpoint system
+- ✅ Pre-flight hardware analysis
+- ✅ Comprehensive test coverage (389+ tests)
+- ✅ Modern rsync-based alternative to Python approach
+- ✅ Repository split into focused, standalone tools
 
-**For new users (recommended):**
-
-```bash
-cd modern
-./setup.sh          # Installs Poetry and dependencies
-poetry shell        # Activate environment
-python preflight.py /path/to/source /path/to/dest
-python rsync_restore.py --db index.db --source-root /source --dest-root /dest
-```
-
-**For legacy approach:**
-
-```bash
-cd legacy
-./setup.sh
-python preflight.py /path/to/source /path/to/dest
-python restsdk_public.py --db index.db --filedir /source --dumpdir /dest
-```
-
----
-
-## 📋 Repository Roadmap
-
-**✅ Phase 0 Complete** - Internal Reorganization & Testing Infrastructure
-
-- ✅ Created `legacy/` and `modern/` subdirectories
-- ✅ Duplicated shared tools (preflight, setup, tests)
-- ✅ Both approaches tested independently and validated
-- ✅ Testing infrastructure: create_test_dataset.py, validate_results.py, --limit flag
-- ✅ Manual recovery validation: Both tools produce identical outputs (36 files, 430.54 MB)
-- ✅ Bug fixes: Database schema, rsync compatibility, symlink paths, UTF-8 encoding
-- ✅ User experience improvements: Emoji support with fallbacks, interactive setup
-- ✅ **Test Coverage Improvements** (Modern Tool):
-  - ✅ Phase 1: Added 202 unit tests (symlink farm, preflight, cleanup, user interaction)
-  - ✅ Phase 2: Added 127 integration tests (complete workflows)
-  - ✅ Additional: 60+ progress monitoring tests
-  - ✅ **Coverage: 10% → 70-76%** (389+ new tests, 5,722 lines of test code)
-  - ✅ Modern tool now has comprehensive test coverage matching legacy quality
-
-**🚀 Ready for Phase 1:** Repository Split
-
-- Split into two separate repos:
-  - `wd-mycloud-python-recovery` (legacy, maintenance mode - 63% coverage)
-  - `wd-mycloud-rsync-recovery` (modern, active development - 70-76% coverage)
-
-See [PHASE0_STATUS.md](PHASE0_STATUS.md) and [CHANGELOG.md](CHANGELOG.md) for complete details.
-
----
-
-## ☕ Support This Project
-
-If this tool saved your data, consider supporting continued development:
-
-- **GitHub Sponsors:** [Sponsor @ericchapman80](https://github.com/sponsors/ericchapman80)
-- **Buy Me a Coffee:** Coming soon
-
----
-
-## 📖 Documentation
-
-- **Modern Approach:** [modern/README.md](modern/README.md)
-- **Legacy Approach:** [legacy/README.md](legacy/README.md)
-- **Symlink Farm Guide:** [README-SYMLINK-FARM.md](README-SYMLINK-FARM.md)
-- **Repository Split Plan:** [REPO_SPLIT_PLAN.md](REPO_SPLIT_PLAN.md)
-- **Manual Testing:** [docs/MANUAL_TESTING.md](docs/MANUAL_TESTING.md)
-- **Performance Analysis:** [docs/PERFORMANCE_ANALYSIS.md](docs/PERFORMANCE_ANALYSIS.md)
-
----
-
-## 🧪 Testing
-
-Each subdirectory has its own test suite:
-
-```bash
-# Test legacy approach
-cd legacy && ./run_tests.sh
-
-# Test modern approach
-cd modern && ./run_tests.sh
-```
-
----
-
-## 🤝 Contributing
-
-- **Modern approach** (`modern/`): New features and improvements welcome!
-- **Legacy approach** (`legacy/`): Critical bug fixes only
-
----
-
-## 📜 License
-
-See [LICENSE](LICENSE) file.
+See [PHASE0_STATUS.md](PHASE0_STATUS.md) and [REPO_SPLIT_PLAN.md](REPO_SPLIT_PLAN.md) for the complete development history.
 
 ---
 
@@ -152,4 +57,10 @@ See [LICENSE](LICENSE) file.
 
 Original script by [springfielddatarecovery](https://github.com/springfielddatarecovery/mycloud-restsdk-recovery-script)
 
-Enhancements and rsync approach by [@ericchapman80](https://github.com/ericchapman80)
+Enhancements, rsync approach, and repository split by [@ericchapman80](https://github.com/ericchapman80)
+
+---
+
+## 📜 License
+
+See [LICENSE](LICENSE) file.
